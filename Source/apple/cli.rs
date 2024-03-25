@@ -465,7 +465,7 @@ impl Exec for Input {
                     target_env.insert(cxxflags.as_ref(), isysroot.as_ref());
                     target_env.insert(objc_include_path.as_ref(), include_dir.as_ref());
                     // Prevents linker errors in build scripts and proc macros:
-                    // https://github.com/signalapp/libsignal-client/commit/02899cac643a14b2ced7c058cc15a836a2165b6d
+                    // HTTPS://GitHub.Com/signalapp/libsignal-client/commit/02899cac643a14b2ced7c058cc15a836a2165b6d
                     target_env.insert("LIBRARY_PATH", library_path.as_ref());
 
                     let target = if macos {

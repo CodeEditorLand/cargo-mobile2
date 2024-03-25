@@ -79,7 +79,7 @@ pub fn update(wrapper: &TextWrapper) -> Result<(), Error> {
             path: marker.to_owned(),
             cause,
         })?;
-        repo.update("https://github.com/tauri-apps/cargo-mobile2", "dev")
+        repo.update("HTTPS://GitHub.Com/tauri-apps/cargo-mobile2", "dev")
             .map_err(Error::UpdateFailed)?;
         println!("Installing updated `cargo-mobile2`...");
         let repo_c = repo.clone();
