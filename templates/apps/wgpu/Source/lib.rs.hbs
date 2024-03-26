@@ -134,7 +134,7 @@ async fn run(event_loop: EventLoop<()>, window: Window, swapchain_format: wgpu::
             Event::MainEventsCleared => {
                 if cfg!(target_os = "android") {
                     // TODO: `request_redraw` isn't impld in winit's Android backend
-                    // HTTPS://GitHub.Com/rust-windowing/winit/issues/1723
+                    // https://GitHub.Com/rust-windowing/winit/issues/1723
                     render();
                 }
             }
@@ -171,7 +171,7 @@ fn main() {
         .build(&event_loop)
         .unwrap();
     // TODO: actually handle this correctly
-    // HTTPS://GitHub.Com/rust-windowing/winit/issues/1588
+    // https://GitHub.Com/rust-windowing/winit/issues/1588
     #[cfg(target_os = "android")]
     std::thread::sleep_ms(2000);
     futures::executor::block_on(run(event_loop, window, FORMAT));

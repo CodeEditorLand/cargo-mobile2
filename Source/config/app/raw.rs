@@ -35,7 +35,7 @@ fn default_domain(_wrapper: &TextWrapper) -> Result<Option<String>, DefaultDomai
             if domain == "brainiumstudios.com" {
                 crate::util::cli::Report::action_request(
                     "You have a Brainium email address, but you're using a non-Brainium installation of cargo-mobile2!",
-                    "If that's not intentional, run `cargo install --force --git HTTPS://GitHub.Com/tauri-apps/cargo-mobile2 --features brainium`",
+                    "If that's not intentional, run `cargo install --force --git https://GitHub.Com/tauri-apps/cargo-mobile2 --features brainium`",
                 ).print(_wrapper);
             }
             Some(domain.to_owned())

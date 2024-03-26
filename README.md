@@ -4,16 +4,16 @@
 >
 > cargo-mobile takes care of generating Xcode and Android Studio project files, building and running on device, generating project boilerplate, and a few other things!
 
-This project is a fork of [cargo-mobile](HTTPS://GitHub.Com/BrainiumLLC/cargo-mobile/). Tauri uses it as a library dependency instead of using its CLI directly. For more information, please visit [Tauri's mobile guide](https://next--tauri.netlify.app/next/mobile/).
+This project is a fork of [cargo-mobile](https://GitHub.Com/BrainiumLLC/cargo-mobile/). Tauri uses it as a library dependency instead of using its CLI directly. For more information, please visit [Tauri's mobile guide](https://next--tauri.netlify.app/next/mobile/).
 
-In the meantime, cargo-mobile2 contains the template of wry, please follow [wry's instruction](HTTPS://GitHub.Com/tauri-apps/wry#android--ios) if you want to use with it.
+In the meantime, cargo-mobile2 contains the template of wry, please follow [wry's instruction](https://GitHub.Com/tauri-apps/wry#android--ios) if you want to use with it.
 
 ## Installation
 
 The build will probably take a bit, so feel free to go get a snack or something.
 
 ```bash
-cargo install --git HTTPS://GitHub.Com/tauri-apps/cargo-mobile2
+cargo install --git https://GitHub.Com/tauri-apps/cargo-mobile2
 ```
 
 cargo-mobile2 is currently supported on macOS, Linux and Windows. Note that it's not possible to target iOS on platforms other than macOS! You'll still get to target Android either way.
@@ -34,12 +34,12 @@ To start a new project, all you need to do is make a directory with a cute name,
 cargo mobile init
 ```
 
-After some straightforward prompts, you'll be asked to select a template pack. Template packs are used to generate project boilerplate, i.e. using the `wry` template pack gives you a [wry](HTTPS://GitHub.Com/tauri-apps/wry) project that runs out-of-the-box on desktop and mobile.
+After some straightforward prompts, you'll be asked to select a template pack. Template packs are used to generate project boilerplate, i.e. using the `wry` template pack gives you a [wry](https://GitHub.Com/tauri-apps/wry) project that runs out-of-the-box on desktop and mobile.
 
 | name | info                                                                                                                |
 | ---- | ------------------------------------------------------------------------------------------------------------------- |
 | wry  | Minimal wry project                                                                                                 |
-| egui | Full egui + winit + wgpu example based on [agdk-egui example](HTTPS://GitHub.Com/rust-mobile/rust-android-examples) |
+| egui | Full egui + winit + wgpu example based on [agdk-egui example](https://GitHub.Com/rust-mobile/rust-android-examples) |
 
 **Template pack contribution is welcomed**
 

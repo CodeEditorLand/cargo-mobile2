@@ -31,7 +31,7 @@ pub const kLSLaunchAndHide: LSLaunchFlags = 0x00100000;
 pub const kLSLaunchAndHideOthers: LSLaunchFlags = 0x00200000;
 
 // https://developer.apple.com/documentation/coreservices/lslaunchurlspec?language=objc
-// Field ordering: HTTPS://GitHub.Com/phracker/MacOSX-SDKs/blob/ef9fe35d5691b6dd383c8c46d867a499817a01b6/MacOSX10.3.9.sdk/System/Library/Frameworks/ApplicationServices.framework/Versions/A/Frameworks/LaunchServices.framework/Versions/A/Headers/LSOpen.h#L80
+// Field ordering: https://GitHub.Com/phracker/MacOSX-SDKs/blob/ef9fe35d5691b6dd383c8c46d867a499817a01b6/MacOSX10.3.9.sdk/System/Library/Frameworks/ApplicationServices.framework/Versions/A/Frameworks/LaunchServices.framework/Versions/A/Headers/LSOpen.h#L80
 #[derive(Debug)]
 #[repr(C)]
 pub struct LSLaunchURLSpec {

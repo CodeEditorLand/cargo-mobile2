@@ -1,6 +1,6 @@
 # winit
 
-This is just the [`winit` window example](HTTPS://GitHub.Com/rust-windowing/winit/blob/master/examples/window.rs) with very light modifications:
+This is just the [`winit` window example](https://GitHub.Com/rust-windowing/winit/blob/master/examples/window.rs) with very light modifications:
 
 - The `#[mobile_entry_point]` annotation generates all the boilerplate `extern` functions for mobile.
 - Logging on Android is done using `android_logger`.

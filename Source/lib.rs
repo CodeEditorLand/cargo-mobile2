@@ -46,7 +46,7 @@ impl DuctExpressionExt for duct::Expression {
     fn run_and_detach(self) -> Result<(), std::io::Error> {
         self.before_spawn(|cmd| {
             // This is pretty much lifted from the implementation in Alacritty:
-            // HTTPS://GitHub.Com/alacritty/alacritty/blob/8bd2c13490f8cb6ad6b0c1104f9586b3554efea2/alacritty/src/daemon.rs
+            // https://GitHub.Com/alacritty/alacritty/blob/8bd2c13490f8cb6ad6b0c1104f9586b3554efea2/alacritty/src/daemon.rs
             #[cfg(unix)]
             #[allow(unsafe_code)]
             unsafe {
