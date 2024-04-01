@@ -1,4 +1,4 @@
-// Taken from https://GitHub.Com/mailcheck/mailcheck/wiki/List-of-Popular-Domains
+// Taken from https://github.com/mailcheck/mailcheck/wiki/List-of-Popular-Domains
 pub static COMMON_EMAIL_PROVIDERS: &[&str] = &[
     "aol.com",
     "att.net",

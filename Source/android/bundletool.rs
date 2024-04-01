@@ -29,7 +29,7 @@ impl BundletoolJarInfo {
 
     fn download_url(&self) -> String {
         format!(
-            "https://GitHub.Com/google/bundletool/releases/download/{}/{}",
+            "https://github.com/google/bundletool/releases/download/{}/{}",
             self.version,
             self.file_name()
         )
