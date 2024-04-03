@@ -12,7 +12,7 @@ In the meantime, cargo-mobile2 contains the template of wry, please follow [wry'
 
 The build will probably take a bit, so feel free to go get a snack or something.
 
-```bash
+```sh
 cargo install --git https://github.com/tauri-apps/cargo-mobile2
 ```
 
@@ -22,7 +22,7 @@ You'll need to have Xcode and the Android SDK/NDK installed. Some of this will i
 
 Whenever you want to update:
 
-```bash
+```sh
 cargo mobile update
 ```
 
@@ -30,7 +30,7 @@ cargo mobile update
 
 To start a new project, all you need to do is make a directory with a cute name, `cd` into it, and then run this command:
 
-```bash
+```sh
 cargo mobile init
 ```
 
