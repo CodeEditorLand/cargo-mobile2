@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # This script is only intended for use during development. It's faster than a
 # regular `cargo install`, which makes iteration more pleasant.
