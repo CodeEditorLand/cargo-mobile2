@@ -16,7 +16,7 @@ In the meantime, cargo-mobile2 contains the template of wry, please follow
 [wry's instruction](https://github.com/tauri-apps/wry#android--ios) if you want
 to use with it.
 
-## Installation
+## 🚀 Installation
 
 The build will probably take a bit, so feel free to go get a snack or something.
 
@@ -38,7 +38,7 @@ Whenever you want to update:
 cargo mobile update
 ```
 
-## Usage
+## 🛠️ Usage
 
 To start a new project, all you need to do is make a directory with a cute name,
 `cd` into it, and then run this command:
