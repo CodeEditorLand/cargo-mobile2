@@ -4,7 +4,7 @@ use super::{
     target::{ArchiveError, BuildError, ExportError, Target},
 };
 use crate::{
-    apple::target::ExportConfig,
+    apple::target::{ArchiveConfig, BuildConfig, ExportConfig},
     env::{Env, ExplicitEnv as _},
     opts,
     util::cli::{Report, Reportable},
@@ -128,11 +128,24 @@ impl<'a> Device<'a> {
         // TODO: These steps are run unconditionally, which is slooooooow
         println!("Building app...");
         self.target
-            .build(config, env, noise_level, profile)
+            .build(
+                config,
+                env,
+                noise_level,
+                profile,
+                BuildConfig::new().allow_provisioning_updates(),
+            )
             .map_err(RunError::BuildFailed)?;
         println!("Archiving app...");
         self.target
-            .archive(config, env, noise_level, profile, None)
+            .archive(
+                config,
+                env,
+                noise_level,
+                profile,
+                None,
+                ArchiveConfig::new(),
+            )
             .map_err(RunError::ArchiveFailed)?;
 
         match self.kind {
@@ -141,7 +154,12 @@ impl<'a> Device<'a> {
             DeviceKind::IosDeployDevice | DeviceKind::DeviceCtlDevice => {
                 println!("Exporting app...");
                 self.target
-                    .export(config, env, noise_level, ExportConfig::default())
+                    .export(
+                        config,
+                        env,
+                        noise_level,
+                        ExportConfig::default().allow_provisioning_updates(),
+                    )
                     .map_err(RunError::ExportFailed)?;
                 println!("Extracting IPA...");
 

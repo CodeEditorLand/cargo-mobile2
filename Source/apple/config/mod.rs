@@ -297,7 +297,7 @@ pub struct Config {
 
 impl Config {
     pub fn from_raw(app: App, raw: Option<Raw>) -> Result<Self, Error> {
-        if app.reverse_identifier().contains('_') {
+        if app.identifier().contains('_') {
             return Err(Error::IdentifierCannotContainUnderscores);
         }
 
@@ -443,5 +443,9 @@ impl Config {
 
     pub fn bundle_version(&self) -> &VersionNumber {
         &self.bundle_version
+    }
+
+    pub fn development_team(&self) -> Option<&str> {
+        self.development_team.as_deref()
     }
 }

@@ -3,7 +3,10 @@ use crate::{
         config::{Config, Metadata},
         device::{self, Device, RunError},
         rust_version_check,
-        target::{ArchiveError, BuildError, CheckError, CompileLibError, ExportError, Target},
+        target::{
+            ArchiveConfig, ArchiveError, BuildConfig, BuildError, CheckError, CompileLibError,
+            ExportError, Target,
+        },
         NAME,
     },
     config::{
@@ -314,7 +317,13 @@ impl Exec for Input {
                     &env,
                     |target: &Target| {
                         target
-                            .build(config, &env, noise_level, profile)
+                            .build(
+                                config,
+                                &env,
+                                noise_level,
+                                profile,
+                                BuildConfig::default().allow_provisioning_updates(),
+                            )
                             .map_err(Error::BuildFailed)
                     },
                 )
@@ -338,10 +347,23 @@ impl Exec for Input {
                         }
 
                         target
-                            .build(config, &env, noise_level, profile)
+                            .build(
+                                config,
+                                &env,
+                                noise_level,
+                                profile,
+                                BuildConfig::new().allow_provisioning_updates(),
+                            )
                             .map_err(Error::BuildFailed)?;
                         target
-                            .archive(config, &env, noise_level, profile, Some(app_version))
+                            .archive(
+                                config,
+                                &env,
+                                noise_level,
+                                profile,
+                                Some(app_version),
+                                ArchiveConfig::new().allow_provisioning_updates(),
+                            )
                             .map_err(Error::ArchiveFailed)
                     },
                 )

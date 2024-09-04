@@ -2,6 +2,7 @@ use super::{
     config::{Config, Metadata},
     system_profile::{self, DeveloperTools},
     version_number::VersionNumber,
+    AuthCredentials,
 };
 use crate::{
     env::{Env, ExplicitEnv as _},
@@ -18,7 +19,7 @@ use once_cell_regex::exports::once_cell::sync::OnceCell;
 use std::{
     collections::{BTreeMap, HashMap},
     ffi::{OsStr, OsString},
-    path::PathBuf,
+    process::Command,
 };
 use thiserror::Error;
 
@@ -135,9 +136,39 @@ impl Reportable for ExportError {
 }
 
 #[derive(Default)]
-pub struct ExportConfig {
+pub struct XcodebuildOptions {
     allow_provisioning_updates: bool,
+    skip_codesign: bool,
     authentication_credentials: Option<AuthCredentials>,
+}
+
+impl XcodebuildOptions {
+    fn args_for(&self, cmd: &mut Command) {
+        if self.skip_codesign {
+            cmd.args([
+                "CODE_SIGNING_REQUIRED=NO",
+                "CODE_SIGNING_ALLOWED=NO",
+                "CODE_SIGN_IDENTITY=\"\"",
+                "CODE_SIGN_ENTITLEMENTS=\"\"",
+            ]);
+        }
+
+        if self.allow_provisioning_updates {
+            cmd.arg("-allowProvisioningUpdates");
+        }
+
+        if let Some(credentials) = &self.authentication_credentials {
+            cmd.args(["-authenticationKeyID", &credentials.key_id])
+                .arg("-authenticationKeyPath")
+                .arg(&credentials.key_path)
+                .args(["-authenticationKeyIssuerID", &credentials.key_issuer_id]);
+        }
+    }
+}
+
+#[derive(Default)]
+pub struct ExportConfig {
+    xcodebuild_options: XcodebuildOptions,
 }
 
 impl ExportConfig {
@@ -146,20 +177,72 @@ impl ExportConfig {
     }
 
     pub fn allow_provisioning_updates(mut self) -> Self {
-        self.allow_provisioning_updates = true;
+        self.xcodebuild_options.allow_provisioning_updates = true;
         self
     }
 
     pub fn authentication_credentials(mut self, credentials: AuthCredentials) -> Self {
-        self.authentication_credentials.replace(credentials);
+        self.xcodebuild_options
+            .authentication_credentials
+            .replace(credentials);
         self
     }
 }
 
-pub struct AuthCredentials {
-    pub key_path: PathBuf,
-    pub key_id: String,
-    pub key_issuer_id: String,
+#[derive(Default)]
+pub struct BuildConfig {
+    xcodebuild_options: XcodebuildOptions,
+}
+
+impl BuildConfig {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn allow_provisioning_updates(mut self) -> Self {
+        self.xcodebuild_options.allow_provisioning_updates = true;
+        self
+    }
+
+    pub fn skip_codesign(mut self) -> Self {
+        self.xcodebuild_options.skip_codesign = true;
+        self
+    }
+
+    pub fn authentication_credentials(mut self, credentials: AuthCredentials) -> Self {
+        self.xcodebuild_options
+            .authentication_credentials
+            .replace(credentials);
+        self
+    }
+}
+
+#[derive(Default)]
+pub struct ArchiveConfig {
+    xcodebuild_options: XcodebuildOptions,
+}
+
+impl ArchiveConfig {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn allow_provisioning_updates(mut self) -> Self {
+        self.xcodebuild_options.allow_provisioning_updates = true;
+        self
+    }
+
+    pub fn skip_codesign(mut self) -> Self {
+        self.xcodebuild_options.skip_codesign = true;
+        self
+    }
+
+    pub fn authentication_credentials(mut self, credentials: AuthCredentials) -> Self {
+        self.xcodebuild_options
+            .authentication_credentials
+            .replace(credentials);
+        self
+    }
 }
 
 #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
@@ -345,6 +428,7 @@ impl<'a> Target<'a> {
         env: &Env,
         noise_level: opts::NoiseLevel,
         profile: opts::Profile,
+        build_config: BuildConfig,
     ) -> Result<(), BuildError> {
         let configuration = profile.as_str();
         let scheme = config.scheme();
@@ -360,18 +444,20 @@ impl<'a> Target<'a> {
             .full_env(env.explicit_env())
             .env("FORCE_COLOR", "--force-color")
             .before_spawn(move |cmd| {
+                build_config.xcodebuild_options.args_for(cmd);
+
                 if let Some(v) = verbosity(noise_level) {
                     cmd.arg(v);
                 }
                 if let Some(a) = &arch {
                     cmd.args(["-arch", a]);
                 }
+
                 cmd.args(["-scheme", &scheme])
                     .arg("-workspace")
                     .arg(&workspace_path)
                     .args(["-sdk", &sdk])
                     .args(["-configuration", configuration])
-                    .arg("-allowProvisioningUpdates")
                     .arg("build");
                 Ok(())
             })
@@ -388,6 +474,7 @@ impl<'a> Target<'a> {
         noise_level: opts::NoiseLevel,
         profile: opts::Profile,
         build_number: Option<VersionNumber>,
+        archive_config: ArchiveConfig,
     ) -> Result<(), ArchiveError> {
         if let Some(build_number) = build_number {
             util::with_working_dir(config.project_dir(), || {
@@ -415,6 +502,8 @@ impl<'a> Target<'a> {
         duct::cmd("xcodebuild", args)
             .full_env(env.explicit_env())
             .before_spawn(move |cmd| {
+                archive_config.xcodebuild_options.args_for(cmd);
+
                 if let Some(v) = verbosity(noise_level) {
                     cmd.arg(v);
                 }
@@ -457,6 +546,8 @@ impl<'a> Target<'a> {
         duct::cmd("xcodebuild", args)
             .full_env(env.explicit_env())
             .before_spawn(move |cmd| {
+                export_config.xcodebuild_options.args_for(cmd);
+
                 if let Some(v) = verbosity(noise_level) {
                     cmd.arg(v);
                 }
@@ -467,16 +558,6 @@ impl<'a> Target<'a> {
                     .arg(&export_plist_path)
                     .arg("-exportPath")
                     .arg(&export_dir);
-
-                if export_config.allow_provisioning_updates {
-                    cmd.arg("-allowProvisioningUpdates");
-                }
-                if let Some(credentials) = &export_config.authentication_credentials {
-                    cmd.args(["-authenticationKeyID", &credentials.key_id])
-                        .arg("-authenticationKeyPath")
-                        .arg(&credentials.key_path)
-                        .args(["-authenticationKeyIssuerID", &credentials.key_issuer_id]);
-                }
 
                 Ok(())
             })

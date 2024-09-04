@@ -1,5 +1,25 @@
 # Changelog
 
+## \[0.17.0]
+
+- [`64d3e6f`](https://github.com/tauri-apps/cargo-mobile2/commit/64d3e6f04f2a6613b23caf0038812beab9554acb) ([#383](https://github.com/tauri-apps/cargo-mobile2/pull/383) by [@lucasfernog](https://github.com/tauri-apps/cargo-mobile2/../../lucasfernog)) Added an `ArchiveConfig` parameter to `apple::Target::archive`.
+- [`64d3e6f`](https://github.com/tauri-apps/cargo-mobile2/commit/64d3e6f04f2a6613b23caf0038812beab9554acb) ([#383](https://github.com/tauri-apps/cargo-mobile2/pull/383) by [@lucasfernog](https://github.com/tauri-apps/cargo-mobile2/../../lucasfernog)) Allow skipping code signing on `Apple::Target` `build` and `archive` methods,
+  which fixes an issue in CI where automatic signing only works on the first execution,
+  and following runs errors with `Revoke certificate: Your account already has a signing certificate for this machine but it is not present in your keychain`.
+
+## \[0.16.0]
+
+- [`e289dd9`](https://github.com/tauri-apps/cargo-mobile2/commit/e289dd95a435ad069e8252519a2e1232f9376d98) ([#381](https://github.com/tauri-apps/cargo-mobile2/pull/381) by [@lucasfernog](https://github.com/tauri-apps/cargo-mobile2/../../lucasfernog)) Added a `BuildConfig` argument to the `Target::build` iOS method to allow provisioning updates.
+- [`e289dd9`](https://github.com/tauri-apps/cargo-mobile2/commit/e289dd95a435ad069e8252519a2e1232f9376d98) ([#381](https://github.com/tauri-apps/cargo-mobile2/pull/381) by [@lucasfernog](https://github.com/tauri-apps/cargo-mobile2/../../lucasfernog)) Move `AuthCredentials` to `cargo_mobile2::apple`.
+
+## \[0.15.1]
+
+- [`c92d72f`](https://github.com/tauri-apps/cargo-mobile2/commit/c92d72f4a09166d54a4653d8ce9ac44296fc00c4) ([#377](https://github.com/tauri-apps/cargo-mobile2/pull/377) by [@lucasfernog](https://github.com/tauri-apps/cargo-mobile2/../../lucasfernog)) Added `apple::Config::development_team` getter.
+
+## \[0.15.0]
+
+- [`da40535`](https://github.com/tauri-apps/cargo-mobile2/commit/da40535856cc6ca3b372e3e95b3bd59a2a391a47) ([#375](https://github.com/tauri-apps/cargo-mobile2/pull/375) by [@amrbashir](https://github.com/tauri-apps/cargo-mobile2/../../amrbashir)) The app identifier must now be provided in reverse order (e.g. `dev.tauri.app` instead of `app.tauri.dev`). Removed `App::reverse_identifier` and Added `App::identifier`.
+
 ## \[0.14.0]
 
 - [`d0e9e58`](https://github.com/tauri-apps/cargo-mobile2/commit/d0e9e587a085d3b08a2e082dea562dbc252ad191) ([#371](https://github.com/tauri-apps/cargo-mobile2/pull/371) by [@lucasfernog](https://github.com/tauri-apps/cargo-mobile2/../../lucasfernog)) Added a `ExportConfig` argument to the `Target::export` iOS method to allow provisioning updates.
