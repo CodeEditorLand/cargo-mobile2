@@ -18,14 +18,17 @@ license = "Apache-2.0 OR MIT"
 [[bin]]
 name = "cargo-mobile"
 required-features = [ "cli" ]
+path = "Source/bin/cargo-mobile.rs"
 
 [[bin]]
 name = "cargo-apple"
 required-features = [ "cli" ]
+path = "Source/bin/cargo-apple.rs"
 
 [[bin]]
 name = "cargo-android"
 required-features = [ "cli" ]
+path = "Source/bin/cargo-android.rs"
 
 [features]
 cli = [
@@ -112,3 +115,6 @@ log = { version = "0.4", optional = true }
 serde = { version = "1.0", optional = true }
 serde_json = { version = "1.0", optional = true }
 thiserror = { version = "1.0", optional = true }
+
+[lib]
+path = "Source/lib.rs"

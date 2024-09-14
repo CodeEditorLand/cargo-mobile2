@@ -143,11 +143,11 @@ fn transliterate_initial_number(s: &str) -> String {
 }
 
 fn char_allowed(c: char) -> bool {
-    c.is_ascii_lowercase() || c.is_ascii_digit() || c == '_' || c == '-'
+    c.is_ascii_alphabetic() || c == '_' || c == '-'
 }
 
 fn char_naughty(c: char) -> bool {
-    !c.is_ascii_lowercase() && !c.is_ascii_digit() && c != '_' && c != '-'
+    !c.is_ascii_alphabetic() && c != '_' && c != '-'
 }
 
 fn strip_naughty_chars(s: &str) -> String {
