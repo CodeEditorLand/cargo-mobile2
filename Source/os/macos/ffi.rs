@@ -1,7 +1,7 @@
 #![allow(dead_code, non_snake_case, non_upper_case_globals)]
 
 use core_foundation::{
-    array::CFArrayRef, base::OSStatus, error::CFErrorRef, string::CFStringRef, url::CFURLRef,
+	array::CFArrayRef, base::OSStatus, error::CFErrorRef, string::CFStringRef, url::CFURLRef,
 };
 use std::{os::raw::c_void, ptr};
 
@@ -35,26 +35,26 @@ pub const kLSLaunchAndHideOthers: LSLaunchFlags = 0x00200000;
 #[derive(Debug)]
 #[repr(C)]
 pub struct LSLaunchURLSpec {
-    pub appURL: CFURLRef,
-    pub itemURLs: CFArrayRef,
-    // This should actually be `*const AEDesc`, but we don't personally need
-    // this field, so we'll save ourselves the trouble of defining more structs.
-    // Just, yknow, be sure to only ever set this to NULL!
-    passThruParams: *const c_void,
-    pub launchFlags: LSLaunchFlags,
-    asyncRefCon: *mut c_void,
+	pub appURL: CFURLRef,
+	pub itemURLs: CFArrayRef,
+	// This should actually be `*const AEDesc`, but we don't personally need
+	// this field, so we'll save ourselves the trouble of defining more structs.
+	// Just, yknow, be sure to only ever set this to NULL!
+	passThruParams: *const c_void,
+	pub launchFlags: LSLaunchFlags,
+	asyncRefCon: *mut c_void,
 }
 
 impl LSLaunchURLSpec {
-    pub fn new(appURL: CFURLRef, itemURLs: CFArrayRef, launchFlags: LSLaunchFlags) -> Self {
-        Self {
-            appURL,
-            asyncRefCon: ptr::null_mut(),
-            itemURLs,
-            launchFlags,
-            passThruParams: ptr::null(),
-        }
-    }
+	pub fn new(appURL: CFURLRef, itemURLs: CFArrayRef, launchFlags: LSLaunchFlags) -> Self {
+		Self {
+			appURL,
+			asyncRefCon: ptr::null_mut(),
+			itemURLs,
+			launchFlags,
+			passThruParams: ptr::null(),
+		}
+	}
 }
 
 // https://developer.apple.com/documentation/coreservices/launch_services?language=objc#1661359
@@ -81,24 +81,24 @@ pub const kLSNoClassicEnvironmentErr: OSStatus = -10828;
 pub const kLSMultipleSessionsNotSupportedErr: OSStatus = -10829;
 
 #[link(name = "CoreServices", kind = "framework")]
-extern "C" {
-    // https://developer.apple.com/documentation/coreservices/1448824-lscopydefaultapplicationurlforur?language=objc
-    pub fn LSCopyDefaultApplicationURLForURL(
-        inURL: CFURLRef,
-        inRoleMask: LSRolesMask,
-        outError: *mut CFErrorRef,
-    ) -> CFURLRef;
+extern {
+	// https://developer.apple.com/documentation/coreservices/1448824-lscopydefaultapplicationurlforur?language=objc
+	pub fn LSCopyDefaultApplicationURLForURL(
+		inURL: CFURLRef,
+		inRoleMask: LSRolesMask,
+		outError: *mut CFErrorRef,
+	) -> CFURLRef;
 
-    // https://developer.apple.com/documentation/coreservices/1447734-lscopydefaultapplicationurlforco?language=objc
-    pub fn LSCopyDefaultApplicationURLForContentType(
-        inContentType: CFStringRef,
-        inRoleMask: LSRolesMask,
-        outError: *mut CFErrorRef,
-    ) -> CFURLRef;
+	// https://developer.apple.com/documentation/coreservices/1447734-lscopydefaultapplicationurlforco?language=objc
+	pub fn LSCopyDefaultApplicationURLForContentType(
+		inContentType: CFStringRef,
+		inRoleMask: LSRolesMask,
+		outError: *mut CFErrorRef,
+	) -> CFURLRef;
 
-    // https://developer.apple.com/documentation/coreservices/1441986-lsopenfromurlspec?language=objc
-    pub fn LSOpenFromURLSpec(
-        inLaunchSpec: *const LSLaunchURLSpec,
-        outLaunchedURL: *mut CFURLRef,
-    ) -> OSStatus;
+	// https://developer.apple.com/documentation/coreservices/1441986-lsopenfromurlspec?language=objc
+	pub fn LSOpenFromURLSpec(
+		inLaunchSpec: *const LSLaunchURLSpec,
+		outLaunchedURL: *mut CFURLRef,
+	) -> OSStatus;
 }
