@@ -2,58 +2,58 @@ pub(super) mod info;
 mod xdg;
 
 use std::{
-	ffi::{OsStr, OsString},
-	io,
-	path::{Path, PathBuf},
+    ffi::{OsStr, OsString},
+    io,
+    path::{Path, PathBuf},
 };
 use thiserror::Error;
 
 use crate::DuctExpressionExt;
 pub use crate::{
-	env::{Env, ExplicitEnv},
-	util::ln,
+    env::{Env, ExplicitEnv},
+    util::ln,
 };
 
 #[derive(Debug, Error)]
 pub enum DetectEditorError {
-	#[error("No default editor is set: xdg-mime queries for \"text/rust\" and \"text/plain\" both failed")]
-	NoDefaultEditorSet,
-	#[error("Entry Not Found: xdg-mime returned an entry name that could not be found")]
-	FreeDesktopEntryNotFound,
-	#[error(
-		"Entry Parse Error: xdg-mime returned an entry that could not be parsed. Caused by {0}"
-	)]
-	FreeDesktopEntryParseError(io::Error),
-	#[error("Entry Parse Error: file lookup failed. Caused by {0}")]
-	FreeDesktopEntryLookupFailed(io::Error),
-	#[error("Exec field on desktop entry was not found")]
-	ExecFieldMissing,
+    #[error("No default editor is set: xdg-mime queries for \"text/rust\" and \"text/plain\" both failed")]
+    NoDefaultEditorSet,
+    #[error("Entry Not Found: xdg-mime returned an entry name that could not be found")]
+    FreeDesktopEntryNotFound,
+    #[error(
+        "Entry Parse Error: xdg-mime returned an entry that could not be parsed. Caused by {0}"
+    )]
+    FreeDesktopEntryParseError(io::Error),
+    #[error("Entry Parse Error: file lookup failed. Caused by {0}")]
+    FreeDesktopEntryLookupFailed(io::Error),
+    #[error("Exec field on desktop entry was not found")]
+    ExecFieldMissing,
 }
 
 #[derive(Debug, Error)]
 pub enum OpenFileError {
-	#[error("Launch failed: {0}")]
-	LaunchFailed(std::io::Error),
-	#[error("Command parsing failed")]
-	CommandParsingFailed,
+    #[error("Launch failed: {0}")]
+    LaunchFailed(std::io::Error),
+    #[error("Command parsing failed")]
+    CommandParsingFailed,
 }
 
 #[derive(Debug)]
 pub struct Application {
-	exec_command: OsString,
-	icon: Option<OsString>,
-	xdg_entry_path: PathBuf,
+    exec_command: OsString,
+    icon: Option<OsString>,
+    xdg_entry_path: PathBuf,
 }
 
 impl Application {
-	pub fn detect_editor() -> Result<Self, DetectEditorError> {
-		// Try a rust code editor, then a plain text editor. If neither are available,
-		// then return an error.
-		let entry = xdg::query_mime_entry("text/rust")
-			.or_else(|| xdg::query_mime_entry("text/plain"))
-			.ok_or(DetectEditorError::NoDefaultEditorSet)?;
+    pub fn detect_editor() -> Result<Self, DetectEditorError> {
+        // Try a rust code editor, then a plain text editor. If neither are available,
+        // then return an error.
+        let entry = xdg::query_mime_entry("text/rust")
+            .or_else(|| xdg::query_mime_entry("text/plain"))
+            .ok_or(DetectEditorError::NoDefaultEditorSet)?;
 
-		xdg::get_xdg_data_dirs()
+        xdg::get_xdg_data_dirs()
             .iter()
             .find_map(|dir| {
                 let dir = dir.join("applications");
@@ -86,43 +86,43 @@ impl Application {
             })
             // If this returns None, no errors ocurred, and no elements were found
             .unwrap_or(Err(DetectEditorError::FreeDesktopEntryNotFound))
-	}
+    }
 
-	pub fn open_file(&self, path: impl AsRef<Path>) -> Result<(), OpenFileError> {
-		let path = path.as_ref();
+    pub fn open_file(&self, path: impl AsRef<Path>) -> Result<(), OpenFileError> {
+        let path = path.as_ref();
 
-		let maybe_icon = self.icon.as_deref();
+        let maybe_icon = self.icon.as_deref();
 
-		// Parse the xdg command field with all the needed data
-		let command_parts = xdg::parse_command(
-			&self.exec_command,
-			path.as_os_str(),
-			maybe_icon,
-			Some(&self.xdg_entry_path),
-		);
+        // Parse the xdg command field with all the needed data
+        let command_parts = xdg::parse_command(
+            &self.exec_command,
+            path.as_os_str(),
+            maybe_icon,
+            Some(&self.xdg_entry_path),
+        );
 
-		if !command_parts.is_empty() {
-			// If command_parts has at least one element this works. If it has a single
-			// element, &command_parts[1..] should be an empty slice (&[]) and duct
-			// does not add any argument on that case
-			duct::cmd(&command_parts[0], &command_parts[1..])
-				.run_and_detach()
-				.map_err(OpenFileError::LaunchFailed)
-		} else {
-			Err(OpenFileError::CommandParsingFailed)
-		}
-	}
+        if !command_parts.is_empty() {
+            // If command_parts has at least one element this works. If it has a single
+            // element, &command_parts[1..] should be an empty slice (&[]) and duct
+            // does not add any argument on that case
+            duct::cmd(&command_parts[0], &command_parts[1..])
+                .run_and_detach()
+                .map_err(OpenFileError::LaunchFailed)
+        } else {
+            Err(OpenFileError::CommandParsingFailed)
+        }
+    }
 }
 
 pub fn open_file_with(
-	application: impl AsRef<OsStr>,
-	path: impl AsRef<OsStr>,
-	env: &Env,
+    application: impl AsRef<OsStr>,
+    path: impl AsRef<OsStr>,
+    env: &Env,
 ) -> Result<(), OpenFileError> {
-	let app_str = application.as_ref();
-	let path_str = path.as_ref();
+    let app_str = application.as_ref();
+    let path_str = path.as_ref();
 
-	let command_parts = xdg::get_xdg_data_dirs()
+    let command_parts = xdg::get_xdg_data_dirs()
         .iter()
         .find_map(|dir| {
             let dir = dir.join("applications");
@@ -153,33 +153,33 @@ pub fn open_file_with(
         // Here is why we ought to change this function's return type, to fit this error
         .unwrap_or_else(|| vec![app_str.to_os_string()]);
 
-	// If command_parts has at least one element, this won't panic from Out of Bounds
-	duct::cmd(&command_parts[0], &command_parts[1..])
-		.vars(env.explicit_env())
-		.run_and_detach()
-		.map_err(OpenFileError::LaunchFailed)
+    // If command_parts has at least one element, this won't panic from Out of Bounds
+    duct::cmd(&command_parts[0], &command_parts[1..])
+        .vars(env.explicit_env())
+        .run_and_detach()
+        .map_err(OpenFileError::LaunchFailed)
 }
 
 // We use "sh" in order to access "command -v", as that is a bultin command on sh.
 // Linux does not require a binary "command" in path, so this seems the way to go.
 #[cfg(target_os = "linux")]
 pub fn command_path(name: &str) -> std::io::Result<std::process::Output> {
-	duct::cmd("sh", ["-c", format!("command -v {name}").as_str()]).run()
+    duct::cmd("sh", ["-c", format!("command -v {name}").as_str()]).run()
 }
 
 pub fn code_command() -> duct::Expression {
-	duct::cmd!("code")
+    duct::cmd!("code")
 }
 
 pub fn replace_path_separator(path: OsString) -> OsString {
-	path
+    path
 }
 
 pub mod consts {
-	pub const CLANG: &str = "clang";
-	pub const CLANGXX: &str = "clang++";
-	pub const AR: &str = "ar";
-	pub const LD: &str = "ld";
-	pub const READELF: &str = "readelf";
-	pub const NDK_STACK: &str = "ndk-stack";
+    pub const CLANG: &str = "clang";
+    pub const CLANGXX: &str = "clang++";
+    pub const AR: &str = "ar";
+    pub const LD: &str = "ld";
+    pub const READELF: &str = "readelf";
+    pub const NDK_STACK: &str = "ndk-stack";
 }
