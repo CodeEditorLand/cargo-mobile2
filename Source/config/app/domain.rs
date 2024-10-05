@@ -1,8 +1,9 @@
-use crate::util::list_display;
 use std::{error::Error, fmt};
 
-static RESERVED_PACKAGE_NAMES: [&str; 2] = ["kotlin", "java"];
-static RESERVED_KEYWORDS: [&str; 63] = [
+use crate::util::list_display;
+
+static RESERVED_PACKAGE_NAMES:[&str; 2] = ["kotlin", "java"];
+static RESERVED_KEYWORDS:[&str; 63] = [
 	"abstract",
 	"as",
 	"assert",
@@ -71,10 +72,10 @@ static RESERVED_KEYWORDS: [&str; 63] = [
 #[derive(Debug)]
 pub enum DomainError {
 	Empty,
-	NotAsciiAlphanumeric { bad_chars: Vec<char> },
-	StartsWithDigit { label: String },
-	ReservedPackageName { package_name: String },
-	ReservedKeyword { keyword: String },
+	NotAsciiAlphanumeric { bad_chars:Vec<char> },
+	StartsWithDigit { label:String },
+	ReservedPackageName { package_name:String },
+	ReservedKeyword { keyword:String },
 	StartsOrEndsWithADot,
 	EmptyLabel,
 }
@@ -82,7 +83,7 @@ pub enum DomainError {
 impl Error for DomainError {}
 
 impl fmt::Display for DomainError {
-	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+	fn fmt(&self, f:&mut fmt::Formatter<'_>) -> fmt::Result {
 		match self {
             Self::Empty => write!(f, "Domain can't be empty."),
             Self::NotAsciiAlphanumeric { bad_chars } => write!(
@@ -116,7 +117,7 @@ impl fmt::Display for DomainError {
 	}
 }
 
-pub fn check_domain_syntax(domain_name: &str) -> Result<(), DomainError> {
+pub fn check_domain_syntax(domain_name:&str) -> Result<(), DomainError> {
 	if domain_name.is_empty() {
 		return Err(DomainError::Empty);
 	}
@@ -129,10 +130,14 @@ pub fn check_domain_syntax(domain_name: &str) -> Result<(), DomainError> {
 			return Err(DomainError::EmptyLabel);
 		}
 		if RESERVED_KEYWORDS.contains(&label) {
-			return Err(DomainError::ReservedKeyword { keyword: label.to_owned() });
+			return Err(DomainError::ReservedKeyword {
+				keyword:label.to_owned(),
+			});
 		}
 		if label.chars().next().unwrap().is_ascii_digit() {
-			return Err(DomainError::StartsWithDigit { label: label.to_owned() });
+			return Err(DomainError::StartsWithDigit {
+				label:label.to_owned(),
+			});
 		}
 		let mut bad_chars = Vec::new();
 		for c in label.chars() {
@@ -146,7 +151,9 @@ pub fn check_domain_syntax(domain_name: &str) -> Result<(), DomainError> {
 	}
 	for pkg_name in RESERVED_PACKAGE_NAMES.iter() {
 		if domain_name.ends_with(pkg_name) {
-			return Err(DomainError::ReservedPackageName { package_name: pkg_name.to_string() });
+			return Err(DomainError::ReservedPackageName {
+				package_name:pkg_name.to_string(),
+			});
 		}
 	}
 	Ok(())
@@ -154,8 +161,9 @@ pub fn check_domain_syntax(domain_name: &str) -> Result<(), DomainError> {
 
 #[cfg(test)]
 mod test {
-	use super::*;
 	use rstest::rstest;
+
+	use super::*;
 
 	#[rstest(
 		input,
@@ -165,7 +173,7 @@ mod test {
 		case("java.test"),
 		case("synchronized2.com")
 	)]
-	fn test_check_domain_syntax_correct(input: &str) {
+	fn test_check_domain_syntax_correct(input:&str) {
 		check_domain_syntax(input).unwrap();
 	}
 
@@ -178,7 +186,10 @@ mod test {
         case("some.domain.catch.com", DomainError::ReservedKeyword { keyword: String::from("catch") }),
         case("com..empty.label", DomainError::EmptyLabel)
     )]
-	fn test_check_domain_syntax_error(input: &str, error: DomainError) {
-		assert_eq!(check_domain_syntax(input).unwrap_err().to_string(), error.to_string())
+	fn test_check_domain_syntax_error(input:&str, error:DomainError) {
+		assert_eq!(
+			check_domain_syntax(input).unwrap_err().to_string(),
+			error.to_string()
+		)
 	}
 }
