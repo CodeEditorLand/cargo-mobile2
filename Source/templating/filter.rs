@@ -22,8 +22,7 @@ impl Display for FilterError {
 			Self::ReadDirFailed { path, cause } => {
 				write!(
 					f,
-					"App root directory {:?} couldn't be checked for \
-					 emptiness: {}",
+					"App root directory {:?} couldn't be checked for emptiness: {}",
 					path, cause
 				)
 			},
@@ -45,35 +44,31 @@ impl Filter {
 	) -> Result<Self, FilterError> {
 		if config_origin.freshly_minted() {
 			log::info!(
-				"config freshly minted, so we're assuming a brand new \
-				 project; using `WildWest` filtering strategy"
+				"config freshly minted, so we're assuming a brand new project; using `WildWest` \
+				 filtering strategy"
 			);
 			Ok(Self::WildWest)
 		} else if dot_first_init_exists {
 			log::info!(
-				"`{}` exists, so we're assuming a brand new project; using \
-				 `WildWest` filtering strategy",
+				"`{}` exists, so we're assuming a brand new project; using `WildWest` filtering \
+				 strategy",
 				crate::init::DOT_FIRST_INIT_FILE_NAME
 			);
 			Ok(Self::WildWest)
 		} else {
 			log::info!(
-				"existing config loaded, so we're assuming an existing \
-				 project; using `Protected` filtering strategy"
+				"existing config loaded, so we're assuming an existing project; using `Protected` \
+				 filtering strategy"
 			);
 			let gitignore_path = config.app().root_dir().join(".gitignore");
 			let (unprotected, err) = Gitignore::new(&gitignore_path);
 			if let Some(err) = err {
-				log::error!(
-					"non-fatal error loading {:?}: {}",
-					gitignore_path,
-					err
-				);
+				log::error!("non-fatal error loading {:?}: {}", gitignore_path, err);
 			}
 			if unprotected.is_empty() {
 				log::warn!(
-					"no ignore entries were parsed from {:?}; project \
-					 generation will more or less be a no-op",
+					"no ignore entries were parsed from {:?}; project generation will more or \
+					 less be a no-op",
 					gitignore_path
 				);
 			} else {
@@ -92,8 +87,7 @@ impl Filter {
 			match self {
 				Self::WildWest => {
 					log::debug!(
-						"filtering strategy is `WildWest`, so action will be \
-						 processed: {:#?}",
+						"filtering strategy is `WildWest`, so action will be processed: {:#?}",
 						action
 					);
 					true
@@ -103,21 +97,16 @@ impl Filter {
 					// actions that apply to paths excluded from version
 					// control.
 					let ignored = unprotected
-						.matched_path_or_any_parents(
-							action.dest(),
-							action.is_create_directory(),
-						)
+						.matched_path_or_any_parents(action.dest(), action.is_create_directory())
 						.is_ignore();
 					if ignored {
 						log::debug!(
-							"action has unprotected src, so will be \
-							 processed: {:#?}",
+							"action has unprotected src, so will be processed: {:#?}",
 							action
 						);
 					} else {
 						log::debug!(
-							"action has protected src, so won't be processed: \
-							 {:#?}",
+							"action has protected src, so won't be processed: {:#?}",
 							action
 						);
 					}

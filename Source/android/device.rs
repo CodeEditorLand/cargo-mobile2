@@ -7,15 +7,7 @@ use std::{
 
 use thiserror::Error;
 
-use super::{
-	aab,
-	adb,
-	bundletool,
-	config::Config,
-	env::Env,
-	jnilibs,
-	target::Target,
-};
+use super::{aab, adb, bundletool, config::Config, env::Env, jnilibs, target::Target};
 use crate::{
 	android::apk,
 	env::ExplicitEnv as _,
@@ -55,12 +47,8 @@ pub enum ApksBuildError {
 impl Reportable for ApksBuildError {
 	fn report(&self) -> Report {
 		match self {
-			Self::CleanFailed(err) => {
-				Report::error("Failed to clean old APKS", err)
-			},
-			Self::BuildFromAabFailed(err) => {
-				Report::error("Failed to build APKS from AAB", err)
-			},
+			Self::CleanFailed(err) => Report::error("Failed to clean old APKS", err),
+			Self::BuildFromAabFailed(err) => Report::error("Failed to build APKS from AAB", err),
 		}
 	}
 }
@@ -76,12 +64,8 @@ pub enum ApkInstallError {
 impl Reportable for ApkInstallError {
 	fn report(&self) -> Report {
 		match self {
-			Self::InstallFailed(err) => {
-				Report::error("Failed to install APK", err)
-			},
-			Self::InstallFromAabFailed(err) => {
-				Report::error("Failed to install APK from AAB", err)
-			},
+			Self::InstallFailed(err) => Report::error("Failed to install APK", err),
+			Self::InstallFromAabFailed(err) => Report::error("Failed to install APK from AAB", err),
 		}
 	}
 }
@@ -112,9 +96,7 @@ impl Reportable for RunError {
 			Self::ApkError(err) => err.report(),
 			Self::AabError(err) => err.report(),
 			Self::ApkInstallFailed(err) => err.report(),
-			Self::WakeScreenFailed(err) => {
-				Report::error("Failed to wake device screen", err)
-			},
+			Self::WakeScreenFailed(err) => Report::error("Failed to wake device screen", err),
 			Self::BundletoolInstallFailed(err) => err.report(),
 			Self::AabBuildFailed(err) => err.report(),
 			Self::ApksFromAabBuildFailed(err) => err.report(),
@@ -156,12 +138,7 @@ impl<'a> Display for Device<'a> {
 }
 
 impl<'a> Device<'a> {
-	pub(super) fn new(
-		serial_no:String,
-		name:String,
-		model:String,
-		target:&'a Target<'a>,
-	) -> Self {
+	pub(super) fn new(serial_no:String, name:String, model:String, target:&'a Target<'a>) -> Self {
 		Self { serial_no, name, model, target }
 	}
 
@@ -173,15 +150,9 @@ impl<'a> Device<'a> {
 
 	pub fn serial_no(&self) -> &str { &self.serial_no }
 
-	fn adb(&self, env:&Env) -> duct::Expression {
-		adb::adb(env, ["-s", &self.serial_no])
-	}
+	fn adb(&self, env:&Env) -> duct::Expression { adb::adb(env, ["-s", &self.serial_no]) }
 
-	pub fn all_apks_paths(
-		config:&Config,
-		profile:Profile,
-		flavor:&str,
-	) -> Vec<PathBuf> {
+	pub fn all_apks_paths(config:&Config, profile:Profile, flavor:&str) -> Vec<PathBuf> {
 		profile
 			.suffixes()
 			.iter()
@@ -203,13 +174,10 @@ impl<'a> Device<'a> {
 
 	fn wait_device_boot(&self, env:&Env) {
 		loop {
-			let cmd =
-				self.adb(env).stderr_capture().stdout_capture().before_spawn(
-					move |cmd| {
-						cmd.args(["shell", "getprop", "init.svc.bootanim"]);
-						Ok(())
-					},
-				);
+			let cmd = self.adb(env).stderr_capture().stdout_capture().before_spawn(move |cmd| {
+				cmd.args(["shell", "getprop", "init.svc.bootanim"]);
+				Ok(())
+			});
 			let handle = cmd.start();
 			if let Ok(handle) = handle {
 				if let Ok(output) = handle.wait() {
@@ -234,14 +202,7 @@ impl<'a> Device<'a> {
 		noise_level:NoiseLevel,
 		profile:Profile,
 	) -> Result<(), apk::ApkError> {
-		apk::build(
-			config,
-			env,
-			noise_level,
-			profile,
-			vec![self.target()],
-			true,
-		)?;
+		apk::build(config, env, noise_level, profile, vec![self.target()], true)?;
 		Ok(())
 	}
 
@@ -277,22 +238,11 @@ impl<'a> Device<'a> {
 		noise_level:NoiseLevel,
 		profile:Profile,
 	) -> Result<(), aab::AabError> {
-		aab::build(
-			config,
-			env,
-			noise_level,
-			profile,
-			vec![self.target()],
-			false,
-		)?;
+		aab::build(config, env, noise_level, profile, vec![self.target()], false)?;
 		Ok(())
 	}
 
-	fn build_apks_from_aab(
-		&self,
-		config:&Config,
-		profile:Profile,
-	) -> Result<(), ApksBuildError> {
+	fn build_apks_from_aab(&self, config:&Config, profile:Profile) -> Result<(), ApksBuildError> {
 		let flavor = self.target.arch;
 		// In the case that profile is `Release`, it is safe to pick the first
 		// one which should have the suffix `release` instead of
@@ -302,8 +252,7 @@ impl<'a> Device<'a> {
 		//
 		// and in the case that profile is `Debug` there will be only one path
 		// that has the suffix `debug`
-		let all_apks_path =
-			Self::all_apks_paths(config, profile, flavor)[0].clone();
+		let all_apks_path = Self::all_apks_paths(config, profile, flavor)[0].clone();
 		let aab_path = aab::aab_path(config, profile, flavor);
 		bundletool::command()
 			.before_spawn(move |cmd| {
@@ -320,11 +269,7 @@ impl<'a> Device<'a> {
 		Ok(())
 	}
 
-	fn install_apk_from_aab(
-		&self,
-		config:&Config,
-		profile:Profile,
-	) -> Result<(), ApkInstallError> {
+	fn install_apk_from_aab(&self, config:&Config, profile:Profile) -> Result<(), ApkInstallError> {
 		let flavor = self.target.arch;
 		let apks_path = Self::all_apks_paths(config, profile, flavor)
 			.into_iter()
@@ -332,10 +277,7 @@ impl<'a> Device<'a> {
 			.unwrap();
 		bundletool::command()
 			.before_spawn(move |cmd| {
-				cmd.args([
-					"install-apks",
-					&format!("--apks={}", apks_path.to_str().unwrap()),
-				]);
+				cmd.args(["install-apks", &format!("--apks={}", apks_path.to_str().unwrap())]);
 
 				Ok(())
 			})
@@ -369,25 +311,20 @@ impl<'a> Device<'a> {
 		activity:String,
 	) -> Result<duct::Handle, RunError> {
 		if build_app_bundle {
-			bundletool::install(reinstall_deps)
-				.map_err(RunError::BundletoolInstallFailed)?;
-			self.build_aab(config, env, noise_level, profile)
-				.map_err(RunError::AabError)?;
+			bundletool::install(reinstall_deps).map_err(RunError::BundletoolInstallFailed)?;
+			self.build_aab(config, env, noise_level, profile).map_err(RunError::AabError)?;
 			self.build_apks_from_aab(config, profile)
 				.map_err(RunError::ApksFromAabBuildFailed)?;
 			if self.serial_no.starts_with("emulator") {
 				self.wait_device_boot(env);
 			}
-			self.install_apk_from_aab(config, profile)
-				.map_err(RunError::ApkInstallFailed)?;
+			self.install_apk_from_aab(config, profile).map_err(RunError::ApkInstallFailed)?;
 		} else {
-			self.build_apk(config, env, noise_level, profile)
-				.map_err(RunError::ApkError)?;
+			self.build_apk(config, env, noise_level, profile).map_err(RunError::ApkError)?;
 			if self.serial_no.starts_with("emulator") {
 				self.wait_device_boot(env);
 			}
-			self.install_apk(config, env, profile)
-				.map_err(RunError::ApkInstallFailed)?;
+			self.install_apk(config, env, profile).map_err(RunError::ApkInstallFailed)?;
 		}
 		let activity = format!("{}/{}", config.app().identifier(), activity);
 		self.adb(env)
@@ -448,11 +385,7 @@ impl<'a> Device<'a> {
 		logcat.start().map_err(Into::into)
 	}
 
-	pub fn stacktrace(
-		&self,
-		config:&Config,
-		env:&Env,
-	) -> Result<(), StacktraceError> {
+	pub fn stacktrace(&self, config:&Config, env:&Env) -> Result<(), StacktraceError> {
 		let jnilib_path = config
             .app()
             // ndk-stack can't seem to handle spaces in args, no matter
@@ -470,19 +403,14 @@ impl<'a> Device<'a> {
 				Ok(())
 			})
 			.dup_stdio();
-		let stack_command = duct::cmd::<PathBuf, [String; 0]>(
-			env.ndk.home().join(consts::NDK_STACK),
-			[],
-		)
-		.vars(env.explicit_env())
-		.env(
-			"PATH",
-			util::prepend_to_path(
-				env.ndk.home().display(),
-				env.path().to_string_lossy(),
-			),
-		)
-		.dup_stdio();
+		let stack_command =
+			duct::cmd::<PathBuf, [String; 0]>(env.ndk.home().join(consts::NDK_STACK), [])
+				.vars(env.explicit_env())
+				.env(
+					"PATH",
+					util::prepend_to_path(env.ndk.home().display(), env.path().to_string_lossy()),
+				)
+				.dup_stdio();
 
 		if logcat_command.pipe(stack_command).start()?.wait().is_err() {
 			println!("  -- no stacktrace --");

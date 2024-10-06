@@ -51,11 +51,7 @@ pub struct LSLaunchURLSpec {
 }
 
 impl LSLaunchURLSpec {
-	pub fn new(
-		appURL:CFURLRef,
-		itemURLs:CFArrayRef,
-		launchFlags:LSLaunchFlags,
-	) -> Self {
+	pub fn new(appURL:CFURLRef, itemURLs:CFArrayRef, launchFlags:LSLaunchFlags) -> Self {
 		Self {
 			appURL,
 			asyncRefCon:ptr::null_mut(),

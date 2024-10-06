@@ -58,28 +58,20 @@ const TEXT_EXT:PCWSTR = w!(".txt");
 
 impl Application {
 	pub fn detect_editor() -> Result<Self, DetectEditorError> {
-		let editor_command = Self::detect_associated_command(RUST_EXT)
-			.or_else(|err| {
-				match err {
-					DetectEditorError::NoDefaultEditorSet => {
-						Self::detect_associated_command(TEXT_EXT)
-					},
-					_ => Err(err),
-				}
-			})?;
+		let editor_command = Self::detect_associated_command(RUST_EXT).or_else(|err| {
+			match err {
+				DetectEditorError::NoDefaultEditorSet => Self::detect_associated_command(TEXT_EXT),
+				_ => Err(err),
+			}
+		})?;
 		let argv:Vec<_> = NativeArgv::new(&editor_command).into();
 		Ok(Self { argv })
 	}
 
-	pub fn open_file(
-		&self,
-		path:impl AsRef<Path>,
-	) -> Result<(), OpenFileError> {
+	pub fn open_file(&self, path:impl AsRef<Path>) -> Result<(), OpenFileError> {
 		let args = self.argv[1..]
 			.iter()
-			.map(|arg| {
-				Self::replace_command_arg(arg, &path.as_ref().as_os_str())
-			})
+			.map(|arg| Self::replace_command_arg(arg, &path.as_ref().as_os_str()))
 			.collect::<Vec<_>>();
 		duct::cmd(&self.argv[0], args)
 			.run_and_detach()
@@ -87,9 +79,7 @@ impl Application {
 		Ok(())
 	}
 
-	fn detect_associated_command(
-		ext:PCWSTR,
-	) -> Result<Vec<u16>, DetectEditorError> {
+	fn detect_associated_command(ext:PCWSTR) -> Result<Vec<u16>, DetectEditorError> {
 		let mut len:u32 = 0;
 		if let Err(e) = unsafe {
 			AssocQueryStringW(
@@ -174,18 +164,14 @@ pub fn open_file_with(
 }
 
 const ANDROID_STUDIO_UNINSTALL_KEY_PATH:PCWSTR =
-	w!("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Android \
-	    Studio");
+	w!("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Android Studio");
 const ANDROID_STUDIO_UNINSTALLER_VALUE:PCWSTR = w!("UninstallString");
 #[cfg(target_pointer_width = "64")]
 const STUDIO_EXE_PATH:&str = "bin/studio64.exe";
 #[cfg(target_pointer_width = "32")]
 const STUDIO_EXE_PATH:&str = "bin/studio.exe";
 
-fn open_file_with_android_studio(
-	path:impl AsRef<OsStr>,
-	env:&Env,
-) -> Result<(), OpenFileError> {
+fn open_file_with_android_studio(path:impl AsRef<OsStr>, env:&Env) -> Result<(), OpenFileError> {
 	let mut application_path = which("studio.cmd").unwrap_or_default();
 	if !application_path.is_file() {
 		let mut buffer = [0; MAX_PATH as usize];
@@ -209,8 +195,10 @@ fn open_file_with_android_studio(
 	}
 	duct::cmd(
 		application_path,
-		[dunce::canonicalize(Path::new(path.as_ref()))
-			.expect("Failed to canonicalize file path")],
+		[
+			dunce::canonicalize(Path::new(path.as_ref()))
+				.expect("Failed to canonicalize file path"),
+		],
 	)
 	.vars(env.explicit_env())
 	.run_and_detach()
@@ -233,9 +221,7 @@ impl NativeArgv {
 		let mut len = 0;
 		// In shellap.h, lpcmdline's type is `LPCWSTR`.
 		// So it's not modified actually.
-		let argv = unsafe {
-			CommandLineToArgvW(PCWSTR::from_raw(buffer.as_ptr()), &mut len as _)
-		};
+		let argv = unsafe { CommandLineToArgvW(PCWSTR::from_raw(buffer.as_ptr()), &mut len as _) };
 		Self { argv, len }
 	}
 }
@@ -247,13 +233,10 @@ impl Drop for NativeArgv {
 impl From<NativeArgv> for Vec<OsString> {
 	fn from(native_argv:NativeArgv) -> Self {
 		let mut argv = Vec::with_capacity(native_argv.len as usize);
-		let argv_slice =
-			unsafe { from_raw_parts(native_argv.argv, native_argv.len as _) };
+		let argv_slice = unsafe { from_raw_parts(native_argv.argv, native_argv.len as _) };
 		for pwstr in argv_slice {
 			let len = NullTerminatedWTF16Iterator(pwstr.0).count();
-			let arg = OsString::from_wide(unsafe {
-				std::slice::from_raw_parts(pwstr.0, len)
-			});
+			let arg = OsString::from_wide(unsafe { std::slice::from_raw_parts(pwstr.0, len) });
 			argv.push(arg);
 		}
 		argv

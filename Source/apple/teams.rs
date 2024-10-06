@@ -68,27 +68,18 @@ pub struct Team {
 
 impl Team {
 	pub fn from_x509(cert:X509Certificate) -> Result<Self, FromX509Error> {
-		let common_name = cert
-			.subject_common_name()
-			.ok_or(FromX509Error::CommonNameMissing)?;
+		let common_name = cert.subject_common_name().ok_or(FromX509Error::CommonNameMissing)?;
 
-		let organization = cert
-			.subject_name()
-			.iter_organization()
-			.next()
-			.and_then(|v| v.to_string().ok());
+		let organization =
+			cert.subject_name().iter_organization().next().and_then(|v| v.to_string().ok());
 
 		let name = if let Some(organization) = organization {
-			log::debug!(
-				"found cert {:?} with organization {:?}",
-				common_name,
-				organization
-			);
+			log::debug!("found cert {:?} with organization {:?}", common_name, organization);
 			organization
 		} else {
 			log::debug!(
-				"found cert {:?} but failed to get organization; falling back \
-				 to displaying common name",
+				"found cert {:?} but failed to get organization; falling back to displaying \
+				 common name",
 				common_name
 			);
 			regex!(r"Apple Develop\w+: (.*) \(.+\)")
@@ -96,8 +87,8 @@ impl Team {
 				.map(|caps| caps[1].to_owned())
 				.unwrap_or_else(|| {
 					log::debug!(
-						"regex failed to capture nice part of name in cert \
-						 {:?}; falling back to displaying full name",
+						"regex failed to capture nice part of name in cert {:?}; falling back to \
+						 displaying full name",
 						common_name
 					);
 					common_name.clone()
@@ -117,15 +108,12 @@ impl Team {
 
 pub fn find_development_teams() -> Result<Vec<Team>, Error> {
 	let certs = {
-		let new = get_pem_list_new_name_scheme()
-			.map_err(Error::SecurityCommandFailed)?;
-		let mut certs = X509Certificate::from_pem_multiple(new.stdout)
-			.map_err(Error::X509ParseFailed)?;
-		let old = get_pem_list_old_name_scheme()
-			.map_err(Error::SecurityCommandFailed)?;
+		let new = get_pem_list_new_name_scheme().map_err(Error::SecurityCommandFailed)?;
+		let mut certs =
+			X509Certificate::from_pem_multiple(new.stdout).map_err(Error::X509ParseFailed)?;
+		let old = get_pem_list_old_name_scheme().map_err(Error::SecurityCommandFailed)?;
 		certs.append(
-			&mut X509Certificate::from_pem_multiple(old.stdout)
-				.map_err(Error::X509ParseFailed)?,
+			&mut X509Certificate::from_pem_multiple(old.stdout).map_err(Error::X509ParseFailed)?,
 		);
 		certs
 	};

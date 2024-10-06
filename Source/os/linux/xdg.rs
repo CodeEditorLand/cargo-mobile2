@@ -16,11 +16,7 @@ pub fn query_mime_entry(mime_type:&str) -> Option<PathBuf> {
 		.read()
 		.map(|out_str| {
 			log::debug!("query_mime_entry got output {:?}", out_str);
-			if !out_str.is_empty() {
-				Some(PathBuf::from(out_str.trim()))
-			} else {
-				None
-			}
+			if !out_str.is_empty() { Some(PathBuf::from(out_str.trim())) } else { None }
 		})
 		.ok()?
 }
@@ -31,10 +27,7 @@ pub fn query_mime_entry(mime_type:&str) -> Option<PathBuf> {
 // https://specifications.freedesktop.org/desktop-entry-spec/desktop-entry-spec-latest.html
 // This other one does not give that idea:
 // https://specifications.freedesktop.org/menu-spec/latest/ar01s02.html
-pub fn find_entry_in_dir(
-	dir_path:&Path,
-	target:&Path,
-) -> std::io::Result<Option<PathBuf>> {
+pub fn find_entry_in_dir(dir_path:&Path, target:&Path) -> std::io::Result<Option<PathBuf>> {
 	for entry in dir_path.read_dir()?.flatten() {
 		// If it is a file with that same _filename_ (not full path)
 		if entry.path().is_file() && entry.file_name() == target {
@@ -50,9 +43,7 @@ pub fn find_entry_in_dir(
 	Ok(None)
 }
 
-pub fn parse(entry:impl AsRef<Path>) -> io::Result<FreeDesktopEntry> {
-	parse_entry(entry.as_ref())
-}
+pub fn parse(entry:impl AsRef<Path>) -> io::Result<FreeDesktopEntry> { parse_entry(entry.as_ref()) }
 
 /// Returns the first FreeDesktop XDG .desktop entry, found inside `dir_path`,
 /// when the "Name" atribute of that entry is `app_name`.
@@ -68,16 +59,13 @@ pub fn find_entry_by_app_name(
 		// If it is a file we open it
 		if entry_path.is_file() {
 			if let Ok(parsed) = parse_entry(&entry_path) {
-				if parsed.section("Desktop Entry").attr("Name").map(str::as_ref)
-					== Some(app_name)
-				{
+				if parsed.section("Desktop Entry").attr("Name").map(str::as_ref) == Some(app_name) {
 					return Some((parsed, entry_path));
 				}
 			}
 		} else if entry.path().is_dir() {
 			// Recursively keep searching if it is a directory
-			if let Some(result) = find_entry_by_app_name(&entry_path, app_name)
-			{
+			if let Some(result) = find_entry_by_app_name(&entry_path, app_name) {
 				return Some(result);
 			}
 		}
@@ -166,10 +154,8 @@ fn parse_unquoted_text(
 	let icon_replace = icon.unwrap_or_else(|| "".as_ref());
 	let result = replace_on_pattern(result, icon_replace, byte_regex!("%i"));
 
-	let desktop_entry_replace =
-		desktop_entry_path.unwrap_or_else(|| "".as_ref());
-	let result =
-		replace_on_pattern(result, desktop_entry_replace, byte_regex!("%k"));
+	let desktop_entry_replace = desktop_entry_path.unwrap_or_else(|| "".as_ref());
+	let result = replace_on_pattern(result, desktop_entry_replace, byte_regex!("%k"));
 
 	// The other % flags are deprecated so we clear them, except double
 	// percentage The spec from freedesktop does not even list what they should
@@ -191,11 +177,7 @@ pub fn parse_command(
 	icon:Option<&OsStr>,
 	desktop_entry_path:Option<&Path>,
 ) -> Vec<OsString> {
-	log::debug!(
-		"Parsing XDG Exec command {:?}, with argument {:?}",
-		command,
-		argument
-	);
+	log::debug!("Parsing XDG Exec command {:?}, with argument {:?}", command, argument);
 
 	// let command_name_re = byte_regex!(r#"^[^ \t"]+|"[^ \t]+""#);
 	let mut escape_char = false;
@@ -295,21 +277,13 @@ pub fn parse_command(
 	if !text_atom.is_empty() {
 		// If the value was well formed, quoted strings end on a quote
 		// character, and not on EOF, so this should be unquoted.
-		let text_atom_string = parse_unquoted_text(
-			OsStr::from_bytes(&text_atom),
-			argument,
-			icon,
-			desktop_entry_path,
-		);
+		let text_atom_string =
+			parse_unquoted_text(OsStr::from_bytes(&text_atom), argument, icon, desktop_entry_path);
 		parsed_command_parts.push(text_atom_string);
 		text_atom.clear();
 	}
 
-	log::debug!(
-		"XDG parsed command {:?} to {:?}",
-		command,
-		parsed_command_parts
-	);
+	log::debug!("XDG parsed command {:?} to {:?}", command, parsed_command_parts);
 	parsed_command_parts
 }
 
@@ -347,12 +321,7 @@ mod tests {
 	#[test]
 	fn parse_command_simple() {
 		assert_eq!(
-			parse_command(
-				r#"simple.sh %u"#.as_ref(),
-				"~/myfolder/src".as_ref(),
-				None,
-				None,
-			),
+			parse_command(r#"simple.sh %u"#.as_ref(), "~/myfolder/src".as_ref(), None, None,),
 			["simple.sh", "~/myfolder/src"]
 		);
 	}
@@ -386,24 +355,24 @@ mod tests {
 	#[test]
 	fn parse_command_complex_test() {
 		assert_eq!(
-            parse_command(
-                r#"test_command --flag %u --another "thing \\\\" %i %% %k My\ Work\ Place"#
-                    .as_ref(),
-                "/my/file/folder/file.rs".as_ref(),
-                Some("/foo/bar/something/myicon.xpg".as_ref()),
-                Some("/foo/bar/applications/test.desktop".as_ref()),
-            ),
-            [
-                "test_command",
-                "--flag",
-                "/my/file/folder/file.rs",
-                "--another",
-                r"thing \",
-                "/foo/bar/something/myicon.xpg",
-                "%",
-                "/foo/bar/applications/test.desktop",
-                "My Work Place"
-            ]
-        );
+			parse_command(
+				r#"test_command --flag %u --another "thing \\\\" %i %% %k My\ Work\ Place"#
+					.as_ref(),
+				"/my/file/folder/file.rs".as_ref(),
+				Some("/foo/bar/something/myicon.xpg".as_ref()),
+				Some("/foo/bar/applications/test.desktop".as_ref()),
+			),
+			[
+				"test_command",
+				"--flag",
+				"/my/file/folder/file.rs",
+				"--another",
+				r"thing \",
+				"/foo/bar/something/myicon.xpg",
+				"%",
+				"/foo/bar/applications/test.desktop",
+				"My Work Place"
+			]
+		);
 	}
 }

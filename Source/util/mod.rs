@@ -71,9 +71,7 @@ pub enum HostTargetTripleError {
 impl Reportable for HostTargetTripleError {
 	fn report(&self) -> Report {
 		match self {
-			Self::CommandFailed(err) => {
-				Report::error("Failed to detect host target triple", err)
-			},
+			Self::CommandFailed(err) => Report::error("Failed to detect host target triple", err),
 		}
 	}
 }
@@ -110,9 +108,9 @@ pub enum VersionTripleError {
 macro_rules! parse {
 	($key:expr, $err:ident, $variant:ident, $field:ident) => {
 		|caps:&Captures<'_>, context:&str| {
-			caps[$key].parse::<u32>().map_err(|source| {
-				$err::$variant { $field:context.to_owned(), source }
-			})
+			caps[$key]
+				.parse::<u32>()
+				.map_err(|source| $err::$variant { $field:context.to_owned(), source })
 		}
 	};
 }
@@ -147,10 +145,7 @@ impl FromStr for VersionTriple {
 			1 => {
 				Ok(VersionTriple {
 					major:v.parse().map_err(|source| {
-						VersionTripleError::MajorInvalid {
-							version:v.to_owned(),
-							source,
-						}
+						VersionTripleError::MajorInvalid { version:v.to_owned(), source }
 					})?,
 					minor:0,
 					patch:0,
@@ -160,16 +155,10 @@ impl FromStr for VersionTriple {
 				let mut s = v.split('.');
 				Ok(VersionTriple {
 					major:s.next().unwrap().parse().map_err(|source| {
-						VersionTripleError::MajorInvalid {
-							version:v.to_owned(),
-							source,
-						}
+						VersionTripleError::MajorInvalid { version:v.to_owned(), source }
 					})?,
 					minor:s.next().unwrap().parse().map_err(|source| {
-						VersionTripleError::MinorInvalid {
-							version:v.to_owned(),
-							source,
-						}
+						VersionTripleError::MinorInvalid { version:v.to_owned(), source }
 					})?,
 					patch:0,
 				})
@@ -178,30 +167,19 @@ impl FromStr for VersionTriple {
 				let mut s = v.split('.');
 				Self::from_split(&mut s, v)
 			},
-			_ => {
-				Err(VersionTripleError::VersionStringInvalid {
-					version:v.to_owned(),
-				})
-			},
+			_ => Err(VersionTripleError::VersionStringInvalid { version:v.to_owned() }),
 		}
 	}
 }
 
 impl VersionTriple {
-	pub const fn new(major:u32, minor:u32, patch:u32) -> Self {
-		Self { major, minor, patch }
-	}
+	pub const fn new(major:u32, minor:u32, patch:u32) -> Self { Self { major, minor, patch } }
 
-	pub fn from_caps<'a>(
-		caps:&'a Captures<'a>,
-	) -> Result<(Self, &'a str), VersionTripleError> {
+	pub fn from_caps<'a>(caps:&'a Captures<'a>) -> Result<(Self, &'a str), VersionTripleError> {
 		let version_str = &caps["version"];
-		let parse_major =
-			parse!("major", VersionTripleError, MajorInvalid, version);
-		let parse_minor =
-			parse!("minor", VersionTripleError, MinorInvalid, version);
-		let parse_patch =
-			parse!("patch", VersionTripleError, PatchInvalid, version);
+		let parse_major = parse!("major", VersionTripleError, MajorInvalid, version);
+		let parse_minor = parse!("minor", VersionTripleError, MinorInvalid, version);
+		let parse_patch = parse!("patch", VersionTripleError, PatchInvalid, version);
 		Ok((
 			Self {
 				major:parse_major(caps, version_str)?,
@@ -218,22 +196,13 @@ impl VersionTriple {
 	) -> Result<Self, VersionTripleError> {
 		Ok(VersionTriple {
 			major:split.next().unwrap().parse().map_err(|source| {
-				VersionTripleError::MajorInvalid {
-					version:version.to_owned(),
-					source,
-				}
+				VersionTripleError::MajorInvalid { version:version.to_owned(), source }
 			})?,
 			minor:split.next().unwrap().parse().map_err(|source| {
-				VersionTripleError::MinorInvalid {
-					version:version.to_owned(),
-					source,
-				}
+				VersionTripleError::MinorInvalid { version:version.to_owned(), source }
 			})?,
 			patch:split.next().unwrap().parse().map_err(|source| {
-				VersionTripleError::PatchInvalid {
-					version:version.to_owned(),
-					source,
-				}
+				VersionTripleError::PatchInvalid { version:version.to_owned(), source }
 			})?,
 		})
 	}
@@ -245,10 +214,7 @@ pub enum VersionDoubleError {
 	MajorInvalid { version:String, source:std::num::ParseIntError },
 	#[error("Failed to parse minor version from {version:?}: {source}")]
 	MinorInvalid { version:String, source:std::num::ParseIntError },
-	#[error(
-		"Failed to parse version string {version:?}: string must be in format \
-		 <major>[.minor]"
-	)]
+	#[error("Failed to parse version string {version:?}: string must be in format <major>[.minor]")]
 	VersionStringInvalid { version:String },
 }
 
@@ -281,10 +247,7 @@ impl FromStr for VersionDouble {
 			1 => {
 				Ok(VersionDouble {
 					major:v.parse().map_err(|source| {
-						VersionDoubleError::MajorInvalid {
-							version:v.to_owned(),
-							source,
-						}
+						VersionDoubleError::MajorInvalid { version:v.to_owned(), source }
 					})?,
 					minor:0,
 				})
@@ -293,24 +256,14 @@ impl FromStr for VersionDouble {
 				let mut s = v.split('.');
 				Ok(VersionDouble {
 					major:s.next().unwrap().parse().map_err(|source| {
-						VersionDoubleError::MajorInvalid {
-							version:v.to_owned(),
-							source,
-						}
+						VersionDoubleError::MajorInvalid { version:v.to_owned(), source }
 					})?,
 					minor:s.next().unwrap().parse().map_err(|source| {
-						VersionDoubleError::MinorInvalid {
-							version:v.to_owned(),
-							source,
-						}
+						VersionDoubleError::MinorInvalid { version:v.to_owned(), source }
 					})?,
 				})
 			},
-			_ => {
-				Err(VersionDoubleError::VersionStringInvalid {
-					version:v.to_owned(),
-				})
-			},
+			_ => Err(VersionDoubleError::VersionStringInvalid { version:v.to_owned() }),
 		}
 	}
 }
@@ -341,9 +294,7 @@ pub enum RustVersionError {
 }
 
 impl Reportable for RustVersionError {
-	fn report(&self) -> Report {
-		Report::error("Failed to check Rust version", self)
-	}
+	fn report(&self) -> Report { Report::error("Failed to check Rust version", self) }
 }
 
 #[derive(Debug)]
@@ -410,24 +361,9 @@ impl RustVersion {
 						.name("details")
 						.map(|_details| -> Result<_, RustVersionError> {
 							let date_str = &caps["date"];
-							let parse_year = parse!(
-								"year",
-								RustVersionError,
-								YearInvalid,
-								date
-							);
-							let parse_month = parse!(
-								"month",
-								RustVersionError,
-								MonthInvalid,
-								date
-							);
-							let parse_day = parse!(
-								"day",
-								RustVersionError,
-								DayInvalid,
-								date
-							);
+							let parse_year = parse!("year", RustVersionError, YearInvalid, date);
+							let parse_month = parse!("month", RustVersionError, MonthInvalid, date);
+							let parse_day = parse!("day", RustVersionError, DayInvalid, date);
 							Ok(RustVersionDetails {
 								hash:caps["hash"].to_owned(),
 								date:(
@@ -459,9 +395,8 @@ impl RustVersion {
 					.map(|details| details.date >= FIRST_GOOD_NIGHTLY)
 					.unwrap_or_else(|| {
 						log::warn!(
-							"output of `rustc --version` didn't contain date \
-							 info; continuing with the assumption that the \
-							 release date is at least 2020-10-24"
+							"output of `rustc --version` didn't contain date info; continuing \
+							 with the assumption that the release date is at least 2020-10-24"
 						);
 						true
 					});
@@ -502,11 +437,7 @@ impl Display for PipeError {
 				write!(f, "Failed to pipe output: {}", err)
 			},
 			Self::WaitFailed(err) => {
-				write!(
-					f,
-					"Failed to wait for receiving command to exit: {}",
-					err
-				)
+				write!(f, "Failed to wait for receiving command to exit: {}", err)
 			},
 		}
 	}
@@ -588,21 +519,18 @@ pub enum InstalledCommitMsgError {
 	ReadFailed { path:PathBuf, source:io::Error },
 }
 
-pub fn installed_commit_msg() -> Result<Option<String>, InstalledCommitMsgError>
-{
+pub fn installed_commit_msg() -> Result<Option<String>, InstalledCommitMsgError> {
 	let path = install_dir()?.join("commit");
 	if path.is_file() {
-		std::fs::read_to_string(&path).map(Some).map_err(|source| {
-			InstalledCommitMsgError::ReadFailed { path, source }
-		})
+		std::fs::read_to_string(&path)
+			.map(Some)
+			.map_err(|source| InstalledCommitMsgError::ReadFailed { path, source })
 	} else {
 		Ok(None)
 	}
 }
 
-pub fn format_commit_msg(msg:String) -> String {
-	format!("Contains commits up to {:?}", msg)
-}
+pub fn format_commit_msg(msg:String) -> String { format!("Contains commits up to {:?}", msg) }
 
 pub fn unwrap_either<T>(result:Result<T, T>) -> T {
 	match result {
@@ -630,18 +558,13 @@ where
 	E: StdError,
 	E: From<IE>, {
 	let working_dir = working_dir.as_ref();
-	let current_dir = std::env::current_dir()
-		.map_err(WithWorkingDirError::CurrentDirGetFailed)?;
+	let current_dir = std::env::current_dir().map_err(WithWorkingDirError::CurrentDirGetFailed)?;
 	std::env::set_current_dir(working_dir).map_err(|source| {
-		WithWorkingDirError::CurrentDirSetFailed {
-			path:working_dir.to_owned(),
-			source,
-		}
+		WithWorkingDirError::CurrentDirSetFailed { path:working_dir.to_owned(), source }
 	})?;
 	let result = f().map_err(E::from)?;
-	std::env::set_current_dir(&current_dir).map_err(|source| {
-		WithWorkingDirError::CurrentDirSetFailed { path:current_dir, source }
-	})?;
+	std::env::set_current_dir(&current_dir)
+		.map_err(|source| WithWorkingDirError::CurrentDirSetFailed { path:current_dir, source })?;
 	Ok(result)
 }
 
@@ -686,12 +609,9 @@ pub fn gradlew(
 	let project_dir = dunce::simplified(&project_dir);
 	let gradlew_p = project_dir.join(gradlew);
 	if gradlew_p.exists() {
-		duct::cmd(
-			gradlew_p,
-			[OsStr::new("--project-dir"), project_dir.as_ref()],
-		)
-		.vars(env.explicit_env())
-		.dup_stdio()
+		duct::cmd(gradlew_p, [OsStr::new("--project-dir"), project_dir.as_ref()])
+			.vars(env.explicit_env())
+			.dup_stdio()
 	} else if duct::cmd(gradlew, ["-v"])
 		.dup_stdio()
 		.run()

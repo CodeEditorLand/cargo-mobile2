@@ -40,37 +40,36 @@ pub enum Invalid {
 impl Display for Invalid {
 	fn fmt(&self, f:&mut fmt::Formatter<'_>) -> fmt::Result {
 		match self {
-            Self::Empty => write!(f, "The app name can't be empty.")?,
-            Self::NotAscii { app_name, .. } => write!(
-                f,
-                "\"{}\" isn't valid ASCII.",
-                app_name,
-            )?,
-            Self::StartsWithDigit { app_name, .. } => write!(f, "\"{}\" starts with a digit.", app_name)?,
-            Self::ReservedKeyword { app_name } => write!(
+			Self::Empty => write!(f, "The app name can't be empty.")?,
+			Self::NotAscii { app_name, .. } => write!(f, "\"{}\" isn't valid ASCII.", app_name,)?,
+			Self::StartsWithDigit { app_name, .. } => {
+				write!(f, "\"{}\" starts with a digit.", app_name)?
+			},
+			Self::ReservedKeyword { app_name } => {
+				write!(
                 f,
                 "\"{}\" is a reserved keyword: https://doc.rust-lang.org/reference/keywords.html",
                 app_name,
-            )?,
-            Self::ReservedWindows { app_name } => write!(
-                f,
-                "\"{}\" is a reserved name on Windows.",
-                app_name,
-            )?,
-            Self::ReservedArtifacts { app_name } => write!(
-                f,
-                "\"{}\" is reserved by Cargo.",
-                app_name,
-            )?,
-            Self::NotAlphanumericOrUnderscore { app_name, naughty_chars, .. } => write!(
-                f,
-                "\"{}\" contains {}, but only lowercase letters, numbers, and underscores are allowed.",
-                app_name,
-                util::list_display(
-                    &naughty_chars.iter().map(|c| format!("'{}'", c)).collect::<Vec<_>>()
-                ),
-            )?,
-        }
+            )?
+			},
+			Self::ReservedWindows { app_name } => {
+				write!(f, "\"{}\" is a reserved name on Windows.", app_name,)?
+			},
+			Self::ReservedArtifacts { app_name } => {
+				write!(f, "\"{}\" is reserved by Cargo.", app_name,)?
+			},
+			Self::NotAlphanumericOrUnderscore { app_name, naughty_chars, .. } => {
+				write!(
+					f,
+					"\"{}\" contains {}, but only lowercase letters, numbers, and underscores are \
+					 allowed.",
+					app_name,
+					util::list_display(
+						&naughty_chars.iter().map(|c| format!("'{}'", c)).collect::<Vec<_>>()
+					),
+				)?
+			},
+		}
 		if let Some(suggested) = self.suggested() {
 			write!(f, " \"{}\" would work, if you'd like!", suggested)?;
 		}
@@ -79,10 +78,7 @@ impl Display for Invalid {
 }
 
 impl Invalid {
-	fn from_reservation(
-		reservation:Reservation,
-		app_name:impl Into<String>,
-	) -> Self {
+	fn from_reservation(reservation:Reservation, app_name:impl Into<String>) -> Self {
 		let app_name = app_name.into();
 		match reservation {
 			Reservation::Keywords => Self::ReservedKeyword { app_name },
@@ -95,9 +91,7 @@ impl Invalid {
 		match self {
 			Invalid::NotAscii { suggested, .. } => suggested.as_ref(),
 			Invalid::StartsWithDigit { suggested, .. } => suggested.as_ref(),
-			Invalid::NotAlphanumericOrUnderscore { suggested, .. } => {
-				suggested.as_ref()
-			},
+			Invalid::NotAlphanumericOrUnderscore { suggested, .. } => suggested.as_ref(),
 			_ => None,
 		}
 		.map(|s| s.as_str())
@@ -121,27 +115,21 @@ pub fn transliterate(s:&str) -> Option<String> {
 	validate_non_recursive(transliterated).ok()
 }
 
-fn has_initial_number(s:&str) -> bool {
-	s.chars().next().unwrap().is_ascii_digit()
-}
+fn has_initial_number(s:&str) -> bool { s.chars().next().unwrap().is_ascii_digit() }
 
 fn transliterate_initial_number(s:&str) -> String {
 	let (last_digit_indx, _) =
 		s.char_indices().take_while(|(_, c)| c.is_ascii_digit()).last().expect(
-			"developer error: called `transliterate_initial_number` on an app \
-			 name that didn't actually start with a number",
+			"developer error: called `transliterate_initial_number` on an app name that didn't \
+			 actually start with a number",
 		);
 	let (number, tail) = s.split_at(last_digit_indx + 1);
 	let number:i64 = number.parse().expect(
-		"developer error: despite being digits, the initial digits couldn't \
-		 be parsed as a number",
+		"developer error: despite being digits, the initial digits couldn't be parsed as a number",
 	);
 	let transliterated = english_numbers::convert(
 		number,
-		english_numbers::Formatting {
-			spaces:true,
-			..english_numbers::Formatting::none()
-		},
+		english_numbers::Formatting { spaces:true, ..english_numbers::Formatting::none() },
 	);
 	normalize_case(&format!("{}-{}", transliterated, tail))
 }
@@ -150,17 +138,11 @@ fn char_allowed(c:char) -> bool {
 	c.is_ascii_lowercase() || c.is_ascii_digit() || c == '_' || c == '-'
 }
 
-fn char_naughty(c:char) -> bool {
-	!c.is_ascii_lowercase() && !c.is_ascii_digit() && c != '_'
-}
+fn char_naughty(c:char) -> bool { !c.is_ascii_lowercase() && !c.is_ascii_digit() && c != '_' }
 
-fn strip_naughty_chars(s:&str) -> String {
-	s.chars().filter(|c| char_allowed(*c)).collect()
-}
+fn strip_naughty_chars(s:&str) -> String { s.chars().filter(|c| char_allowed(*c)).collect() }
 
-fn validate_non_recursive<T:Deref<Target = str>>(
-	app_name:T,
-) -> Result<T, Invalid> {
+fn validate_non_recursive<T:Deref<Target = str>>(app_name:T) -> Result<T, Invalid> {
 	// crates.io and Android require alphanumeric ASCII with underscores
 	// (crates.io also allows hyphens), which is stricter than Rust/Cargo's
 	// general requirements, but being conservative here is a super good idea.
@@ -171,10 +153,7 @@ fn validate_non_recursive<T:Deref<Target = str>>(
 	if !app_name.is_empty() {
 		if app_name.is_ascii() {
 			if has_initial_number(app_name.deref()) {
-				Err(Invalid::StartsWithDigit {
-					app_name:app_name.to_owned(),
-					suggested:None,
-				})
+				Err(Invalid::StartsWithDigit { app_name:app_name.to_owned(), suggested:None })
 			} else {
 				match is_reserved(app_name.deref()) {
 					Ok(()) => {
@@ -182,9 +161,7 @@ fn validate_non_recursive<T:Deref<Target = str>>(
 							Ok(app_name)
 						} else {
 							let mut naughty_chars = Vec::new();
-							for c in
-								app_name.chars().filter(|c| char_naughty(*c))
-							{
+							for c in app_name.chars().filter(|c| char_naughty(*c)) {
 								if !naughty_chars.contains(&c) {
 									naughty_chars.push(c);
 								}
@@ -197,18 +174,12 @@ fn validate_non_recursive<T:Deref<Target = str>>(
 						}
 					},
 					Err(reservation) => {
-						Err(Invalid::from_reservation(
-							reservation,
-							app_name.deref(),
-						))
+						Err(Invalid::from_reservation(reservation, app_name.deref()))
 					},
 				}
 			}
 		} else {
-			Err(Invalid::NotAscii {
-				app_name:app_name.to_owned(),
-				suggested:None,
-			})
+			Err(Invalid::NotAscii { app_name:app_name.to_owned(), suggested:None })
 		}
 	} else {
 		Err(Invalid::Empty)
@@ -226,18 +197,11 @@ pub fn validate<T:Deref<Target = str>>(app_name:T) -> Result<T, Invalid> {
 				*suggested = transliterate(app_name.deref());
 			},
 			Invalid::StartsWithDigit { app_name, suggested } => {
-				*suggested =
-					Some(transliterate_initial_number(app_name.deref()));
+				*suggested = Some(transliterate_initial_number(app_name.deref()));
 			},
-			Invalid::NotAlphanumericOrUnderscore {
-				app_name,
-				suggested,
-				..
-			} => {
-				*suggested = validate_non_recursive(strip_naughty_chars(
-					&normalize_case(app_name),
-				))
-				.ok();
+			Invalid::NotAlphanumericOrUnderscore { app_name, suggested, .. } => {
+				*suggested =
+					validate_non_recursive(strip_naughty_chars(&normalize_case(app_name))).ok();
 			},
 			_ => (),
 		}

@@ -15,9 +15,7 @@ pub enum Error {
 }
 
 impl Reportable for Error {
-	fn report(&self) -> Report {
-		Report::error("Failed to initialize base environment", self)
-	}
+	fn report(&self) -> Report { Report::error("Failed to initialize base environment", self) }
 }
 
 #[derive(Clone, Debug)]
@@ -54,9 +52,7 @@ impl Env {
 		self
 	}
 
-	pub fn insert_env_var(&mut self, key:String, value:OsString) {
-		self.vars.insert(key, value);
-	}
+	pub fn insert_env_var(&mut self, key:String, value:OsString) { self.vars.insert(key, value); }
 
 	pub fn explicit_env_vars(mut self, vars:HashMap<String, OsString>) -> Self {
 		self.vars.extend(vars);

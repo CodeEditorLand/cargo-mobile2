@@ -8,12 +8,7 @@ use std::{
 use windows::{
 	core::{self, PCWSTR},
 	Win32::{
-		Foundation::{
-			CloseHandle,
-			ERROR_PRIVILEGE_NOT_HELD,
-			GENERIC_READ,
-			HANDLE,
-		},
+		Foundation::{CloseHandle, ERROR_PRIVILEGE_NOT_HELD, GENERIC_READ, HANDLE},
 		Storage::FileSystem::{
 			CreateFileW,
 			FILE_FLAG_BACKUP_SEMANTICS,
@@ -61,13 +56,11 @@ pub fn force_symlink(
 		.map(|parent| prefix_path(parent, source).is_dir())
 		.unwrap_or(false);
 	if is_symlink(&target) {
-		delete_symlink(&target)
-			.map_err(|err| error(ErrorCause::IOError(err.into())))?;
+		delete_symlink(&target).map_err(|err| error(ErrorCause::IOError(err.into())))?;
 	} else if target.is_file() {
 		remove_file(&target).map_err(|err| error(ErrorCause::IOError(err)))?;
 	} else if target.is_dir() {
-		remove_dir_all(&target)
-			.map_err(|err| error(ErrorCause::IOError(err)))?;
+		remove_dir_all(&target).map_err(|err| error(ErrorCause::IOError(err)))?;
 	}
 	let result = if is_directory {
 		std::os::windows::fs::symlink_dir(source, target)
@@ -91,15 +84,9 @@ pub fn force_symlink_relative(
 ) -> Result<(), Error> {
 	let (abs_source, abs_target) = (abs_source.as_ref(), abs_target.as_ref());
 	let rel_source = crate::util::relativize_path(abs_source, abs_target);
-	if target_style == TargetStyle::Directory
-		&& rel_source.file_name().is_none()
-	{
+	if target_style == TargetStyle::Directory && rel_source.file_name().is_none() {
 		if let Some(file_name) = abs_source.file_name() {
-			force_symlink(
-				rel_source,
-				abs_target.join(file_name),
-				TargetStyle::File,
-			)
+			force_symlink(rel_source, abs_target.join(file_name), TargetStyle::File)
 		} else {
 			Err(Error::new(
 				LinkType::Symbolic,
@@ -116,8 +103,7 @@ pub fn force_symlink_relative(
 }
 
 fn delete_symlink(filename:&Path) -> Result<(), core::Error> {
-	let filename =
-		filename.as_os_str().encode_wide().chain([0]).collect::<Vec<_>>();
+	let filename = filename.as_os_str().encode_wide().chain([0]).collect::<Vec<_>>();
 
 	if let Ok(handle) = unsafe {
 		CreateFileW(
@@ -126,9 +112,7 @@ fn delete_symlink(filename:&Path) -> Result<(), core::Error> {
 			FILE_SHARE_READ,
 			None,
 			OPEN_EXISTING,
-			FILE_FLAG_BACKUP_SEMANTICS
-				| FILE_FLAG_OPEN_REPARSE_POINT
-				| FILE_FLAG_DELETE_ON_CLOSE,
+			FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT | FILE_FLAG_DELETE_ON_CLOSE,
 			HANDLE(std::ptr::null_mut()),
 		)
 	} {

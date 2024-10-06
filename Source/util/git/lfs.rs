@@ -21,9 +21,7 @@ pub enum Error {
 pub fn ensure_present() -> Result<(), Error> {
 	#[cfg(not(target_os = "macos"))]
 	{
-		if !crate::util::command_present("git-lfs")
-			.map_err(Error::CheckFailed)?
-		{
+		if !crate::util::command_present("git-lfs").map_err(Error::CheckFailed)? {
 			return Err(Error::InstallNeeded);
 		}
 	}

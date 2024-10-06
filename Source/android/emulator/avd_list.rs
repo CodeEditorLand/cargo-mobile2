@@ -12,24 +12,17 @@ pub enum Error {
 }
 
 pub fn avd_list(env:&Env) -> Result<BTreeSet<Emulator>, Error> {
-	duct::cmd(
-		PathBuf::from(env.android_home()).join("emulator/emulator"),
-		["-list-avds"],
-	)
-	.vars(env.explicit_env())
-	.stderr_capture()
-	.read()
-	.map(|raw_list| {
-		raw_list
-			.split('\n')
-			.filter_map(|name| {
-				if name.is_empty() {
-					None
-				} else {
-					Some(Emulator::new(name.trim().into()))
-				}
-			})
-			.collect::<BTreeSet<Emulator>>()
-	})
-	.map_err(Error::ListAvdsFailed)
+	duct::cmd(PathBuf::from(env.android_home()).join("emulator/emulator"), ["-list-avds"])
+		.vars(env.explicit_env())
+		.stderr_capture()
+		.read()
+		.map(|raw_list| {
+			raw_list
+				.split('\n')
+				.filter_map(|name| {
+					if name.is_empty() { None } else { Some(Emulator::new(name.trim().into())) }
+				})
+				.collect::<BTreeSet<Emulator>>()
+		})
+		.map_err(Error::ListAvdsFailed)
 }

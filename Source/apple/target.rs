@@ -45,13 +45,10 @@ pub enum VersionCheckError {
 impl Reportable for VersionCheckError {
 	fn report(&self) -> Report {
 		match self {
-			Self::LookupFailed(err) => {
-				Report::error("Failed to lookup Xcode version", err)
-			},
+			Self::LookupFailed(err) => Report::error("Failed to lookup Xcode version", err),
 			Self::TooLow { msg, you_have, you_need } => {
 				Report::action_request(
-					"Installed Xcode version too low; please upgrade and try \
-					 again",
+					"Installed Xcode version too low; please upgrade and try again",
 					format!(
 						"{} Xcode {}.{}; you have Xcode {}.{}.",
 						msg, you_need.0, you_need.1, you_have.0, you_have.1
@@ -72,9 +69,7 @@ impl Reportable for CheckError {
 	fn report(&self) -> Report {
 		match self {
 			Self::VersionCheckFailed(err) => err.report(),
-			Self::CargoCheckFailed(err) => {
-				Report::error("Failed to run `cargo check`", err)
-			},
+			Self::CargoCheckFailed(err) => Report::error("Failed to run `cargo check`", err),
 		}
 	}
 }
@@ -91,9 +86,7 @@ impl Reportable for CompileLibError {
 	fn report(&self) -> Report {
 		match self {
 			Self::VersionCheckFailed(err) => err.report(),
-			Self::CargoBuildFailed(err) => {
-				Report::error("Failed to run `cargo build`", err)
-			},
+			Self::CargoBuildFailed(err) => Report::error("Failed to run `cargo build`", err),
 		}
 	}
 }
@@ -103,9 +96,7 @@ impl Reportable for CompileLibError {
 pub struct BuildError(#[from] std::io::Error);
 
 impl Reportable for BuildError {
-	fn report(&self) -> Report {
-		Report::error("Failed to build via `xcodebuild`", &self.0)
-	}
+	fn report(&self) -> Report { Report::error("Failed to build via `xcodebuild`", &self.0) }
 }
 
 #[derive(Debug, Error)]
@@ -119,12 +110,8 @@ pub enum ArchiveError {
 impl Reportable for ArchiveError {
 	fn report(&self) -> Report {
 		match self {
-			Self::SetVersionFailed(err) => {
-				Report::error("Failed to set app version number", err)
-			},
-			Self::ArchiveFailed(err) => {
-				Report::error("Failed to archive via `xcodebuild`", err)
-			},
+			Self::SetVersionFailed(err) => Report::error("Failed to set app version number", err),
+			Self::ArchiveFailed(err) => Report::error("Failed to archive via `xcodebuild`", err),
 		}
 	}
 }
@@ -165,10 +152,7 @@ impl XcodebuildOptions {
 			cmd.args(["-authenticationKeyID", &credentials.key_id])
 				.arg("-authenticationKeyPath")
 				.arg(&credentials.key_path)
-				.args([
-					"-authenticationKeyIssuerID",
-					&credentials.key_issuer_id,
-				]);
+				.args(["-authenticationKeyIssuerID", &credentials.key_issuer_id]);
 		}
 	}
 }
@@ -186,10 +170,7 @@ impl ExportConfig {
 		self
 	}
 
-	pub fn authentication_credentials(
-		mut self,
-		credentials:AuthCredentials,
-	) -> Self {
+	pub fn authentication_credentials(mut self, credentials:AuthCredentials) -> Self {
 		self.xcodebuild_options.authentication_credentials.replace(credentials);
 		self
 	}
@@ -213,10 +194,7 @@ impl BuildConfig {
 		self
 	}
 
-	pub fn authentication_credentials(
-		mut self,
-		credentials:AuthCredentials,
-	) -> Self {
+	pub fn authentication_credentials(mut self, credentials:AuthCredentials) -> Self {
 		self.xcodebuild_options.authentication_credentials.replace(credentials);
 		self
 	}
@@ -240,10 +218,7 @@ impl ArchiveConfig {
 		self
 	}
 
-	pub fn authentication_credentials(
-		mut self,
-		credentials:AuthCredentials,
-	) -> Self {
+	pub fn authentication_credentials(mut self, credentials:AuthCredentials) -> Self {
 		self.xcodebuild_options.authentication_credentials.replace(credentials);
 		self
 	}
@@ -262,8 +237,7 @@ impl<'a> TargetTrait<'a> for Target<'a> {
 	const DEFAULT_KEY:&'static str = "aarch64";
 
 	fn all() -> &'a BTreeMap<&'a str, Self> {
-		static TARGETS:OnceCell<BTreeMap<&'static str, Target<'static>>> =
-			OnceCell::new();
+		static TARGETS:OnceCell<BTreeMap<&'static str, Target<'static>>> = OnceCell::new();
 		TARGETS.get_or_init(|| {
 			let mut targets = BTreeMap::new();
 			targets.insert(
@@ -288,10 +262,7 @@ impl<'a> TargetTrait<'a> for Target<'a> {
 					// While this doesn't matter if you aren't using Metal,
 					// it should be fine to be opinionated about this given
 					// OpenGL's deprecation.
-					min_xcode_version:Some((
-						(11, 0),
-						"iOS Simulator doesn't support Metal until",
-					)),
+					min_xcode_version:Some(((11, 0), "iOS Simulator doesn't support Metal until")),
 				},
 			);
 			targets.insert(
@@ -308,9 +279,7 @@ impl<'a> TargetTrait<'a> for Target<'a> {
 		})
 	}
 
-	fn name_list() -> Vec<&'a str> {
-		Self::all().keys().copied().collect::<Vec<_>>()
-	}
+	fn name_list() -> Vec<&'a str> { Self::all().keys().copied().collect::<Vec<_>>() }
 
 	fn triple(&'a self) -> &'a str { self.triple }
 
@@ -340,8 +309,7 @@ impl<'a> Target<'a> {
 	fn min_xcode_version_satisfied(&self) -> Result<(), VersionCheckError> {
 		self.min_xcode_version
 			.map(|(min_version, msg)| {
-				let tool_info = DeveloperTools::new()
-					.map_err(VersionCheckError::LookupFailed)?;
+				let tool_info = DeveloperTools::new().map_err(VersionCheckError::LookupFailed)?;
 				let installed_version = tool_info.version;
 				if installed_version >= min_version {
 					Ok(())
@@ -362,8 +330,7 @@ impl<'a> Target<'a> {
 		metadata:&'a Metadata,
 		subcommand:&'a str,
 	) -> Result<CargoCommand<'a>, VersionCheckError> {
-		let metadata =
-			if self.is_macos() { metadata.macos() } else { metadata.ios() };
+		let metadata = if self.is_macos() { metadata.macos() } else { metadata.ios() };
 		self.min_xcode_version_satisfied().map(|()| {
 			CargoCommand::new(subcommand)
 				.with_package(Some(config.app().name()))
@@ -434,8 +401,7 @@ impl<'a> Target<'a> {
 		let scheme = config.scheme();
 		let workspace_path = config.workspace_path();
 		let sdk = self.sdk.to_string();
-		let arch =
-			if self.is_macos() { Some(self.arch.to_string()) } else { None };
+		let arch = if self.is_macos() { Some(self.arch.to_string()) } else { None };
 		let args:Vec<OsString> = vec![];
 		duct::cmd("xcodebuild", args)
 			.full_env(env.explicit_env())
@@ -472,17 +438,9 @@ impl<'a> Target<'a> {
 	) -> Result<(), ArchiveError> {
 		if let Some(build_number) = build_number {
 			util::with_working_dir(config.project_dir(), || {
-				duct::cmd(
-					"xcrun",
-					[
-						"agvtool",
-						"new-version",
-						"-all",
-						&build_number.to_string(),
-					],
-				)
-				.dup_stdio()
-				.run()
+				duct::cmd("xcrun", ["agvtool", "new-version", "-all", &build_number.to_string()])
+					.dup_stdio()
+					.run()
 			})
 			.map_err(ArchiveError::SetVersionFailed)?;
 		}
@@ -492,8 +450,7 @@ impl<'a> Target<'a> {
 		let scheme = config.scheme();
 		let workspace_path = config.workspace_path();
 		let sdk = self.sdk.to_string();
-		let arch =
-			if self.is_macos() { Some(self.arch.to_string()) } else { None };
+		let arch = if self.is_macos() { Some(self.arch.to_string()) } else { None };
 		let args:Vec<OsString> = vec![];
 		duct::cmd("xcodebuild", args)
 			.full_env(env.explicit_env())
@@ -532,8 +489,7 @@ impl<'a> Target<'a> {
 		export_config:ExportConfig,
 	) -> Result<(), ExportError> {
 		// Super fun discrepancy in expectation of `-archivePath` value
-		let archive_path =
-			config.archive_dir().join(format!("{}.xcarchive", config.scheme()));
+		let archive_path = config.archive_dir().join(format!("{}.xcarchive", config.scheme()));
 		let export_dir = config.export_dir();
 		let export_plist_path = config.export_plist_path();
 

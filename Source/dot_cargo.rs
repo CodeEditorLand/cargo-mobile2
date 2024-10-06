@@ -13,10 +13,7 @@ use crate::{
 pub enum LoadError {
 	#[error("Failed to create \".cargo\" directory at {path}: {cause}")]
 	DirCreationFailed { path:PathBuf, cause:io::Error },
-	#[error(
-		"Failed to rename cargo config from old style {from} to new style \
-		 {to}: {cause}"
-	)]
+	#[error("Failed to rename cargo config from old style {from} to new style {to}: {cause}")]
 	MigrateFailed { from:PathBuf, to:PathBuf, cause:io::Error },
 	#[error("Failed to read cargo config from {path}: {cause}")]
 	ReadFailed { path:PathBuf, cause:io::Error },
@@ -25,9 +22,7 @@ pub enum LoadError {
 }
 
 impl Reportable for LoadError {
-	fn report(&self) -> Report {
-		Report::error("Failed to load .cargo file", self)
-	}
+	fn report(&self) -> Report { Report::error("Failed to load .cargo file", self) }
 }
 
 #[derive(Debug, Error)]
@@ -50,9 +45,7 @@ pub struct DotCargoBuild {
 }
 
 impl DotCargoBuild {
-	pub fn new(target:impl Into<String>) -> Self {
-		Self { target:target.into() }
-	}
+	pub fn new(target:impl Into<String>) -> Self { Self { target:target.into() } }
 }
 
 #[derive(Debug, Default, Deserialize, Serialize)]
@@ -63,9 +56,7 @@ pub struct DotCargoTarget {
 }
 
 impl DotCargoTarget {
-	pub fn is_empty(&self) -> bool {
-		self.linker.is_none() && self.rustflags.is_empty()
-	}
+	pub fn is_empty(&self) -> bool { self.linker.is_none() && self.rustflags.is_empty() }
 }
 
 #[derive(Debug, Default, Deserialize, Serialize)]
@@ -77,9 +68,7 @@ pub struct DotCargo {
 }
 
 impl DotCargo {
-	fn create_dir_and_get_path(
-		app:&App,
-	) -> Result<PathBuf, (PathBuf, io::Error)> {
+	fn create_dir_and_get_path(app:&App) -> Result<PathBuf, (PathBuf, io::Error)> {
 		let dir = app.prefix_path(".cargo");
 		fs::create_dir_all(&dir)
 			.map(|()| dir.join("config.toml"))
@@ -87,10 +76,8 @@ impl DotCargo {
 	}
 
 	pub fn load(app:&App) -> Result<Self, LoadError> {
-		let path =
-			Self::create_dir_and_get_path(app).map_err(|(path, cause)| {
-				LoadError::DirCreationFailed { path, cause }
-			})?;
+		let path = Self::create_dir_and_get_path(app)
+			.map_err(|(path, cause)| LoadError::DirCreationFailed { path, cause })?;
 		let old_style = path
 			.parent()
 			.expect("developer error: cargo config path had no parent")
@@ -98,19 +85,13 @@ impl DotCargo {
 		if old_style.is_file() {
 			// Migrate from old-style cargo config
 			std::fs::rename(&old_style, &path).map_err(|cause| {
-				LoadError::MigrateFailed {
-					from:old_style,
-					to:path.clone(),
-					cause,
-				}
+				LoadError::MigrateFailed { from:old_style, to:path.clone(), cause }
 			})?;
 		}
 		if path.is_file() {
-			let toml_str = fs::read_to_string(&path).map_err(|cause| {
-				LoadError::ReadFailed { path:path.clone(), cause }
-			})?;
-			toml::from_str(&toml_str)
-				.map_err(|cause| LoadError::DeserializeFailed { path, cause })
+			let toml_str = fs::read_to_string(&path)
+				.map_err(|cause| LoadError::ReadFailed { path:path.clone(), cause })?;
+			toml::from_str(&toml_str).map_err(|cause| LoadError::DeserializeFailed { path, cause })
 		} else {
 			Ok(Self::default())
 		}
@@ -120,11 +101,7 @@ impl DotCargo {
 		self.build = Some(DotCargoBuild::new(target));
 	}
 
-	pub fn insert_target(
-		&mut self,
-		name:impl Into<String>,
-		target:DotCargoTarget,
-	) {
+	pub fn insert_target(&mut self, name:impl Into<String>, target:DotCargoTarget) {
 		if !target.is_empty() {
 			// merging could be nice, but is also very painful...
 			self.target.insert(name.into(), target);
@@ -132,13 +109,9 @@ impl DotCargo {
 	}
 
 	pub fn write(self, app:&App) -> Result<(), WriteError> {
-		let path =
-			Self::create_dir_and_get_path(app).map_err(|(path, cause)| {
-				WriteError::DirCreationFailed { path, cause }
-			})?;
-		let ser = toml::to_string_pretty(&self)
-			.map_err(WriteError::SerializeFailed)?;
-		fs::write(&path, ser)
-			.map_err(|cause| WriteError::WriteFailed { path, cause })
+		let path = Self::create_dir_and_get_path(app)
+			.map_err(|(path, cause)| WriteError::DirCreationFailed { path, cause })?;
+		let ser = toml::to_string_pretty(&self).map_err(WriteError::SerializeFailed)?;
+		fs::write(&path, ser).map_err(|cause| WriteError::WriteFailed { path, cause })
 	}
 }

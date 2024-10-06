@@ -43,10 +43,7 @@ pub enum Pack {
 }
 
 impl Pack {
-	pub(super) fn lookup(
-		dir:impl AsRef<Path>,
-		name:impl AsRef<str>,
-	) -> Result<Self, LookupError> {
+	pub(super) fn lookup(dir:impl AsRef<Path>, name:impl AsRef<str>) -> Result<Self, LookupError> {
 		fn check_path(name:&str, path:&Path) -> Option<PathBuf> {
 			log::info!("checking for template pack \"{}\" at {:?}", name, path);
 			if path.exists() {
@@ -62,19 +59,12 @@ impl Pack {
 			let name = name.as_ref();
 			let toml_path = dir.join(format!("{}.toml", name));
 			let path = dir.join(name);
-			check_path(name, &toml_path)
-				.or_else(|| check_path(name, &path))
-				.ok_or_else(|| {
-					LookupError::MissingPack {
-						name:name.to_owned(),
-						tried_toml:toml_path,
-						tried:path,
-					}
-				})
+			check_path(name, &toml_path).or_else(|| check_path(name, &path)).ok_or_else(|| {
+				LookupError::MissingPack { name:name.to_owned(), tried_toml:toml_path, tried:path }
+			})
 		}?;
 		if path.extension() == Some("toml".as_ref()) {
-			let pack = FancyPack::parse(path)
-				.map_err(LookupError::FancyPackParseFailed)?;
+			let pack = FancyPack::parse(path).map_err(LookupError::FancyPackParseFailed)?;
 			Ok(Pack::Fancy(pack))
 		} else {
 			Ok(Pack::Simple(path))
@@ -114,8 +104,8 @@ impl Pack {
 			Self::Simple(path) => {
 				if submodule_commit.is_some() {
 					log::warn!(
-						"specified a submodule commit, but the template pack \
-						 {:?} isn't submodule-based",
+						"specified a submodule commit, but the template pack {:?} isn't \
+						 submodule-based",
 						path
 					);
 				}
@@ -141,11 +131,7 @@ impl Display for ListError {
 				write!(f, "Failed to read directory {:?}: {}", dir, cause)
 			},
 			Self::DirEntryReadFailed { dir, cause } => {
-				write!(
-					f,
-					"Failed to read entry in directory {:?}: {}",
-					dir, cause
-				)
+				write!(f, "Failed to read entry in directory {:?}: {}", dir, cause)
 			},
 		}
 	}
@@ -154,12 +140,11 @@ impl Display for ListError {
 pub fn list_app_packs() -> Result<Vec<String>, ListError> {
 	let dir = app_pack_dir().map_err(ListError::NoHomeDir)?;
 	let mut packs = Vec::new();
-	for entry in fs::read_dir(&dir)
-		.map_err(|cause| ListError::DirReadFailed { dir:dir.clone(), cause })?
+	for entry in
+		fs::read_dir(&dir).map_err(|cause| ListError::DirReadFailed { dir:dir.clone(), cause })?
 	{
-		let entry = entry.map_err(|cause| {
-			ListError::DirEntryReadFailed { dir:dir.clone(), cause }
-		})?;
+		let entry =
+			entry.map_err(|cause| ListError::DirEntryReadFailed { dir:dir.clone(), cause })?;
 		if let Some(name) = entry.path().file_stem() {
 			let name = name.to_string_lossy();
 			if !BRAINIUM.contains(&name.as_ref()) {

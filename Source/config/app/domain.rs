@@ -130,14 +130,10 @@ pub fn check_domain_syntax(domain_name:&str) -> Result<(), DomainError> {
 			return Err(DomainError::EmptyLabel);
 		}
 		if RESERVED_KEYWORDS.contains(&label) {
-			return Err(DomainError::ReservedKeyword {
-				keyword:label.to_owned(),
-			});
+			return Err(DomainError::ReservedKeyword { keyword:label.to_owned() });
 		}
 		if label.chars().next().unwrap().is_ascii_digit() {
-			return Err(DomainError::StartsWithDigit {
-				label:label.to_owned(),
-			});
+			return Err(DomainError::StartsWithDigit { label:label.to_owned() });
 		}
 		let mut bad_chars = Vec::new();
 		for c in label.chars() {
@@ -151,9 +147,7 @@ pub fn check_domain_syntax(domain_name:&str) -> Result<(), DomainError> {
 	}
 	for pkg_name in RESERVED_PACKAGE_NAMES.iter() {
 		if domain_name.ends_with(pkg_name) {
-			return Err(DomainError::ReservedPackageName {
-				package_name:pkg_name.to_string(),
-			});
+			return Err(DomainError::ReservedPackageName { package_name:pkg_name.to_string() });
 		}
 	}
 	Ok(())
@@ -173,9 +167,7 @@ mod test {
 		case("java.test"),
 		case("synchronized2.com")
 	)]
-	fn test_check_domain_syntax_correct(input:&str) {
-		check_domain_syntax(input).unwrap();
-	}
+	fn test_check_domain_syntax_correct(input:&str) { check_domain_syntax(input).unwrap(); }
 
 	#[rstest(input, error,
         case("ラスト.テスト", DomainError::NotAsciiAlphanumeric { bad_chars: vec!['ラ', 'ス', 'ト'] }),
@@ -187,9 +179,6 @@ mod test {
         case("com..empty.label", DomainError::EmptyLabel)
     )]
 	fn test_check_domain_syntax_error(input:&str, error:DomainError) {
-		assert_eq!(
-			check_domain_syntax(input).unwrap_err().to_string(),
-			error.to_string()
-		)
+		assert_eq!(check_domain_syntax(input).unwrap_err().to_string(), error.to_string())
 	}
 }

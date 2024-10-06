@@ -18,13 +18,13 @@ pub enum Error {
 	CoreEnvError(#[from] CoreError),
 	// TODO: we should be nice and provide a platform-specific suggestion
 	#[error(
-		"Have you installed the Android SDK? The `ANDROID_HOME` environment \
-		 variable isn't set, and is required: {0}"
+		"Have you installed the Android SDK? The `ANDROID_HOME` environment variable isn't set, \
+		 and is required: {0}"
 	)]
 	AndroidHomeNotSet(#[from] std::env::VarError),
 	#[error(
-		"Have you installed the Android SDK? The `ANDROID_HOME` environment \
-		 variable is set, but doesn't point to an existing directory."
+		"Have you installed the Android SDK? The `ANDROID_HOME` environment variable is set, but \
+		 doesn't point to an existing directory."
 	)]
 	AndroidHomeNotADir,
 	#[error(transparent)]
@@ -36,17 +36,13 @@ impl Reportable for Error {
 		match self {
 			Self::CoreEnvError(err) => err.report(),
 			Self::NdkEnvError(err) => err.report(),
-			_ => {
-				Report::error("Failed to initialize Android environment", self)
-			},
+			_ => Report::error("Failed to initialize Android environment", self),
 		}
 	}
 }
 
 impl Error {
-	pub fn sdk_or_ndk_issue(&self) -> bool {
-		!matches!(self, Self::CoreEnvError(_))
-	}
+	pub fn sdk_or_ndk_issue(&self) -> bool { !matches!(self, Self::CoreEnvError(_)) }
 }
 
 #[derive(Debug, Clone)]
@@ -77,8 +73,8 @@ impl Env {
 					.filter(|sdk_root| sdk_root.is_dir())
 				{
 					log::warn!(
-						"`ANDROID_HOME` isn't set; falling back to \
-						 `ANDROID_SDK_ROOT`, which is deprecated"
+						"`ANDROID_HOME` isn't set; falling back to `ANDROID_SDK_ROOT`, which is \
+						 deprecated"
 					);
 					Ok(sdk_root)
 				} else {
@@ -92,8 +88,8 @@ impl Env {
 					.filter(|sdk_root| sdk_root.is_dir())
 				{
 					log::warn!(
-						"`ANDROID_HOME` isn't set; falling back to \
-						 `ANDROID_SDK_ROOT`, which is deprecated"
+						"`ANDROID_HOME` isn't set; falling back to `ANDROID_SDK_ROOT`, which is \
+						 deprecated"
 					);
 					Ok(sdk_root)
 				} else {
@@ -105,35 +101,23 @@ impl Env {
 
 	pub fn path(&self) -> &OsString { self.base.path() }
 
-	pub fn android_home(&self) -> &str {
-		self.android_home.as_path().to_str().unwrap()
-	}
+	pub fn android_home(&self) -> &str { self.android_home.as_path().to_str().unwrap() }
 
 	pub fn platform_tools_path(&self) -> PathBuf {
 		PathBuf::from(&self.android_home).join("platform-tools")
 	}
 
-	pub fn sdk_version(
-		&self,
-	) -> Result<source_props::Revision, source_props::Error> {
-		SourceProps::from_path(
-			self.platform_tools_path().join("source.properties"),
-		)
-		.map(|props| props.pkg.revision)
+	pub fn sdk_version(&self) -> Result<source_props::Revision, source_props::Error> {
+		SourceProps::from_path(self.platform_tools_path().join("source.properties"))
+			.map(|props| props.pkg.revision)
 	}
 }
 
 impl ExplicitEnv for Env {
 	fn explicit_env(&self) -> HashMap<String, OsString> {
 		let mut envs = self.base.explicit_env();
-		envs.insert(
-			"ANDROID_HOME".into(),
-			self.android_home.as_os_str().to_os_string(),
-		);
-		envs.insert(
-			"NDK_HOME".into(),
-			self.ndk.home().as_os_str().to_os_string(),
-		);
+		envs.insert("ANDROID_HOME".into(), self.android_home.as_os_str().to_os_string());
+		envs.insert("NDK_HOME".into(), self.ndk.home().as_os_str().to_os_string());
 		envs
 	}
 }

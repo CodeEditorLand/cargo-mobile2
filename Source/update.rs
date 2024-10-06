@@ -35,35 +35,19 @@ impl Display for Error {
 		match self {
 			Self::NoHomeDir(err) => write!(f, "{}", err),
 			Self::StatusFailed(err) => {
-				write!(
-					f,
-					"Failed to check status of `cargo-mobile2` repo: {}",
-					err
-				)
+				write!(f, "Failed to check status of `cargo-mobile2` repo: {}", err)
 			},
 			Self::MarkerCreateFailed { path, cause } => {
-				write!(
-					f,
-					"Failed to create marker file at {:?}: {}",
-					path, cause
-				)
+				write!(f, "Failed to create marker file at {:?}: {}", path, cause)
 			},
 			Self::UpdateFailed(err) => {
 				write!(f, "Failed to update `cargo-mobile2` repo: {}", err)
 			},
 			Self::InstallFailed(err) => {
-				write!(
-					f,
-					"Failed to install new version of `cargo-mobile2`: {}",
-					err
-				)
+				write!(f, "Failed to install new version of `cargo-mobile2`: {}", err)
 			},
 			Self::MarkerDeleteFailed { path, cause } => {
-				write!(
-					f,
-					"Failed to delete marker file at {:?}: {}",
-					path, cause
-				)
+				write!(f, "Failed to delete marker file at {:?}: {}", path, cause)
 			},
 		}
 	}
@@ -91,12 +75,9 @@ pub fn update(wrapper:&TextWrapper) -> Result<(), Error> {
 	} else {
 		log::info!("no marker file present at {:?}", marker);
 	}
-	let msg = if marker_exists
-		|| repo.status().map_err(Error::StatusFailed)?.stale()
-	{
-		File::create(&marker).map_err(|cause| {
-			Error::MarkerCreateFailed { path:marker.to_owned(), cause }
-		})?;
+	let msg = if marker_exists || repo.status().map_err(Error::StatusFailed)?.stale() {
+		File::create(&marker)
+			.map_err(|cause| Error::MarkerCreateFailed { path:marker.to_owned(), cause })?;
 		repo.update("https://github.com/tauri-apps/cargo-mobile2", "dev")
 			.map_err(Error::UpdateFailed)?;
 		println!("Installing updated `cargo-mobile2`...");
@@ -111,18 +92,17 @@ pub fn update(wrapper:&TextWrapper) -> Result<(), Error> {
 			})
 			.run()
 			.map_err(Error::InstallFailed)?;
-		fs::remove_file(&marker).map_err(|cause| {
-			Error::MarkerDeleteFailed { path:marker.to_owned(), cause }
-		})?;
+		fs::remove_file(&marker)
+			.map_err(|cause| Error::MarkerDeleteFailed { path:marker.to_owned(), cause })?;
 		log::info!("deleted marker file at {:?}", marker);
 		"installed new version of `cargo-mobile2`"
 	} else {
 		"`cargo-mobile2` is already up-to-date"
 	};
 	let details = util::unwrap_either(
-		repo.latest_subject().map(util::format_commit_msg).map_err(|err| {
-			format!("But we failed to get the latest commit message: {}", err)
-		}),
+		repo.latest_subject()
+			.map(util::format_commit_msg)
+			.map_err(|err| format!("But we failed to get the latest commit message: {}", err)),
 	);
 	Report::victory(msg, details).print(wrapper);
 	Ok(())

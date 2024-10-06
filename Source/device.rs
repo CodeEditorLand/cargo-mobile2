@@ -32,8 +32,7 @@ impl<T:Display> Display for PromptError<T> {
 			PromptErrorCause::NoneDetected => {
 				write!(
 					f,
-					"Failed to prompt for {} device: No connected devices \
-					 detected",
+					"Failed to prompt for {} device: No connected devices detected",
 					self.name
 				)
 			},
@@ -50,10 +49,7 @@ impl<T:Debug + Display> Reportable for PromptError<T> {
 				Report::error("failed to detect devices", err)
 			},
 			PromptErrorCause::PromptFailed(err) => {
-				Report::error(
-					format!("Failed to prompt for {} device", self.name),
-					err,
-				)
+				Report::error(format!("Failed to prompt for {} device", self.name), err)
 			},
 			PromptErrorCause::NoneDetected => {
 				Report::error(
@@ -66,9 +62,7 @@ impl<T:Debug + Display> Reportable for PromptError<T> {
 }
 
 impl<T:Debug + Display> PromptError<T> {
-	pub fn new(name:&'static str, cause:PromptErrorCause<T>) -> Self {
-		Self { name, cause }
-	}
+	pub fn new(name:&'static str, cause:PromptErrorCause<T>) -> Self { Self { name, cause } }
 
 	pub fn detection_failed(name:&'static str, err:T) -> Self {
 		Self::new(name, PromptErrorCause::DetectionFailed(err))
@@ -86,14 +80,9 @@ impl<T:Debug + Display> PromptError<T> {
 #[macro_export]
 macro_rules! define_device_prompt {
 	($func:path, $e:ty, $name:ident) => {
-		fn device_prompt<'a>(
-			env:&'_ Env,
-		) -> Result<Device<'a>, $crate::device::PromptError<$e>> {
+		fn device_prompt<'a>(env:&'_ Env) -> Result<Device<'a>, $crate::device::PromptError<$e>> {
 			let device_list = $func(env).map_err(|cause| {
-				$crate::device::PromptError::detection_failed(
-					stringify!($name),
-					cause,
-				)
+				$crate::device::PromptError::detection_failed(stringify!($name), cause)
 			})?;
 			if device_list.len() > 0 {
 				let index = if device_list.len() > 1 {
@@ -105,10 +94,7 @@ macro_rules! define_device_prompt {
 						"Device",
 					)
 					.map_err(|cause| {
-						$crate::device::PromptError::prompt_failed(
-							stringify!($name),
-							cause,
-						)
+						$crate::device::PromptError::prompt_failed(stringify!($name), cause)
 					})?
 				} else {
 					0
@@ -121,9 +107,7 @@ macro_rules! define_device_prompt {
 				);
 				Ok(device)
 			} else {
-				Err($crate::device::PromptError::none_detected(stringify!(
-					$name
-				)))
+				Err($crate::device::PromptError::none_detected(stringify!($name)))
 			}
 		}
 	};

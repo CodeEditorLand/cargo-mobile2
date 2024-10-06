@@ -40,22 +40,17 @@ impl Display for Revision {
 impl Revision {
 	fn from_str(revision:&str) -> Result<Self, RevisionError> {
 		// Referenced from `$NDK_HOME/build/cmake/android.toolchain.cmake`
-		let caps = regex!(r"(?P<version>(?P<major>[0-9]+)\.(?P<minor>[0-9]+)\.(?P<patch>[0-9]+)(-beta(?P<beta>[0-9]+))?)")
-            .captures(revision)
-            .ok_or_else(|| RevisionError::SearchFailed { revision: revision.to_owned()})?;
+		let caps = regex!(
+			r"(?P<version>(?P<major>[0-9]+)\.(?P<minor>[0-9]+)\.(?P<patch>[0-9]+)(-beta(?P<beta>[0-9]+))?)"
+		)
+		.captures(revision)
+		.ok_or_else(|| RevisionError::SearchFailed { revision:revision.to_owned() })?;
 		let (triple, version_str) = util::VersionTriple::from_caps(&caps)?;
 		Ok(Self {
 			triple,
-			beta:caps
-				.name("beta")
-				.map(|beta| beta.as_str().parse())
-				.transpose()
-				.map_err(|source| {
-					RevisionError::BetaInvalid {
-						revision:version_str.to_owned(),
-						source,
-					}
-				})?,
+			beta:caps.name("beta").map(|beta| beta.as_str().parse()).transpose().map_err(
+				|source| RevisionError::BetaInvalid { revision:version_str.to_owned(), source },
+			)?,
 		})
 	}
 }
@@ -101,15 +96,12 @@ pub struct SourceProps {
 impl SourceProps {
 	pub fn from_path(path:impl AsRef<Path>) -> Result<Self, Error> {
 		let path = path.as_ref();
-		let file = std::fs::File::open(path).map_err(|source| {
-			Error::OpenFailed { path:path.to_owned(), source }
-		})?;
-		let props = java_properties::read(file).map_err(|source| {
-			Error::ParseFailed { path:path.to_owned(), source }
-		})?;
-		let pkg = Pkg::from_props(&props).map_err(|source| {
-			Error::PkgInvalid { path:path.to_owned(), source }
-		})?;
+		let file = std::fs::File::open(path)
+			.map_err(|source| Error::OpenFailed { path:path.to_owned(), source })?;
+		let props = java_properties::read(file)
+			.map_err(|source| Error::ParseFailed { path:path.to_owned(), source })?;
+		let pkg = Pkg::from_props(&props)
+			.map_err(|source| Error::PkgInvalid { path:path.to_owned(), source })?;
 		Ok(Self { pkg })
 	}
 }

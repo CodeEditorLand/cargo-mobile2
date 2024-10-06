@@ -12,9 +12,7 @@ use thiserror::Error;
 #[error("Failed to get user's home directory!")]
 pub struct NoHomeDir;
 
-pub fn home_dir() -> Result<PathBuf, NoHomeDir> {
-	home::home_dir().ok_or(NoHomeDir)
-}
+pub fn home_dir() -> Result<PathBuf, NoHomeDir> { home::home_dir().ok_or(NoHomeDir) }
 
 pub fn expand_home(path:impl AsRef<Path>) -> Result<PathBuf, NoHomeDir> {
 	let home = home_dir()?;
@@ -36,11 +34,8 @@ pub enum ContractHomeError {
 	PathInvalidUtf8,
 }
 
-pub fn contract_home(
-	path:impl AsRef<Path>,
-) -> Result<String, ContractHomeError> {
-	let path =
-		path.as_ref().to_str().ok_or(ContractHomeError::PathInvalidUtf8)?;
+pub fn contract_home(path:impl AsRef<Path>) -> Result<String, ContractHomeError> {
+	let path = path.as_ref().to_str().ok_or(ContractHomeError::PathInvalidUtf8)?;
 	#[cfg(not(windows))]
 	{
 		let home = home_dir()?;
@@ -83,12 +78,11 @@ impl Display for PathNotPrefixed {
 pub fn prefix_path(root:impl AsRef<Path>, path:impl AsRef<Path>) -> PathBuf {
 	let root = root.as_ref();
 	let path = path.as_ref();
-	let is_verbatim =
-		if let Some(Component::Prefix(prefix)) = root.components().next() {
-			prefix.kind().is_verbatim()
-		} else {
-			false
-		};
+	let is_verbatim = if let Some(Component::Prefix(prefix)) = root.components().next() {
+		prefix.kind().is_verbatim()
+	} else {
+		false
+	};
 	if !is_verbatim {
 		return root.join(path);
 	}
@@ -117,9 +111,9 @@ pub fn unprefix_path(
 ) -> Result<PathBuf, PathNotPrefixed> {
 	let root = root.as_ref();
 	let path = path.as_ref();
-	path.strip_prefix(root).map(|path| path.to_owned()).map_err(|_| {
-		PathNotPrefixed { path:path.to_owned(), prefix:root.to_owned() }
-	})
+	path.strip_prefix(root)
+		.map(|path| path.to_owned())
+		.map_err(|_| PathNotPrefixed { path:path.to_owned(), prefix:root.to_owned() })
 }
 
 fn common_root(abs_src:&Path, abs_dest:&Path) -> PathBuf {
@@ -134,12 +128,8 @@ fn common_root(abs_src:&Path, abs_dest:&Path) -> PathBuf {
 }
 
 /// Transforms `abs_path` to be relative to `abs_relative_to`.
-pub fn relativize_path(
-	abs_path:impl AsRef<Path>,
-	abs_relative_to:impl AsRef<Path>,
-) -> PathBuf {
-	let (abs_path, abs_relative_to) =
-		(abs_path.as_ref(), abs_relative_to.as_ref());
+pub fn relativize_path(abs_path:impl AsRef<Path>, abs_relative_to:impl AsRef<Path>) -> PathBuf {
+	let (abs_path, abs_relative_to) = (abs_path.as_ref(), abs_relative_to.as_ref());
 	assert!(abs_path.is_absolute());
 	assert!(abs_relative_to.is_absolute());
 	let (path, relative_to) = {
@@ -153,12 +143,7 @@ pub fn relativize_path(
 		rel_path.push("..");
 	}
 	let rel_path = rel_path.join(path);
-	log::info!(
-		"{:?} relative to {:?} is {:?}",
-		abs_path,
-		abs_relative_to,
-		rel_path
-	);
+	log::info!("{:?} relative to {:?} is {:?}", abs_path, abs_relative_to, rel_path);
 	rel_path
 }
 
@@ -172,42 +157,24 @@ impl Display for NormalizationError {
 	fn fmt(&self, f:&mut fmt::Formatter<'_>) -> fmt::Result {
 		match self {
 			Self::CanonicalizationFailed { path, cause } => {
-				write!(
-					f,
-					"Failed to canonicalize existing path {:?}: {}",
-					path, cause
-				)
+				write!(f, "Failed to canonicalize existing path {:?}: {}", path, cause)
 			},
 			Self::PathAbsFailed { path, cause } => {
-				write!(
-					f,
-					"Failed to normalize non-existent path {:?}: {}",
-					path, cause
-				)
+				write!(f, "Failed to normalize non-existent path {:?}: {}", path, cause)
 			},
 		}
 	}
 }
 
-pub fn normalize_path(
-	path:impl AsRef<Path>,
-) -> Result<PathBuf, NormalizationError> {
+pub fn normalize_path(path:impl AsRef<Path>) -> Result<PathBuf, NormalizationError> {
 	let path = path.as_ref();
 	if path.exists() {
 		path.canonicalize().map_err(|cause| {
-			NormalizationError::CanonicalizationFailed {
-				path:path.to_owned(),
-				cause,
-			}
+			NormalizationError::CanonicalizationFailed { path:path.to_owned(), cause }
 		})
 	} else {
 		PathAbs::new(path)
-			.map_err(|cause| {
-				NormalizationError::PathAbsFailed {
-					path:path.to_owned(),
-					cause,
-				}
-			})
+			.map_err(|cause| NormalizationError::PathAbsFailed { path:path.to_owned(), cause })
 			.map(|abs| abs.as_path().to_owned())
 	}
 }
@@ -224,14 +191,10 @@ pub fn under_root(
 }
 
 pub fn last_modified(first:PathBuf, second:PathBuf) -> PathBuf {
-	let first_modified = first
-		.metadata()
-		.and_then(|m| m.modified())
-		.unwrap_or(SystemTime::UNIX_EPOCH);
-	let second_modified = second
-		.metadata()
-		.and_then(|m| m.modified())
-		.unwrap_or(SystemTime::UNIX_EPOCH);
+	let first_modified =
+		first.metadata().and_then(|m| m.modified()).unwrap_or(SystemTime::UNIX_EPOCH);
+	let second_modified =
+		second.metadata().and_then(|m| m.modified()).unwrap_or(SystemTime::UNIX_EPOCH);
 	match first_modified.cmp(&second_modified) {
 		std::cmp::Ordering::Less => second,
 		std::cmp::Ordering::Equal => first,
@@ -275,11 +238,7 @@ mod test {
             "D:\\Users\\user\\cargo-mobile2-project\\gen\\android\\cargo-mobile2-project\\app\\build\\outputs\\apk\\arm64\\debug\\app-arm64-debug.apk"
         )
     )]
-	fn test_prefix_path(
-		root:impl AsRef<Path>,
-		path:impl AsRef<Path>,
-		result:&str,
-	) {
+	fn test_prefix_path(root:impl AsRef<Path>, path:impl AsRef<Path>, result:&str) {
 		assert_eq!(prefix_path(root, path), PathBuf::from(result));
 	}
 }

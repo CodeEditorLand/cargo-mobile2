@@ -47,11 +47,8 @@ impl Application {
 	pub fn detect_editor() -> Result<Self, DetectEditorError> {
 		unsafe fn inner(uti:CFStringRef) -> Result<CFURL, CFError> {
 			let mut err:CFErrorRef = ptr::null_mut();
-			let out_url = ffi::LSCopyDefaultApplicationURLForContentType(
-				uti,
-				ffi::kLSRolesEditor,
-				&mut err,
-			);
+			let out_url =
+				ffi::LSCopyDefaultApplicationURLForContentType(uti, ffi::kLSRolesEditor, &mut err);
 			if out_url.is_null() {
 				Err(TCFType::wrap_under_create_rule(err))
 			} else {
@@ -59,20 +56,15 @@ impl Application {
 			}
 		}
 		let uti = CFString::from_static_string(RUST_UTI);
-		let url = unsafe { inner(uti.as_concrete_TypeRef()) }
-			.map_err(DetectEditorError::LookupFailed)?;
+		let url =
+			unsafe { inner(uti.as_concrete_TypeRef()) }.map_err(DetectEditorError::LookupFailed)?;
 		Ok(Self { url })
 	}
 
-	pub fn open_file(
-		&self,
-		path:impl AsRef<Path>,
-	) -> Result<(), OpenFileError> {
+	pub fn open_file(&self, path:impl AsRef<Path>) -> Result<(), OpenFileError> {
 		let path = path.as_ref();
-		let item_url =
-			CFURL::from_path(path, path.is_dir()).ok_or_else(|| {
-				OpenFileError::PathToUrlFailed { path:path.to_owned() }
-			})?;
+		let item_url = CFURL::from_path(path, path.is_dir())
+			.ok_or_else(|| OpenFileError::PathToUrlFailed { path:path.to_owned() })?;
 		let items = CFArray::from_CFTypes(&[item_url]);
 		let spec = ffi::LSLaunchURLSpec::new(
 			self.url.as_concrete_TypeRef(),
@@ -80,11 +72,7 @@ impl Application {
 			ffi::kLSLaunchDefaults,
 		);
 		let status = unsafe { ffi::LSOpenFromURLSpec(&spec, ptr::null_mut()) };
-		if status == 0 {
-			Ok(())
-		} else {
-			Err(OpenFileError::LaunchFailed(status))
-		}
+		if status == 0 { Ok(()) } else { Err(OpenFileError::LaunchFailed(status)) }
 	}
 }
 

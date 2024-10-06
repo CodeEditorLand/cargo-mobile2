@@ -37,11 +37,7 @@ impl Display for Error {
 				write!(f, "Failed to get commit log: {}", err)
 			},
 			Self::ParentDirCreationFailed { path, cause } => {
-				write!(
-					f,
-					"Failed to create parent directory {:?}: {}",
-					path, cause
-				)
+				write!(f, "Failed to create parent directory {:?}: {}", path, cause)
 			},
 			Self::CloneFailed(err) => {
 				write!(f, "Failed to clone repo: {}", err)
@@ -74,13 +70,9 @@ pub struct Repo {
 }
 
 impl Repo {
-	pub fn from_path(path:impl Into<PathBuf>) -> Self {
-		Self { path:path.into() }
-	}
+	pub fn from_path(path:impl Into<PathBuf>) -> Self { Self { path:path.into() } }
 
-	pub fn checkouts_dir(
-		checkout:impl AsRef<Path>,
-	) -> Result<Self, util::NoHomeDir> {
+	pub fn checkouts_dir(checkout:impl AsRef<Path>) -> Result<Self, util::NoHomeDir> {
 		util::checkouts_dir().map(|dir| dir.join(checkout)).map(Self::from_path)
 	}
 
@@ -93,9 +85,7 @@ impl Repo {
 			Status::Stale
 		} else {
 			let git = self.git();
-			git.command_parse("fetch origin")
-				.run()
-				.map_err(Error::FetchFailed)?;
+			git.command_parse("fetch origin").run().map_err(Error::FetchFailed)?;
 			let local = git
 				.command_parse("rev-parse HEAD")
 				.stderr_capture()
@@ -108,11 +98,7 @@ impl Repo {
 				.stdout_capture()
 				.run()
 				.map_err(Error::RevParseRemoteFailed)?;
-			if local.stdout != remote.stdout {
-				Status::Stale
-			} else {
-				Status::Fresh
-			}
+			if local.stdout != remote.stdout { Status::Stale } else { Status::Fresh }
 		};
 		Ok(status)
 	}
@@ -133,23 +119,13 @@ impl Repo {
 			.map_err(Error::LogFailed)
 	}
 
-	pub fn update(
-		&self,
-		url:impl AsRef<OsStr>,
-		branch:&str,
-	) -> Result<(), Error> {
+	pub fn update(&self, url:impl AsRef<OsStr>, branch:&str) -> Result<(), Error> {
 		let path = self.path();
 		if !path.is_dir() {
-			let parent = self
-				.path()
-				.parent()
-				.expect("developer error: `Repo` path was at root");
+			let parent = self.path().parent().expect("developer error: `Repo` path was at root");
 			if !parent.is_dir() {
 				std::fs::create_dir_all(parent).map_err(|cause| {
-					Error::ParentDirCreationFailed {
-						path:parent.to_owned(),
-						cause,
-					}
+					Error::ParentDirCreationFailed { path:parent.to_owned(), cause }
 				})?;
 			}
 			Git::new(parent)
@@ -164,16 +140,11 @@ impl Repo {
 			println!(
 				"Updating `{}` repo...",
 				Path::new(
-					self.path().file_name().expect(
-						"developer error: `Repo` path had no file name"
-					)
+					self.path().file_name().expect("developer error: `Repo` path had no file name")
 				)
 				.display()
 			);
-			self.git()
-				.command_parse("fetch --depth 1")
-				.run()
-				.map_err(Error::FetchFailed)?;
+			self.git().command_parse("fetch --depth 1").run().map_err(Error::FetchFailed)?;
 			self.git()
 				.command_parse(format!("reset --hard origin/{branch}"))
 				.run()

@@ -29,9 +29,7 @@ pub trait TargetTrait<'a>: Debug + Sized {
 
 	fn arch(&'a self) -> &'a str;
 
-	fn install(&'a self) -> Result<ExitStatus, std::io::Error> {
-		util::rustup_add(self.triple())
-	}
+	fn install(&'a self) -> Result<ExitStatus, std::io::Error> { util::rustup_add(self.triple()) }
 
 	fn install_all() -> Result<(), std::io::Error>
 	where
@@ -76,24 +74,16 @@ where
 				T::for_name(name.as_ref()).ok_or_else(|| {
 					TargetInvalid {
 						name:name.as_ref().to_owned(),
-						possible:T::all()
-							.keys()
-							.map(|key| key.to_string())
-							.collect(),
+						possible:T::all().keys().map(|key| key.to_string()).collect(),
 					}
 				})
 			})
 			.collect::<Result<_, _>>()?
 	} else {
-		let target = fallback
-			.and_then(|(get_target, arg)| get_target(arg))
-			.unwrap_or_else(|| {
-				log::info!(
-					"falling back on default target ({})",
-					T::DEFAULT_KEY
-				);
-				T::default_ref()
-			});
+		let target = fallback.and_then(|(get_target, arg)| get_target(arg)).unwrap_or_else(|| {
+			log::info!("falling back on default target ({})", T::DEFAULT_KEY);
+			T::default_ref()
+		});
 		vec![target]
 	})
 }

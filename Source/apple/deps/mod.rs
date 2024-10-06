@@ -64,12 +64,10 @@ impl GemCache {
 				.map_err(Error::GemListFailed)?
 				.lines()
 				.flat_map(|string| {
-					regex!(r"(?P<name>.+) \(.+\)").captures(string).map(
-						|caps| {
-							util::get_string_for_group(&caps, "name", string)
-								.map_err(Error::CaptureGroupError)
-						},
-					)
+					regex!(r"(?P<name>.+) \(.+\)").captures(string).map(|caps| {
+						util::get_string_for_group(&caps, "name", string)
+							.map_err(Error::CaptureGroupError)
+					})
 				})
 				.collect::<Result<_, Error>>()?;
 		}
@@ -81,9 +79,7 @@ impl GemCache {
 		Ok(self.contains_unchecked(package))
 	}
 
-	pub fn contains_unchecked(&self, package:&str) -> bool {
-		self.set.contains(package)
-	}
+	pub fn contains_unchecked(&self, package:&str) -> bool { self.set.contains(package) }
 
 	pub fn reinstall(&mut self, package:&'static str) -> Result<(), Error> {
 		let command = if self.contains(package)? {
@@ -114,10 +110,7 @@ fn brew_reinstall(package:&'static str) -> Result<(), Error> {
 	Ok(())
 }
 
-fn update_package(
-	package:&'static str,
-	gem_cache:&mut GemCache,
-) -> Result<(), Error> {
+fn update_package(package:&'static str, gem_cache:&mut GemCache) -> Result<(), Error> {
 	if installed_with_brew(package) {
 		brew_reinstall(package)?;
 	} else {
@@ -145,11 +138,7 @@ impl PackageSpec {
 	}
 
 	pub const fn brew_or_gem(pkg_name:&'static str) -> Self {
-		Self {
-			pkg_name,
-			bin_name:pkg_name,
-			package_source:PackageSource::BrewOrGem,
-		}
+		Self { pkg_name, bin_name:pkg_name, package_source:PackageSource::BrewOrGem }
 	}
 
 	pub const fn with_bin_name(mut self, bin_name:&'static str) -> Self {
@@ -158,25 +147,18 @@ impl PackageSpec {
 	}
 
 	pub fn found(&self) -> Result<bool, Error> {
-		let found = util::command_present(self.bin_name).map_err(|source| {
-			Error::PresenceCheckFailed { package:self.pkg_name, source }
-		})?;
+		let found = util::command_present(self.bin_name)
+			.map_err(|source| Error::PresenceCheckFailed { package:self.pkg_name, source })?;
 		log::info!("package `{}` present: {}", self.pkg_name, found);
 		Ok(found)
 	}
 
-	pub fn install(
-		&self,
-		reinstall_deps:bool,
-		gem_cache:&mut GemCache,
-	) -> Result<bool, Error> {
+	pub fn install(&self, reinstall_deps:bool, gem_cache:&mut GemCache) -> Result<bool, Error> {
 		if !self.found()? || reinstall_deps {
 			println!("Installing `{}`...", self.pkg_name);
 			match self.package_source {
 				PackageSource::Brew => brew_reinstall(self.pkg_name)?,
-				PackageSource::BrewOrGem => {
-					update_package(self.pkg_name, gem_cache)?
-				},
+				PackageSource::BrewOrGem => update_package(self.pkg_name, gem_cache)?,
 			}
 			Ok(true)
 		} else {
@@ -196,8 +178,7 @@ pub fn install_all(
 		package.install(reinstall_deps, &mut gem_cache)?;
 	}
 	if !device_ctl_available() {
-		PackageSpec::brew("ios-deploy")
-			.install(reinstall_deps, &mut gem_cache)?;
+		PackageSpec::brew("ios-deploy").install(reinstall_deps, &mut gem_cache)?;
 	}
 	gem_cache.initialize()?;
 	let outdated = Outdated::load(&mut gem_cache)?;
@@ -205,8 +186,7 @@ pub fn install_all(
 	if !outdated.is_empty() && !non_interactive {
 		let answer = loop {
 			if let Some(answer) = prompt::yes_no(
-				"Would you like these outdated dependencies to be updated for \
-				 you?",
+				"Would you like these outdated dependencies to be updated for you?",
 				Some(true),
 			)? {
 				break answer;
@@ -221,14 +201,12 @@ pub fn install_all(
 	// we definitely don't want to install this on CI...
 	if !skip_dev_tools {
 		let tool_info = DeveloperTools::new()?;
-		let result =
-			xcode_plugin::install(wrapper, reinstall_deps, tool_info.version);
+		let result = xcode_plugin::install(wrapper, reinstall_deps, tool_info.version);
 		if let Err(err) = result {
 			// philosophy: never be so sturbborn as to prevent use / progress
 			Report::action_request(
-				"Failed to install Rust Xcode plugin; this component is \
-				 optional, so init will continue anyway, but Xcode debugging \
-				 won't work until this is resolved!",
+				"Failed to install Rust Xcode plugin; this component is optional, so init will \
+				 continue anyway, but Xcode debugging won't work until this is resolved!",
 				err,
 			)
 			.print(wrapper);

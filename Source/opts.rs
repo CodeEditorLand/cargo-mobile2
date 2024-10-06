@@ -2,9 +2,7 @@ use serde::{Deserialize, Serialize};
 #[cfg(feature = "cli")]
 use structopt::clap::arg_enum;
 
-#[derive(
-	Clone, Copy, Debug, Deserialize, Eq, Ord, PartialEq, PartialOrd, Serialize,
-)]
+#[derive(Clone, Copy, Debug, Deserialize, Eq, Ord, PartialEq, PartialOrd, Serialize)]
 pub enum NoiseLevel {
 	Polite,
 	LoudAndProud,
@@ -38,9 +36,7 @@ pub enum Profile {
 }
 
 impl Profile {
-	pub fn from_flag(flag:bool) -> Self {
-		if flag { Self::Release } else { Self::Debug }
-	}
+	pub fn from_flag(flag:bool) -> Self { if flag { Self::Release } else { Self::Debug } }
 
 	pub fn debug(self) -> bool { matches!(self, Self::Debug) }
 

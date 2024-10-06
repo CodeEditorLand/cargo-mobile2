@@ -53,28 +53,18 @@ impl Formula {
 	}
 
 	fn from_gem_outdated_str(revision:&str) -> Result<Self, RegexError> {
-		let caps = regex!(
-			r"(?P<name>.+) \((?P<installed_version>.+) < (?P<latest_version>.+)\)"
-		)
-		.captures(revision)
-		.ok_or_else(|| {
-			RegexError::SearchFailed { revision:revision.to_owned() }
-		})?;
+		let caps = regex!(r"(?P<name>.+) \((?P<installed_version>.+) < (?P<latest_version>.+)\)")
+			.captures(revision)
+			.ok_or_else(|| RegexError::SearchFailed { revision:revision.to_owned() })?;
 
 		let name = util::get_string_for_group(&caps, "name", revision)
 			.map_err(RegexError::InvalidCaptureGroup)?;
-		let installed_version =
-			util::get_string_for_group(&caps, "installed_version", revision)
-				.map_err(RegexError::InvalidCaptureGroup)?;
-		let current_version =
-			util::get_string_for_group(&caps, "current_version", revision)
-				.map_err(RegexError::InvalidCaptureGroup)?;
+		let installed_version = util::get_string_for_group(&caps, "installed_version", revision)
+			.map_err(RegexError::InvalidCaptureGroup)?;
+		let current_version = util::get_string_for_group(&caps, "current_version", revision)
+			.map_err(RegexError::InvalidCaptureGroup)?;
 
-		Ok(Self {
-			name,
-			installed_versions:vec![installed_version],
-			current_version,
-		})
+		Ok(Self { name, installed_versions:vec![installed_version], current_version })
 	}
 }
 
@@ -87,25 +77,17 @@ impl Outdated {
 	fn outdated_gem_deps<'a>(
 		outdated_strings:&'a str,
 		gem_cache:&'a GemCache,
-	) -> Result<
-		impl Iterator<Item = Result<Formula, OutdatedError>> + 'a,
-		OutdatedError,
-	> {
+	) -> Result<impl Iterator<Item = Result<Formula, OutdatedError>> + 'a, OutdatedError> {
 		Ok(outdated_strings
 			.lines()
-			.filter(move |name| {
-				!name.is_empty() && gem_cache.contains_unchecked(name)
-			})
+			.filter(move |name| !name.is_empty() && gem_cache.contains_unchecked(name))
 			.map(|string| {
-				Formula::from_gem_outdated_str(string)
-					.map_err(OutdatedError::RegexError)
+				Formula::from_gem_outdated_str(string).map_err(OutdatedError::RegexError)
 			}))
 	}
 
-	fn outdated_brew_deps() -> Result<
-		impl Iterator<Item = Result<Formula, OutdatedError>>,
-		OutdatedError,
-	> {
+	fn outdated_brew_deps()
+	-> Result<impl Iterator<Item = Result<Formula, OutdatedError>>, OutdatedError> {
 		#[derive(Deserialize)]
 		struct Raw {
 			formulae:Vec<Formula>,
@@ -116,17 +98,11 @@ impl Outdated {
 			.stdout_capture()
 			.run()
 			.map_err(OutdatedError::CommandFailed)
-			.and_then(|output| {
-				serde_json::from_slice(&output.stdout).map_err(Into::into)
-			})
+			.and_then(|output| serde_json::from_slice(&output.stdout).map_err(Into::into))
 			.map(|Raw { formulae }| {
 				formulae
 					.into_iter()
-					.filter(|formula| {
-						PACKAGES
-							.iter()
-							.any(|spec| formula.name == spec.pkg_name)
-					})
+					.filter(|formula| PACKAGES.iter().any(|spec| formula.name == spec.pkg_name))
 					.map(Ok)
 			})
 	}
@@ -144,7 +120,7 @@ impl Outdated {
 
 	pub fn iter(&self) -> impl Iterator<Item = &'static str> + '_ {
 		self.packages.iter().map(|formula| {
-            PACKAGES
+			PACKAGES
                 .iter()
                 .map(|info| &info.pkg_name)
                 // Do a switcheroo to get static lifetimes, just for the dubious
@@ -152,7 +128,7 @@ impl Outdated {
                 .find(|package| **package == formula.name.as_str())
                 .copied()
                 .expect("developer error: outdated package list should be a subset of `PACKAGES`")
-        })
+		})
 	}
 
 	pub fn is_empty(&self) -> bool { self.packages.is_empty() }

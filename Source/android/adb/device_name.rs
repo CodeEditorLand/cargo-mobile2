@@ -23,13 +23,9 @@ impl Reportable for Error {
 	fn report(&self) -> Report {
 		let msg = "Failed to get device name";
 		match self {
-			Self::EmuFailed(err) => {
-				err.report("Failed to run `adb emu avd name`")
-			},
+			Self::EmuFailed(err) => err.report("Failed to run `adb emu avd name`"),
 			Self::DumpsysFailed(err) => {
-				err.report(
-					"Failed to run `adb shell dumpsys bluetooth_manager`",
-				)
+				err.report("Failed to run `adb shell dumpsys bluetooth_manager`")
 			},
 			Self::NotMatched => Report::error(msg, self),
 			Self::Io(err) => Report::error("IO error", err),

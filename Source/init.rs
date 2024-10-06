@@ -75,26 +75,17 @@ impl Reportable for Error {
 		match self {
 			Self::ConfigLoadOrGenFailed(err) => err.report(),
 			Self::DotFirstInitWriteFailed { path, cause } => {
-				Report::error(
-					format!("Failed to write first init dot file {:?}", path),
-					cause,
-				)
+				Report::error(format!("Failed to write first init dot file {:?}", path), cause)
 			},
 			Self::FilterConfigureFailed(err) => {
 				Report::error("Failed to configure template filter", err)
 			},
 			Self::ProjectInitFailed(err) => err.report(),
 			Self::AssetDirCreationFailed { asset_dir, cause } => {
-				Report::error(
-					format!("Failed to create asset dir {:?}", asset_dir),
-					cause,
-				)
+				Report::error(format!("Failed to create asset dir {:?}", asset_dir), cause)
 			},
 			Self::CodeCommandPresentFailed(err) => {
-				Report::error(
-					"Failed to check for presence of `code` command",
-					err,
-				)
+				Report::error("Failed to check for presence of `code` command", err)
 			},
 			Self::LldbExtensionInstallFailed(err) => {
 				Report::error("Failed to install CodeLLDB extension", err)
@@ -110,10 +101,9 @@ impl Reportable for Error {
 			Self::DotFirstInitDeleteFailed { path, cause } => {
 				Report::action_request(
 					format!(
-						"Failed to delete first init dot file {:?}; the \
-						 project generated successfully, but `cargo mobile \
-						 init` will have unexpected results unless you \
-						 manually delete this file!",
+						"Failed to delete first init dot file {:?}; the project generated \
+						 successfully, but `cargo mobile init` will have unexpected results \
+						 unless you manually delete this file!",
 						path
 					),
 					cause,
@@ -121,8 +111,8 @@ impl Reportable for Error {
 			},
 			Self::OpenInEditorFailed(err) => {
 				Report::error(
-					"Failed to open project in editor (your project generated \
-					 successfully though, so no worries!)",
+					"Failed to open project in editor (your project generated successfully \
+					 though, so no worries!)",
 					err,
 				)
 			},
@@ -143,51 +133,35 @@ pub fn exec(
 ) -> Result<Config, Box<Error>> {
 	let cwd = cwd.as_ref();
 	let (config, config_origin) =
-		Config::load_or_gen(cwd, non_interactive, wrapper)
-			.map_err(Error::ConfigLoadOrGenFailed)?;
-	let dot_first_init_path =
-		config.app().root_dir().join(DOT_FIRST_INIT_FILE_NAME);
+		Config::load_or_gen(cwd, non_interactive, wrapper).map_err(Error::ConfigLoadOrGenFailed)?;
+	let dot_first_init_path = config.app().root_dir().join(DOT_FIRST_INIT_FILE_NAME);
 	let dot_first_init_exists = {
 		let dot_first_init_exists = dot_first_init_path.exists();
 		if config_origin.freshly_minted() && !dot_first_init_exists {
 			// indicate first init is ongoing, so that if we error out and exit
 			// the next init will know to still use `WildWest` filtering
-			log::info!(
-				"creating first init dot file at {:?}",
-				dot_first_init_path
-			);
-			fs::write(&dot_first_init_path, DOT_FIRST_INIT_CONTENTS).map_err(
-				|cause| {
-					Error::DotFirstInitWriteFailed {
-						path:dot_first_init_path.clone(),
-						cause,
-					}
-				},
-			)?;
+			log::info!("creating first init dot file at {:?}", dot_first_init_path);
+			fs::write(&dot_first_init_path, DOT_FIRST_INIT_CONTENTS).map_err(|cause| {
+				Error::DotFirstInitWriteFailed { path:dot_first_init_path.clone(), cause }
+			})?;
 			true
 		} else {
 			dot_first_init_exists
 		}
 	};
 	let bike = config.build_a_bike();
-	let filter =
-		templating::Filter::new(&config, config_origin, dot_first_init_exists)
-			.map_err(Error::FilterConfigureFailed)?;
+	let filter = templating::Filter::new(&config, config_origin, dot_first_init_exists)
+		.map_err(Error::FilterConfigureFailed)?;
 
 	// Generate the base project
-	project::gen(&config, &bike, &filter, submodule_commit)
-		.map_err(Error::ProjectInitFailed)?;
+	project::gen(&config, &bike, &filter, submodule_commit).map_err(Error::ProjectInitFailed)?;
 
 	let asset_dir = config.app().asset_dir();
 	if !asset_dir.is_dir() {
-		fs::create_dir_all(&asset_dir).map_err(|cause| {
-			Error::AssetDirCreationFailed { asset_dir, cause }
-		})?;
+		fs::create_dir_all(&asset_dir)
+			.map_err(|cause| Error::AssetDirCreationFailed { asset_dir, cause })?;
 	}
-	if !skip_dev_tools
-		&& util::command_present("code")
-			.map_err(Error::CodeCommandPresentFailed)?
-	{
+	if !skip_dev_tools && util::command_present("code").map_err(Error::CodeCommandPresentFailed)? {
 		code_command()
 			.before_spawn(move |cmd| {
 				cmd.args(["--install-extension", "vadimcn.vscode-lldb"]);
@@ -199,11 +173,10 @@ pub fn exec(
 			.run()
 			.map_err(Error::LldbExtensionInstallFailed)?;
 	}
-	let mut dot_cargo = dot_cargo::DotCargo::load(config.app())
-		.map_err(Error::DotCargoLoadFailed)?;
+	let mut dot_cargo =
+		dot_cargo::DotCargo::load(config.app()).map_err(Error::DotCargoLoadFailed)?;
 
-	let metadata = Metadata::load(config.app().root_dir())
-		.map_err(Error::MetadataFailed)?;
+	let metadata = Metadata::load(config.app().root_dir()).map_err(Error::MetadataFailed)?;
 
 	// Generate Xcode project
 	#[cfg(target_os = "macos")]
@@ -222,10 +195,7 @@ pub fn exec(
 		)
 		.map_err(Error::AppleInitFailed)?;
 	} else {
-		println!(
-			"Skipping iOS init, since it's marked as unsupported in your \
-			 Cargo.toml metadata"
-		);
+		println!("Skipping iOS init, since it's marked as unsupported in your Cargo.toml metadata");
 	}
 
 	// Generate Android Studio project
@@ -247,9 +217,8 @@ pub fn exec(
 			Err(err) => {
 				if err.sdk_or_ndk_issue() {
 					Report::action_request(
-						"Failed to initialize Android environment; Android \
-						 support won't be usable until you fix the issue \
-						 below and re-run `cargo mobile init`!",
+						"Failed to initialize Android environment; Android support won't be \
+						 usable until you fix the issue below and re-run `cargo mobile init`!",
 						err,
 					)
 					.print(wrapper);
@@ -260,23 +229,17 @@ pub fn exec(
 		}
 	} else {
 		println!(
-			"Skipping Android init, since it's marked as unsupported in your \
-			 Cargo.toml metadata"
+			"Skipping Android init, since it's marked as unsupported in your Cargo.toml metadata"
 		);
 	}
 
 	dot_cargo.write(config.app()).map_err(Error::DotCargoWriteFailed)?;
 	if dot_first_init_exists {
 		log::info!("deleting first init dot file at {:?}", dot_first_init_path);
-		fs::remove_file(&dot_first_init_path).map_err(|cause| {
-			Error::DotFirstInitDeleteFailed { path:dot_first_init_path, cause }
-		})?;
+		fs::remove_file(&dot_first_init_path)
+			.map_err(|cause| Error::DotFirstInitDeleteFailed { path:dot_first_init_path, cause })?;
 	}
-	Report::victory(
-		"Project generated successfully!",
-		"Make cool apps! 🌻 🐕 🎉",
-	)
-	.print(wrapper);
+	Report::victory("Project generated successfully!", "Make cool apps! 🌻 🐕 🎉").print(wrapper);
 	if open_in_editor {
 		util::open_in_editor(cwd).map_err(Error::OpenInEditorFailed)?;
 	}

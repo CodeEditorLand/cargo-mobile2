@@ -26,9 +26,7 @@ impl DeveloperTools {
 		// The `-xml` flag can be used to get this info in plist format, but
 		// there don't seem to be any high quality plist crates, and parsing
 		// XML sucks, we'll be lazy for now.
-		let command =
-			duct::cmd("system_profiler", ["SPDeveloperToolsDataType"])
-				.stderr_capture();
+		let command = duct::cmd("system_profiler", ["SPDeveloperToolsDataType"]).stderr_capture();
 		let command_string = format!("{command:?}");
 		let output = command.read().map_err(util::RunAndSearchError::from)?;
 		if output.is_empty() {
@@ -44,15 +42,13 @@ impl DeveloperTools {
 				})?;
 			let major = {
 				let raw = &caps["major"];
-				raw.parse::<u32>().map_err(|source| {
-					Error::MajorVersionInvalid { major:raw.to_owned(), source }
-				})?
+				raw.parse::<u32>()
+					.map_err(|source| Error::MajorVersionInvalid { major:raw.to_owned(), source })?
 			};
 			let minor = {
 				let raw = &caps["minor"];
-				raw.parse::<u32>().map_err(|source| {
-					Error::MinorVersionInvalid { minor:raw.to_owned(), source }
-				})?
+				raw.parse::<u32>()
+					.map_err(|source| Error::MinorVersionInvalid { minor:raw.to_owned(), source })?
 			};
 			Ok(Self { version:(major, minor) })
 		}

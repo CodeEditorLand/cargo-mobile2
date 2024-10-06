@@ -42,8 +42,7 @@ impl<'a> CargoCommand<'a> {
 
 	pub fn with_manifest_path(mut self, manifest_path:Option<PathBuf>) -> Self {
 		self.manifest_path = manifest_path.map(|manifest_path| {
-			dunce::canonicalize(manifest_path)
-				.expect("Failed to canonicalize manifest path")
+			dunce::canonicalize(manifest_path).expect("Failed to canonicalize manifest path")
 		});
 		self
 	}
@@ -53,10 +52,7 @@ impl<'a> CargoCommand<'a> {
 		self
 	}
 
-	pub fn with_no_default_features(
-		mut self,
-		no_default_features:bool,
-	) -> Self {
+	pub fn with_no_default_features(mut self, no_default_features:bool) -> Self {
 		self.no_default_features = no_default_features;
 		self
 	}
@@ -109,10 +105,7 @@ impl<'a> CargoCommand<'a> {
 		}
 		if let Some(features) = self.features {
 			let features = features.join(" ");
-			args.extend_from_slice(&[
-				"--features".into(),
-				features.as_str().to_string(),
-			]);
+			args.extend_from_slice(&["--features".into(), features.as_str().to_string()]);
 		}
 		if let Some(a) = self.args {
 			args.extend_from_slice(a);

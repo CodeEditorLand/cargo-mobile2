@@ -44,21 +44,13 @@ impl Display for Error {
 				write!(f, "Failed to read plist at {:?}: {}", path, cause)
 			},
 			Self::PluginsDirCreationFailed { path, cause } => {
-				write!(
-					f,
-					"Failed to create Xcode plugins directory {:?}: {}",
-					path, cause
-				)
+				write!(f, "Failed to create Xcode plugins directory {:?}: {}", path, cause)
 			},
 			Self::PluginCopyFailed(err) => {
 				write!(f, "Failed to copy Xcode plugin: {}", err)
 			},
 			Self::SpecDirCreationFailed { path, cause } => {
-				write!(
-					f,
-					"Failed to create Xcode language spec directory {:?}: {}",
-					path, cause
-				)
+				write!(f, "Failed to create Xcode language spec directory {:?}: {}", path, cause)
 			},
 			Self::SpecCopyFailed(err) => {
 				write!(f, "Failed to copy language spec: {}", err)
@@ -115,11 +107,7 @@ pub struct UuidStatus {
 }
 
 impl UuidStatus {
-	pub fn print_action_request(
-		&self,
-		wrapper:&TextWrapper,
-		xcode_version:(u32, u32),
-	) {
+	pub fn print_action_request(&self, wrapper:&TextWrapper, xcode_version:(u32, u32)) {
 		Report::action_request(
             format!(
                 "Your Xcode UUID ({}, version {}.{}) isn't supported by `rust-xcode-plugin`; skipping installation",
@@ -143,23 +131,20 @@ pub struct Context {
 
 impl Context {
 	pub fn new(xcode_version:(u32, u32)) -> Result<Self, Error> {
-		let repo = Repo::checkouts_dir("rust-xcode-plugin")
-			.map_err(Error::NoHomeDir)?;
+		let repo = Repo::checkouts_dir("rust-xcode-plugin").map_err(Error::NoHomeDir)?;
 		let xcode_user_dir = xcode_user_dir()?;
 		let xcode_plugins_dir = xcode_user_dir.join("Plug-ins");
-		let xcode_app_dir = xcode_developer_dir()
-			.map(|path| xcode_app_dir(&path).to_owned())?;
-		let xcode_lang_res_dir = xcode_app_dir.join(
-			"SharedFrameworks/SourceModel.framework/Versions/A/Resources",
-		);
+		let xcode_app_dir = xcode_developer_dir().map(|path| xcode_app_dir(&path).to_owned())?;
+		let xcode_lang_res_dir =
+			xcode_app_dir.join("SharedFrameworks/SourceModel.framework/Versions/A/Resources");
 		let xcode_spec_dir = if xcode_version.0 >= 11 {
 			xcode_lang_res_dir.join("LanguageSpecifications")
 		} else {
 			xcode_app_dir.join("Specifications")
 		};
 		let spec_dst = xcode_spec_dir.join("Rust.xclangspec");
-		let meta_dst = xcode_lang_res_dir
-			.join("LanguageMetadata/Xcode.SourceCodeLanguage.Rust.plist");
+		let meta_dst =
+			xcode_lang_res_dir.join("LanguageMetadata/Xcode.SourceCodeLanguage.Rust.plist");
 		Ok(Self {
 			repo,
 			xcode_version,
@@ -178,18 +163,10 @@ impl Context {
 		let plugin_present = plugin_dst.is_dir();
 		log::info!("plugin present at {:?}: {}", plugin_dst, plugin_present);
 		let lang_spec_present = self.spec_dst.is_file();
-		log::info!(
-			"lang spec present at {:?}: {}",
-			self.spec_dst,
-			lang_spec_present
-		);
+		log::info!("lang spec present at {:?}: {}", self.spec_dst, lang_spec_present);
 		let lang_metadata_present = if self.xcode_version.0 >= 11 {
 			let present = self.meta_dst.is_file();
-			log::info!(
-				"lang metadata present at {:?}: {}",
-				self.meta_dst,
-				present
-			);
+			log::info!("lang metadata present at {:?}: {}", self.meta_dst, present);
 			present
 		} else {
 			true
@@ -211,10 +188,7 @@ impl Context {
 	// Step 2: update checkout
 	fn update_repo(&self) -> Result<(), Error> {
 		self.repo
-			.update(
-				"https://github.com/tauri-apps/rust-xcode-plugin.git",
-				"master",
-			)
+			.update("https://github.com/tauri-apps/rust-xcode-plugin.git", "master")
 			.map_err(Error::UpdateFailed)
 	}
 
@@ -230,13 +204,9 @@ impl Context {
 			.read()
 			.map(|s| s.trim().to_owned())
 			.map_err(Error::UuidLookupFailed)?;
-		let plist_path = self
-			.repo
-			.path()
-			.join("Plug-ins/Rust.ideplugin/Contents/Info.plist");
-		let plist = std::fs::read_to_string(&plist_path).map_err(|cause| {
-			Error::PlistReadFailed { path:plist_path, cause }
-		})?;
+		let plist_path = self.repo.path().join("Plug-ins/Rust.ideplugin/Contents/Info.plist");
+		let plist = std::fs::read_to_string(&plist_path)
+			.map_err(|cause| Error::PlistReadFailed { path:plist_path, cause })?;
 		let supported = plist.contains(&uuid);
 		Ok(UuidStatus { uuid, supported })
 	}
@@ -244,14 +214,9 @@ impl Context {
 	// Step 4: install plugin!
 	fn install(&self, wrapper:&TextWrapper) -> Result<(), Error> {
 		if !self.xcode_plugins_dir.is_dir() {
-			std::fs::create_dir_all(&self.xcode_plugins_dir).map_err(
-				|cause| {
-					Error::PluginsDirCreationFailed {
-						path:self.xcode_plugins_dir.to_owned(),
-						cause,
-					}
-				},
-			)?;
+			std::fs::create_dir_all(&self.xcode_plugins_dir).map_err(|cause| {
+				Error::PluginsDirCreationFailed { path:self.xcode_plugins_dir.to_owned(), cause }
+			})?;
 		}
 		let checkout = self.repo.path();
 		let ide_plugin_path = checkout.join("Plug-ins/Rust.ideplugin");
@@ -278,14 +243,9 @@ impl Context {
 				.map_err(Error::SpecCopyFailed)?;
 		} else {
 			if !self.xcode_spec_dir.is_dir() {
-				std::fs::create_dir_all(&self.xcode_spec_dir).map_err(
-					|cause| {
-						Error::SpecDirCreationFailed {
-							path:self.xcode_spec_dir.to_owned(),
-							cause,
-						}
-					},
-				)?;
+				std::fs::create_dir_all(&self.xcode_spec_dir).map_err(|cause| {
+					Error::SpecDirCreationFailed { path:self.xcode_spec_dir.to_owned(), cause }
+				})?;
 			}
 			duct::cmd("cp", [&spec_src, &self.spec_dst])
 				.dup_stdio()
@@ -306,8 +266,8 @@ impl Context {
 		}
 		Report::victory(
 			"`rust-xcode-plugin` installed successfully!",
-			"Please restart Xcode and click \"Load Bundle\" when an alert \
-			 shows about `Rust.ideplugin`",
+			"Please restart Xcode and click \"Load Bundle\" when an alert shows about \
+			 `Rust.ideplugin`",
 		)
 		.print(wrapper);
 		Ok(())

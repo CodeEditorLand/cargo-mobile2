@@ -69,9 +69,8 @@ pub enum SymlinkLibsError {
 	#[error("Failed to locate \"libc++_shared.so\": {0}")]
 	LibcxxSharedPathFailed(ndk::MissingToolError),
 	#[error(
-		"Library artifact not found at {path}. Make sure your Cargo.toml file \
-		 has a [lib] block with `crate-type = [\"staticlib\", \"cdylib\", \
-		 \"rlib\"]`"
+		"Library artifact not found at {path}. Make sure your Cargo.toml file has a [lib] block \
+		 with `crate-type = [\"staticlib\", \"cdylib\", \"rlib\"]`"
 	)]
 	LibNotFound { path:PathBuf },
 }
@@ -110,8 +109,7 @@ impl<'a> TargetTrait<'a> for Target<'a> {
 	const DEFAULT_KEY:&'static str = "aarch64";
 
 	fn all() -> &'a BTreeMap<&'a str, Self> {
-		static TARGETS:OnceCell<BTreeMap<&'static str, Target<'static>>> =
-			OnceCell::new();
+		static TARGETS:OnceCell<BTreeMap<&'static str, Target<'static>>> = OnceCell::new();
 		TARGETS.get_or_init(|| {
 			let mut targets = BTreeMap::new();
 			targets.insert(
@@ -158,9 +156,7 @@ impl<'a> TargetTrait<'a> for Target<'a> {
 		})
 	}
 
-	fn name_list() -> Vec<&'a str> {
-		Self::all().keys().copied().collect::<Vec<_>>()
-	}
+	fn name_list() -> Vec<&'a str> { Self::all().keys().copied().collect::<Vec<_>>() }
 
 	fn triple(&'a self) -> &'a str { self.triple }
 
@@ -168,13 +164,9 @@ impl<'a> TargetTrait<'a> for Target<'a> {
 }
 
 impl<'a> Target<'a> {
-	fn clang_triple(&self) -> &'a str {
-		self.clang_triple_override.unwrap_or(self.triple)
-	}
+	fn clang_triple(&self) -> &'a str { self.clang_triple_override.unwrap_or(self.triple) }
 
-	fn binutils_triple(&self) -> &'a str {
-		self.binutils_triple_override.unwrap_or(self.triple)
-	}
+	fn binutils_triple(&self) -> &'a str { self.binutils_triple_override.unwrap_or(self.triple) }
 
 	pub fn for_abi(abi:&str) -> Option<&'a Self> {
 		Self::all().values().find(|target| target.abi == abi)
@@ -199,11 +191,7 @@ impl<'a> Target<'a> {
 		// library search paths...
 		let linker = env
 			.ndk
-			.compiler_path(
-				ndk::Compiler::Clang,
-				self.clang_triple(),
-				config.min_sdk_version(),
-			)?
+			.compiler_path(ndk::Compiler::Clang, self.clang_triple(), config.min_sdk_version())?
 			.display()
 			.to_string();
 		Ok(DotCargoTarget {
@@ -243,30 +231,17 @@ impl<'a> Target<'a> {
 			.with_release(profile.release())
 			.build(env)
 			.env("ANDROID_NATIVE_API_LEVEL", min_sdk_version.to_string())
-			.env(
-				"TARGET_AR",
-				env.ndk
-					.ar_path(self.triple)
-					.map_err(CompileLibError::MissingTool)?,
-			)
+			.env("TARGET_AR", env.ndk.ar_path(self.triple).map_err(CompileLibError::MissingTool)?)
 			.env(
 				"TARGET_CC",
 				env.ndk
-					.compiler_path(
-						ndk::Compiler::Clang,
-						self.clang_triple(),
-						min_sdk_version,
-					)
+					.compiler_path(ndk::Compiler::Clang, self.clang_triple(), min_sdk_version)
 					.map_err(CompileLibError::MissingTool)?,
 			)
 			.env(
 				"TARGET_CXX",
 				env.ndk
-					.compiler_path(
-						ndk::Compiler::Clangxx,
-						self.clang_triple(),
-						min_sdk_version,
-					)
+					.compiler_path(ndk::Compiler::Clangxx, self.clang_triple(), min_sdk_version)
 					.map_err(CompileLibError::MissingTool)?,
 			)
 			.before_spawn(move |cmd| {
@@ -303,13 +278,10 @@ impl<'a> Target<'a> {
 		ndk:&ndk::Env,
 		profile:Profile,
 	) -> Result<(), SymlinkLibsError> {
-		let jnilibs = JniLibs::create(config, *self)
-			.map_err(SymlinkLibsError::JniLibsCreationFailed)?;
+		let jnilibs =
+			JniLibs::create(config, *self).map_err(SymlinkLibsError::JniLibsCreationFailed)?;
 
-		let src = config
-			.app()
-			.target_dir(self.triple, profile)
-			.join(config.so_name());
+		let src = config.app().target_dir(self.triple, profile).join(config.so_name());
 
 		if !src.exists() {
 			return Err(SymlinkLibsError::LibNotFound { path:src });
@@ -326,9 +298,7 @@ impl<'a> Target<'a> {
 			let cxx_shared = ndk
 				.libcxx_shared_path(*self)
 				.map_err(SymlinkLibsError::LibcxxSharedPathFailed)?;
-			jnilibs
-				.symlink_lib(&cxx_shared)
-				.map_err(SymlinkLibsError::SymlinkFailed)?;
+			jnilibs.symlink_lib(&cxx_shared).map_err(SymlinkLibsError::SymlinkFailed)?;
 		}
 
 		Ok(())

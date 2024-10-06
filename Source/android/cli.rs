@@ -54,27 +54,19 @@ pub struct Input {
 }
 
 impl Input {
-	pub fn new(flags:GlobalFlags, command:Command) -> Self {
-		Self { flags, command }
-	}
+	pub fn new(flags:GlobalFlags, command:Command) -> Self { Self { flags, command } }
 }
 
 #[derive(Clone, Debug, StructOpt)]
 pub enum Command {
 	#[structopt(name = "open", about = "Open project in Android Studio")]
 	Open,
-	#[structopt(
-		name = "check",
-		about = "Checks if code compiles for target(s)"
-	)]
+	#[structopt(name = "check", about = "Checks if code compiles for target(s)")]
 	Check {
 		#[structopt(name = "targets", default_value = Target::DEFAULT_KEY, possible_values = &Target::name_list())]
 		targets:Vec<String>,
 	},
-	#[structopt(
-		name = "build",
-		about = "Builds dynamic libraries for target(s)"
-	)]
+	#[structopt(name = "build", about = "Builds dynamic libraries for target(s)")]
 	Build {
 		#[structopt(name = "targets", default_value = Target::DEFAULT_KEY, possible_values = &Target::name_list())]
 		targets:Vec<String>,
@@ -89,17 +81,10 @@ pub enum Command {
 		filter:cli::Filter,
 		#[structopt(flatten)]
 		reinstall_deps:cli::ReinstallDeps,
-		#[structopt(
-			short = "a",
-			long = "activity",
-			help = "Specifies which activtiy to launch"
-		)]
+		#[structopt(short = "a", long = "activity", help = "Specifies which activtiy to launch")]
 		activity:Option<String>,
 	},
-	#[structopt(
-		name = "st",
-		about = "Displays a detailed stacktrace for a device"
-	)]
+	#[structopt(name = "st", about = "Displays a detailed stacktrace for a device")]
 	Stacktrace,
 	#[structopt(name = "list", about = "Lists connected devices")]
 	List,
@@ -124,10 +109,7 @@ pub enum ApkSubcommand {
 		targets:Vec<String>,
 		#[structopt(flatten)]
 		profile:cli::Profile,
-		#[structopt(
-			long = "split-per-abi",
-			help = "Whether to split the APKs per ABIs."
-		)]
+		#[structopt(long = "split-per-abi", help = "Whether to split the APKs per ABIs.")]
 		split_per_abi:bool,
 	},
 }
@@ -140,10 +122,7 @@ pub enum AabSubcommand {
 		targets:Vec<String>,
 		#[structopt(flatten)]
 		profile:cli::Profile,
-		#[structopt(
-			long = "split-per-abi",
-			help = "Whether to split the AABs per ABIs."
-		)]
+		#[structopt(long = "split-per-abi", help = "Whether to split the AABs per ABIs.")]
 		split_per_abi:bool,
 	},
 }
@@ -172,31 +151,23 @@ impl Reportable for Error {
 		match self {
 			Self::EnvInitFailed(err) => err.report(),
 			Self::DevicePromptFailed(err) => err.report(),
-			Self::TargetInvalid(err) => {
-				Report::error("Specified target was invalid", err)
-			},
+			Self::TargetInvalid(err) => Report::error("Specified target was invalid", err),
 			Self::ConfigFailed(err) => err.report(),
 			Self::MetadataFailed(err) => err.report(),
 			Self::Unsupported => {
 				Report::error(
-					"Android is marked as unsupported in your Cargo.toml \
-					 metadata",
-					"If your project should support Android, modify your \
-					 Cargo.toml, then run `cargo mobile init` and try again.",
+					"Android is marked as unsupported in your Cargo.toml metadata",
+					"If your project should support Android, modify your Cargo.toml, then run \
+					 `cargo mobile init` and try again.",
 				)
 			},
 			Self::ProjectDirAbsent { project_dir } => {
 				Report::action_request(
 					"Please run `cargo mobile init` and try again!",
-					format!(
-						"Android Studio project directory {:?} doesn't exist.",
-						project_dir
-					),
+					format!("Android Studio project directory {:?} doesn't exist.", project_dir),
 				)
 			},
-			Self::OpenFailed(err) => {
-				Report::error("Failed to open project in Android Studio", err)
-			},
+			Self::OpenFailed(err) => Report::error("Failed to open project in Android Studio", err),
 			Self::CheckFailed(err) => err.report(),
 			Self::BuildFailed(err) => err.report(),
 			Self::RunFailed(err) => err.report(),
@@ -214,11 +185,7 @@ impl Exec for Input {
 	fn global_flags(&self) -> GlobalFlags { self.flags }
 
 	fn exec(self, wrapper:&TextWrapper) -> Result<(), Self::Report> {
-		define_device_prompt!(
-			adb::device_list,
-			adb::device_list::Error,
-			Android
-		);
+		define_device_prompt!(adb::device_list, adb::device_list::Error, Android);
 		fn detect_target_ok<'a>(env:&Env) -> Option<&'a Target<'a>> {
 			device_prompt(env).map(|device| device.target()).ok()
 		}
@@ -228,11 +195,10 @@ impl Exec for Input {
 			wrapper:&TextWrapper,
 			f:impl FnOnce(&Config, &Metadata, &Env) -> Result<(), Error>,
 		) -> Result<(), Error> {
-			let (config, _origin) =
-				OmniConfig::load_or_gen(".", non_interactive, wrapper)
-					.map_err(Error::ConfigFailed)?;
-			let metadata = OmniMetadata::load(config.app().root_dir())
-				.map_err(Error::MetadataFailed)?;
+			let (config, _origin) = OmniConfig::load_or_gen(".", non_interactive, wrapper)
+				.map_err(Error::ConfigFailed)?;
+			let metadata =
+				OmniMetadata::load(config.app().root_dir()).map_err(Error::MetadataFailed)?;
 			let mut env = Env::new().map_err(Error::EnvInitFailed)?;
 
 			if let Some(vars) = metadata.android().env_vars.as_ref() {
@@ -244,10 +210,8 @@ impl Exec for Input {
 								OsString::from(
 									d.1.replace(
 										"<android-project-dir>",
-										&dunce::simplified(
-											&config.android().project_dir(),
-										)
-										.to_string_lossy(),
+										&dunce::simplified(&config.android().project_dir())
+											.to_string_lossy(),
 									),
 								),
 							)
@@ -265,29 +229,18 @@ impl Exec for Input {
 
 		fn ensure_init(config:&Config) -> Result<(), Error> {
 			if !config.project_dir_exists() {
-				Err(Error::ProjectDirAbsent {
-					project_dir:config.project_dir(),
-				})
+				Err(Error::ProjectDirAbsent { project_dir:config.project_dir() })
 			} else {
 				Ok(())
 			}
 		}
 
-		fn open_in_android_studio(
-			config:&Config,
-			env:&Env,
-		) -> Result<(), Error> {
-			os::open_file_with(
-				"Android Studio",
-				config.project_dir(),
-				&env.base,
-			)
-			.map_err(Error::OpenFailed)
+		fn open_in_android_studio(config:&Config, env:&Env) -> Result<(), Error> {
+			os::open_file_with("Android Studio", config.project_dir(), &env.base)
+				.map_err(Error::OpenFailed)
 		}
 
-		fn get_targets_or_all<'a>(
-			targets:Vec<String>,
-		) -> Result<Vec<&'a Target<'a>>, Error> {
+		fn get_targets_or_all<'a>(targets:Vec<String>) -> Result<Vec<&'a Target<'a>>, Error> {
 			if targets.is_empty() {
 				Ok(Target::all().iter().map(|t| t.1).collect())
 			} else {
@@ -297,10 +250,7 @@ impl Exec for Input {
 						.ok_or_else(|| {
 							TargetInvalid {
 								name:t,
-								possible:Target::all()
-									.keys()
-									.map(|key| key.to_string())
-									.collect(),
+								possible:Target::all().keys().map(|key| key.to_string()).collect(),
 							}
 						})
 						.map_err(Error::TargetInvalid)?;
@@ -310,10 +260,7 @@ impl Exec for Input {
 			}
 		}
 
-		let Self {
-			flags: GlobalFlags { noise_level, non_interactive },
-			command,
-		} = self;
+		let Self { flags: GlobalFlags { noise_level, non_interactive }, command } = self;
 		match command {
 			Command::Open => {
 				with_config(non_interactive, wrapper, |config, _, env| {
@@ -322,58 +269,37 @@ impl Exec for Input {
 				})
 			},
 			Command::Check { targets } => {
-				with_config(
-					non_interactive,
-					wrapper,
-					|config, metadata, env| {
-						let force_color = true;
-						call_for_targets_with_fallback(
-							targets.iter(),
-							&detect_target_ok,
-							env,
-							|target:&Target| {
-								target
-									.check(
-										config,
-										metadata,
-										env,
-										noise_level,
-										force_color,
-									)
-									.map_err(Error::CheckFailed)
-							},
-						)
-						.map_err(Error::TargetInvalid)?
-					},
-				)
+				with_config(non_interactive, wrapper, |config, metadata, env| {
+					let force_color = true;
+					call_for_targets_with_fallback(
+						targets.iter(),
+						&detect_target_ok,
+						env,
+						|target:&Target| {
+							target
+								.check(config, metadata, env, noise_level, force_color)
+								.map_err(Error::CheckFailed)
+						},
+					)
+					.map_err(Error::TargetInvalid)?
+				})
 			},
 			Command::Build { targets, profile: cli::Profile { profile } } => {
-				with_config(
-					non_interactive,
-					wrapper,
-					|config, metadata, env| {
-						ensure_init(config)?;
-						let force_color = true;
-						call_for_targets_with_fallback(
-							targets.iter(),
-							&detect_target_ok,
-							env,
-							|target:&Target| {
-								target
-									.build(
-										config,
-										metadata,
-										env,
-										noise_level,
-										force_color,
-										profile,
-									)
-									.map_err(Error::BuildFailed)
-							},
-						)
-						.map_err(Error::TargetInvalid)?
-					},
-				)
+				with_config(non_interactive, wrapper, |config, metadata, env| {
+					ensure_init(config)?;
+					let force_color = true;
+					call_for_targets_with_fallback(
+						targets.iter(),
+						&detect_target_ok,
+						env,
+						|target:&Target| {
+							target
+								.build(config, metadata, env, noise_level, force_color, profile)
+								.map_err(Error::BuildFailed)
+						},
+					)
+					.map_err(Error::TargetInvalid)?
+				})
 			},
 			Command::Run {
 				profile: cli::Profile { profile },
@@ -381,35 +307,26 @@ impl Exec for Input {
 				reinstall_deps: cli::ReinstallDeps { reinstall_deps },
 				activity,
 			} => {
-				with_config(
-					non_interactive,
-					wrapper,
-					|config, metadata, env| {
-						let build_app_bundle = metadata.asset_packs().is_some();
-						ensure_init(config)?;
-						device_prompt(env)
-							.map_err(Error::DevicePromptFailed)?
-							.run(
-								config,
-								env,
-								noise_level,
-								profile,
-								filter,
-								build_app_bundle,
-								reinstall_deps,
-								activity.unwrap_or_else(|| {
-									metadata
-										.app_activity_name()
-										.unwrap_or(DEFAULT_ACTIVITY)
-										.to_string()
-								}),
-							)
-							.and_then(|h| {
-								h.wait().map(|_| ()).map_err(Into::into)
-							})
-							.map_err(Error::RunFailed)
-					},
-				)
+				with_config(non_interactive, wrapper, |config, metadata, env| {
+					let build_app_bundle = metadata.asset_packs().is_some();
+					ensure_init(config)?;
+					device_prompt(env)
+						.map_err(Error::DevicePromptFailed)?
+						.run(
+							config,
+							env,
+							noise_level,
+							profile,
+							filter,
+							build_app_bundle,
+							reinstall_deps,
+							activity.unwrap_or_else(|| {
+								metadata.app_activity_name().unwrap_or(DEFAULT_ACTIVITY).to_string()
+							}),
+						)
+						.and_then(|h| h.wait().map(|_| ()).map_err(Into::into))
+						.map_err(Error::RunFailed)
+				})
 			},
 			Command::Stacktrace => {
 				with_config(non_interactive, wrapper, |config, _, env| {
@@ -422,14 +339,9 @@ impl Exec for Input {
 			},
 			Command::List => {
 				with_config(non_interactive, wrapper, |_, _, env| {
-					adb::device_list(env).map_err(Error::ListFailed).map(
-						|device_list| {
-							prompt::list_display_only(
-								device_list.iter(),
-								device_list.len(),
-							);
-						},
-					)
+					adb::device_list(env).map_err(Error::ListFailed).map(|device_list| {
+						prompt::list_display_only(device_list.iter(), device_list.len());
+					})
 				})
 			},
 			Command::Apk { cmd } => {
@@ -439,23 +351,19 @@ impl Exec for Input {
 						profile: cli::Profile { profile },
 						split_per_abi,
 					} => {
-						with_config(
-							non_interactive,
-							wrapper,
-							|config, _, env| {
-								ensure_init(config)?;
+						with_config(non_interactive, wrapper, |config, _, env| {
+							ensure_init(config)?;
 
-								apk::cli::build(
-									config,
-									env,
-									noise_level,
-									profile,
-									get_targets_or_all(targets)?,
-									split_per_abi,
-								)
-								.map_err(Error::ApkError)
-							},
-						)
+							apk::cli::build(
+								config,
+								env,
+								noise_level,
+								profile,
+								get_targets_or_all(targets)?,
+								split_per_abi,
+							)
+							.map_err(Error::ApkError)
+						})
 					},
 				}
 			},
@@ -466,22 +374,18 @@ impl Exec for Input {
 						profile: cli::Profile { profile },
 						split_per_abi,
 					} => {
-						with_config(
-							non_interactive,
-							wrapper,
-							|config, _, env| {
-								ensure_init(config)?;
-								aab::cli::build(
-									config,
-									env,
-									noise_level,
-									profile,
-									get_targets_or_all(targets)?,
-									split_per_abi,
-								)
-								.map_err(Error::AabError)
-							},
-						)
+						with_config(non_interactive, wrapper, |config, _, env| {
+							ensure_init(config)?;
+							aab::cli::build(
+								config,
+								env,
+								noise_level,
+								profile,
+								get_targets_or_all(targets)?,
+								split_per_abi,
+							)
+							.map_err(Error::AabError)
+						})
 					},
 				}
 			},

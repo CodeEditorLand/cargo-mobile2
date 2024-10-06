@@ -25,8 +25,7 @@ use crate::{
 };
 
 static DEFAULT_PROJECT_DIR:&str = "gen/apple";
-const DEFAULT_BUNDLE_VERSION:VersionNumber =
-	VersionNumber::new(VersionTriple::new(1, 0, 0), None);
+const DEFAULT_BUNDLE_VERSION:VersionNumber = VersionNumber::new(VersionTriple::new(1, 0, 0), None);
 const DEFAULT_IOS_VERSION:VersionDouble = VersionDouble::new(13, 0);
 const DEFAULT_MACOS_VERSION:VersionDouble = VersionDouble::new(11, 0);
 
@@ -88,43 +87,27 @@ impl Platform {
 
 	pub fn features(&self) -> Option<&[String]> { self.features.as_deref() }
 
-	pub fn libraries(&self) -> &[String] {
-		self.libraries.as_deref().unwrap_or(&[])
-	}
+	pub fn libraries(&self) -> &[String] { self.libraries.as_deref().unwrap_or(&[]) }
 
-	pub fn frameworks(&self) -> &[String] {
-		self.frameworks.as_deref().unwrap_or(&[])
-	}
+	pub fn frameworks(&self) -> &[String] { self.frameworks.as_deref().unwrap_or(&[]) }
 
-	pub fn valid_archs(&self) -> Option<&[String]> {
-		self.valid_archs.as_deref()
-	}
+	pub fn valid_archs(&self) -> Option<&[String]> { self.valid_archs.as_deref() }
 
 	pub fn vendor_frameworks(&self) -> &[String] {
 		self.vendor_frameworks.as_deref().unwrap_or(&[])
 	}
 
-	pub fn vendor_sdks(&self) -> &[String] {
-		self.vendor_sdks.as_deref().unwrap_or(&[])
-	}
+	pub fn vendor_sdks(&self) -> &[String] { self.vendor_sdks.as_deref().unwrap_or(&[]) }
 
-	pub fn asset_catalogs(&self) -> Option<&[PathBuf]> {
-		self.asset_catalogs.as_deref()
-	}
+	pub fn asset_catalogs(&self) -> Option<&[PathBuf]> { self.asset_catalogs.as_deref() }
 
 	pub fn pods(&self) -> Option<&[Pod]> { self.pods.as_deref() }
 
-	pub fn pod_options(&self) -> Option<&[String]> {
-		self.pod_options.as_deref()
-	}
+	pub fn pod_options(&self) -> Option<&[String]> { self.pod_options.as_deref() }
 
-	pub fn additional_targets(&self) -> Option<&[PathBuf]> {
-		self.additional_targets.as_deref()
-	}
+	pub fn additional_targets(&self) -> Option<&[PathBuf]> { self.additional_targets.as_deref() }
 
-	pub fn pre_build_scripts(&self) -> Option<&[BuildScript]> {
-		self.pre_build_scripts.as_deref()
-	}
+	pub fn pre_build_scripts(&self) -> Option<&[BuildScript]> { self.pre_build_scripts.as_deref() }
 
 	pub fn post_compile_scripts(&self) -> Option<&[BuildScript]> {
 		self.post_compile_scripts.as_deref()
@@ -153,11 +136,7 @@ pub struct Metadata {
 
 impl Default for Metadata {
 	fn default() -> Self {
-		Self {
-			supported:true,
-			ios:Default::default(),
-			macos:Default::default(),
-		}
+		Self { supported:true, ios:Default::default(), macos:Default::default() }
 	}
 }
 
@@ -179,17 +158,12 @@ impl Display for ProjectDirInvalid {
 	fn fmt(&self, f:&mut fmt::Formatter<'_>) -> fmt::Result {
 		match self {
 			Self::NormalizationFailed { project_dir, cause } => {
-				write!(
-					f,
-					"Xcode project dir {:?} couldn't be normalized: {}",
-					project_dir, cause
-				)
+				write!(f, "Xcode project dir {:?} couldn't be normalized: {}", project_dir, cause)
 			},
 			Self::OutsideOfAppRoot { project_dir, root_dir } => {
 				write!(
 					f,
-					"Xcode project dir {:?} is outside of the app root dir \
-					 {:?}",
+					"Xcode project dir {:?} is outside of the app root dir {:?}",
 					project_dir, root_dir,
 				)
 			},
@@ -211,15 +185,13 @@ pub enum Error {
 	IosVersionInvalid(VersionDoubleError),
 	#[error("`apple.macos-version` invalid: {0}")]
 	MacOsVersionInvalid(VersionDoubleError),
-	#[error(
-		"`apple.app-version` short and long version number don't match: {0}"
-	)]
+	#[error("`apple.app-version` short and long version number don't match: {0}")]
 	IosVersionNumberInvalid(VersionNumberError),
 	#[error("`apple.app-version` short and long version number don't match")]
 	IosVersionNumberMismatch,
 	#[error(
-		"`apple.app-version` `bundle-version-short` cannot be specified \
-		 without also specifying `bundle-version`"
+		"`apple.app-version` `bundle-version-short` cannot be specified without also specifying \
+		 `bundle-version`"
 	)]
 	InvalidVersionConfiguration,
 	#[error("Identifier cannot contain underscores on iOS")]
@@ -290,12 +262,7 @@ impl Config {
 
 		let raw = raw.ok_or_else(|| Error::DevelopmentTeamMissing)?;
 
-		if raw
-			.development_team
-			.as_ref()
-			.map(|t| t.is_empty())
-			.unwrap_or_default()
-		{
+		if raw.development_team.as_ref().map(|t| t.is_empty()).unwrap_or_default() {
 			return Err(Error::DevelopmentTeamEmpty);
 		}
 
@@ -304,46 +271,36 @@ impl Config {
 			.map(|project_dir| {
 				if project_dir == DEFAULT_PROJECT_DIR {
 					log::warn!(
-						"`{}.project-dir` is set to the default value; you \
-						 can remove it from your config",
+						"`{}.project-dir` is set to the default value; you can remove it from \
+						 your config",
 						super::NAME
 					);
 				}
-				if util::under_root(&project_dir, app.root_dir()).map_err(
-					|cause| {
-						Error::ProjectDirInvalid(
-							ProjectDirInvalid::NormalizationFailed {
-								project_dir:project_dir.clone(),
-								cause,
-							},
-						)
-					},
-				)? {
+				if util::under_root(&project_dir, app.root_dir()).map_err(|cause| {
+					Error::ProjectDirInvalid(ProjectDirInvalid::NormalizationFailed {
+						project_dir:project_dir.clone(),
+						cause,
+					})
+				})? {
 					Ok(project_dir)
 				} else {
-					Err(Error::ProjectDirInvalid(
-						ProjectDirInvalid::OutsideOfAppRoot {
-							project_dir,
-							root_dir:app.root_dir().to_owned(),
-						},
-					))
+					Err(Error::ProjectDirInvalid(ProjectDirInvalid::OutsideOfAppRoot {
+						project_dir,
+						root_dir:app.root_dir().to_owned(),
+					}))
 				}
 			})
 			.unwrap_or_else(|| Ok(DEFAULT_PROJECT_DIR.to_owned()))?;
 
-		let (bundle_version, bundle_version_short) = VersionInfo::from_raw(
-			&raw.bundle_version,
-			&raw.bundle_version_short,
-		)
-		.map(|info| {
-			let bundle_version =
-				info.version_number.clone().unwrap_or(DEFAULT_BUNDLE_VERSION);
+		let (bundle_version, bundle_version_short) =
+			VersionInfo::from_raw(&raw.bundle_version, &raw.bundle_version_short).map(|info| {
+				let bundle_version = info.version_number.clone().unwrap_or(DEFAULT_BUNDLE_VERSION);
 
-			let bundle_version_short =
-				info.short_version_number.unwrap_or(bundle_version.triple);
+				let bundle_version_short =
+					info.short_version_number.unwrap_or(bundle_version.triple);
 
-			(bundle_version, bundle_version_short)
-		})?;
+				(bundle_version, bundle_version_short)
+			})?;
 
 		let export_options_plist_path = raw
 			.export_options_plist_path
@@ -381,23 +338,17 @@ impl Config {
 
 	pub fn app(&self) -> &App { &self.app }
 
-	pub fn project_dir(&self) -> PathBuf {
-		self.app.prefix_path(&self.project_dir)
-	}
+	pub fn project_dir(&self) -> PathBuf { self.app.prefix_path(&self.project_dir) }
 
 	pub fn project_dir_exists(&self) -> bool { self.project_dir().is_dir() }
 
 	pub fn workspace_path(&self) -> PathBuf {
-		let root_workspace = self
-			.project_dir()
-			.join(format!("{}.xcworkspace/", self.app.name()));
+		let root_workspace = self.project_dir().join(format!("{}.xcworkspace/", self.app.name()));
 		if root_workspace.exists() {
 			root_workspace
 		} else {
-			self.project_dir().join(format!(
-				"{}.xcodeproj/project.xcworkspace/",
-				self.app.name()
-			))
+			self.project_dir()
+				.join(format!("{}.xcodeproj/project.xcworkspace/", self.app.name()))
 		}
 	}
 
@@ -422,15 +373,12 @@ impl Config {
 	}
 
 	pub fn app_path(&self) -> PathBuf {
-		self.export_dir()
-			.join(format!("Payload/{}.app", self.app.stylized_name()))
+		self.export_dir().join(format!("Payload/{}.app", self.app.stylized_name()))
 	}
 
 	pub fn scheme(&self) -> String { format!("{}_iOS", self.app.name()) }
 
 	pub fn bundle_version(&self) -> &VersionNumber { &self.bundle_version }
 
-	pub fn development_team(&self) -> Option<&str> {
-		self.development_team.as_deref()
-	}
+	pub fn development_team(&self) -> Option<&str> { self.development_team.as_deref() }
 }

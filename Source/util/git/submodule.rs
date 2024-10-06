@@ -33,16 +33,15 @@ impl Display for Error {
 			Cause::NameMissing => {
 				write!(
 					f,
-					"Failed to infer name for submodule at remote {:?}; \
-					 please specify a name explicitly.",
+					"Failed to infer name for submodule at remote {:?}; please specify a name \
+					 explicitly.",
 					self.submodule.remote
 				)
 			},
 			Cause::LfsFailed(err) => {
 				write!(
 					f,
-					"Failed to ensure presence of Git LFS for submodule {:?}: \
-					 {}",
+					"Failed to ensure presence of Git LFS for submodule {:?}: {}",
 					self.submodule.name().unwrap(),
 					err,
 				)
@@ -64,17 +63,12 @@ impl Display for Error {
 				)
 			},
 			Cause::PathInvalidUtf8 => {
-				write!(
-					f,
-					"Submodule path {:?} wasn't valid utf-8.",
-					self.submodule.path,
-				)
+				write!(f, "Submodule path {:?} wasn't valid utf-8.", self.submodule.path,)
 			},
 			Cause::AddFailed(err) => {
 				write!(
 					f,
-					"Failed to add submodule {:?} with remote {:?} and path \
-					 {:?}: {}",
+					"Failed to add submodule {:?} with remote {:?} and path {:?}: {}",
 					self.submodule.name().unwrap(),
 					self.submodule.remote,
 					self.submodule.path,
@@ -84,8 +78,7 @@ impl Display for Error {
 			Cause::InitFailed(err) => {
 				write!(
 					f,
-					"Failed to init submodule {:?} with remote {:?} and path \
-					 {:?}: {}",
+					"Failed to init submodule {:?} with remote {:?} and path {:?}: {}",
 					self.submodule.name().unwrap(),
 					self.submodule.remote,
 					self.submodule.path,
@@ -95,8 +88,8 @@ impl Display for Error {
 			Cause::CheckoutFailed { commit, cause } => {
 				write!(
 					f,
-					"Failed to checkout commit {:?} from submodule {:?} with \
-					 remote {:?} and path {:?}: {}",
+					"Failed to checkout commit {:?} from submodule {:?} with remote {:?} and path \
+					 {:?}: {}",
 					commit,
 					self.submodule.name().unwrap(),
 					self.submodule.remote,
@@ -118,10 +111,7 @@ pub struct Submodule {
 }
 
 impl Submodule {
-	pub fn with_remote_and_path(
-		remote:impl Into<String>,
-		path:impl Into<PathBuf>,
-	) -> Self {
+	pub fn with_remote_and_path(remote:impl Into<String>, path:impl Into<PathBuf>) -> Self {
 		Self { name:None, remote:remote.into(), path:path.into(), lfs:false }
 	}
 
@@ -142,9 +132,7 @@ impl Submodule {
 	fn in_index(&self, git:Git<'_>, name:&str) -> io::Result<bool> {
 		git.modules().map(|modules| {
 			modules
-				.filter(|modules| {
-					modules.contains(&format!("[submodule {:?}]", name))
-				})
+				.filter(|modules| modules.contains(&format!("[submodule {:?}]", name)))
 				.is_some()
 		})
 	}
@@ -152,40 +140,29 @@ impl Submodule {
 	fn initialized(&self, git:Git<'_>, name:&str) -> io::Result<bool> {
 		git.config().map(|config| {
 			config
-				.filter(|config| {
-					config.contains(&format!("[submodule {:?}]", name))
-				})
+				.filter(|config| config.contains(&format!("[submodule {:?}]", name)))
 				.is_some()
 		})
 	}
 
 	pub fn init(&self, git:Git<'_>, commit:Option<&str>) -> Result<(), Error> {
-		let name = self.name().ok_or_else(|| {
-			Error { submodule:self.clone(), cause:Box::new(Cause::NameMissing) }
-		})?;
+		let name = self
+			.name()
+			.ok_or_else(|| Error { submodule:self.clone(), cause:Box::new(Cause::NameMissing) })?;
 		if self.lfs {
 			lfs::ensure_present().map_err(|cause| {
-				Error {
-					submodule:self.clone(),
-					cause:Box::new(Cause::LfsFailed(cause)),
-				}
+				Error { submodule:self.clone(), cause:Box::new(Cause::LfsFailed(cause)) }
 			})?;
 		}
 		let in_index = self.in_index(git, name).map_err(|cause| {
-			Error {
-				submodule:self.clone(),
-				cause:Box::new(Cause::IndexCheckFailed(cause)),
-			}
+			Error { submodule:self.clone(), cause:Box::new(Cause::IndexCheckFailed(cause)) }
 		})?;
 		let initialized = if !in_index {
 			let path_str = self
 				.path
 				.to_str()
 				.ok_or_else(|| {
-					Error {
-						submodule:self.clone(),
-						cause:Box::new(Cause::PathInvalidUtf8),
-					}
+					Error { submodule:self.clone(), cause:Box::new(Cause::PathInvalidUtf8) }
 				})?
 				.to_owned();
 			log::info!("adding submodule: {:#?}", self);
@@ -193,31 +170,18 @@ impl Submodule {
 			let name = name.to_owned();
 			git.command()
 				.before_spawn(move |cmd| {
-					cmd.args([
-						"submodule",
-						"add",
-						"--name",
-						&name,
-						&remote,
-						&path_str,
-					]);
+					cmd.args(["submodule", "add", "--name", &name, &remote, &path_str]);
 					Ok(())
 				})
 				.run()
 				.map_err(|cause| {
-					Error {
-						submodule:self.clone(),
-						cause:Box::new(Cause::AddFailed(cause)),
-					}
+					Error { submodule:self.clone(), cause:Box::new(Cause::AddFailed(cause)) }
 				})?;
 			false
 		} else {
 			log::info!("submodule already in index: {:#?}", self);
 			self.initialized(git, name).map_err(|cause| {
-				Error {
-					submodule:self.clone(),
-					cause:Box::new(Cause::InitCheckFailed(cause)),
-				}
+				Error { submodule:self.clone(), cause:Box::new(Cause::InitCheckFailed(cause)) }
 			})?
 		};
 		if !initialized {
@@ -229,21 +193,14 @@ impl Submodule {
 				})
 				.run()
 				.map_err(|cause| {
-					Error {
-						submodule:self.clone(),
-						cause:Box::new(Cause::InitFailed(cause)),
-					}
+					Error { submodule:self.clone(), cause:Box::new(Cause::InitFailed(cause)) }
 				})?;
 		} else {
 			log::info!("submodule already initalized: {:#?}", self);
 		}
 		if let Some(commit) = commit {
 			let path = git.root().join(self.path());
-			log::info!(
-				"checking out commit {:?} in submodule at {:?}",
-				commit,
-				path
-			);
+			log::info!("checking out commit {:?} in submodule at {:?}", commit, path);
 			let commit = commit.to_owned();
 			let commit_c = commit.clone();
 			Git::new(&path)

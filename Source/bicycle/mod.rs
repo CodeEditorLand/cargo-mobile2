@@ -20,8 +20,7 @@ use thiserror::Error;
 
 pub use self::{json_map::*, traverse::*};
 
-pub type CustomEscapeFn =
-	&'static (dyn Fn(&str) -> String + 'static + Send + Sync);
+pub type CustomEscapeFn = &'static (dyn Fn(&str) -> String + 'static + Send + Sync);
 
 /// Specifies how to escape template variables prior to rendering.
 pub enum EscapeFn {
@@ -115,9 +114,7 @@ pub struct Bicycle {
 }
 
 impl Default for Bicycle {
-	fn default() -> Self {
-		Self::new(Default::default(), iter::empty(), Default::default())
-	}
+	fn default() -> Self { Self::new(Default::default(), iter::empty(), Default::default()) }
 }
 
 impl Bicycle {
@@ -164,25 +161,16 @@ impl Bicycle {
 	pub fn new<'helper_name>(
 		escape_fn:EscapeFn,
 		helpers:impl iter::IntoIterator<
-			Item = (
-				&'helper_name str,
-				Box<dyn HelperDef + Send + Sync + 'static>,
-			),
+			Item = (&'helper_name str, Box<dyn HelperDef + Send + Sync + 'static>),
 		>,
 		base_data:JsonMap,
 	) -> Self {
 		let mut handlebars = Handlebars::new();
 		handlebars.set_strict_mode(true);
 		match escape_fn {
-			EscapeFn::Custom(escape_fn) => {
-				handlebars.register_escape_fn(escape_fn)
-			},
-			EscapeFn::None => {
-				handlebars.register_escape_fn(handlebars::no_escape)
-			},
-			EscapeFn::Html => {
-				handlebars.register_escape_fn(handlebars::html_escape)
-			},
+			EscapeFn::Custom(escape_fn) => handlebars.register_escape_fn(escape_fn),
+			EscapeFn::None => handlebars.register_escape_fn(handlebars::no_escape),
+			EscapeFn::Html => handlebars.register_escape_fn(handlebars::html_escape),
 		}
 		for (name, helper) in helpers {
 			handlebars.register_helper(name, helper);
@@ -246,43 +234,26 @@ impl Bicycle {
 		match action {
 			Action::CreateDirectory { dest } => {
 				fs::create_dir_all(dest).map_err(|cause| {
-					ProcessingError::DirectoryCreation {
-						dest:dest.clone(),
-						cause,
-					}
+					ProcessingError::DirectoryCreation { dest:dest.clone(), cause }
 				})?;
 			},
 			Action::CopyFile { src, dest } => {
 				fs::copy(src, dest).map_err(|cause| {
-					ProcessingError::FileCopy {
-						src:src.clone(),
-						dest:dest.clone(),
-						cause,
-					}
+					ProcessingError::FileCopy { src:src.clone(), dest:dest.clone(), cause }
 				})?;
 			},
 			Action::WriteTemplate { src, dest } => {
 				let mut template = String::new();
 				fs::File::open(src)
 					.and_then(|mut file| file.read_to_string(&mut template))
-					.map_err(|cause| {
-						ProcessingError::TemplateRead { src:src.clone(), cause }
-					})?;
-				let rendered =
-					self.render(&template, insert_data).map_err(|cause| {
-						ProcessingError::TemplateRender {
-							src:src.clone(),
-							cause,
-						}
-					})?;
+					.map_err(|cause| ProcessingError::TemplateRead { src:src.clone(), cause })?;
+				let rendered = self
+					.render(&template, insert_data)
+					.map_err(|cause| ProcessingError::TemplateRender { src:src.clone(), cause })?;
 				fs::File::create(dest)
 					.and_then(|mut file| file.write_all(rendered.as_bytes()))
 					.map_err(|cause| {
-						ProcessingError::TemplateWrite {
-							src:src.clone(),
-							dest:dest.clone(),
-							cause,
-						}
+						ProcessingError::TemplateWrite { src:src.clone(), dest:dest.clone(), cause }
 					})?;
 			},
 		}
@@ -325,21 +296,11 @@ impl Bicycle {
 		mut filter:impl FnMut(&Action) -> bool,
 	) -> Result<(), ProcessingError> {
 		let src = src.as_ref();
-		traverse(
-			src,
-			dest,
-			|path| self.transform_path(path, &insert_data),
-			DEFAULT_TEMPLATE_EXT,
-		)
-		.map_err(|cause| {
-			ProcessingError::Traversal { src:src.to_owned(), cause }
-		})
-		.and_then(|actions| {
-			self.process_actions(
-				actions.iter().filter(|action| filter(action)),
-				insert_data,
-			)
-		})
+		traverse(src, dest, |path| self.transform_path(path, &insert_data), DEFAULT_TEMPLATE_EXT)
+			.map_err(|cause| ProcessingError::Traversal { src:src.to_owned(), cause })
+			.and_then(|actions| {
+				self.process_actions(actions.iter().filter(|action| filter(action)), insert_data)
+			})
 	}
 
 	/// Renders a path string itself as a template.
@@ -366,9 +327,7 @@ impl Bicycle {
 				.map(PathBuf::from)
 				.map(|p| p.components().collect::<PathBuf>())
 				.map(|p| {
-					if let Some(Component::Prefix(prefix)) =
-						p.components().next()
-					{
+					if let Some(Component::Prefix(prefix)) = p.components().next() {
 						if let Prefix::Disk(_) = prefix.kind() {
 							return p
 								.to_str()

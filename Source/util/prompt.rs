@@ -39,10 +39,7 @@ pub fn default(
 	})
 }
 
-pub fn yes_no(
-	msg:impl Display,
-	default:Option<bool>,
-) -> io::Result<Option<bool>> {
+pub fn yes_no(msg:impl Display, default:Option<bool>) -> io::Result<Option<bool>> {
 	let y_n = match default {
 		Some(true) => "[Y/n]",
 		Some(false) => "[y/N]",
@@ -62,10 +59,7 @@ pub fn yes_no(
 	})
 }
 
-pub fn list_display_only(
-	choices:impl Iterator<Item = impl Display>,
-	choice_count:usize,
-) {
+pub fn list_display_only(choices:impl Iterator<Item = impl Display>, choice_count:usize) {
 	if choice_count > 0 {
 		for (index, choice) in choices.enumerate() {
 			println!("  [{}] {}", index.to_string().green(), choice);
@@ -96,11 +90,8 @@ pub fn list(
 		println!("  Enter an {} for a {} above.", "index".green(), noun);
 	}
 	loop {
-		let response = default(
-			&msg,
-			if choice_count == 1 { Some("0") } else { None },
-			Some(Color::Green),
-		)?;
+		let response =
+			default(&msg, if choice_count == 1 { Some("0") } else { None }, Some(Color::Green))?;
 		if !response.is_empty() {
 			if let Ok(index) = response.parse::<usize>() {
 				if index < choice_count {

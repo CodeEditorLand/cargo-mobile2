@@ -45,8 +45,7 @@ fn default_identifier(
                 ).print(_wrapper);
 			}
 
-			let reverse_domain =
-				domain.split('.').rev().collect::<Vec<_>>().join(".");
+			let reverse_domain = domain.split('.').rev().collect::<Vec<_>>().join(".");
 			Some(format!("{reverse_domain}{name}"))
 		} else {
 			None
@@ -71,11 +70,7 @@ impl Display for DefaultsError {
 				write!(f, "Current working directory has no name: {:?}", cwd)
 			},
 			Self::CurrentDirInvalidUtf8(cwd) => {
-				write!(
-					f,
-					"Current working directory contained invalid UTF-8: {:?}",
-					cwd
-				)
+				write!(f, "Current working directory contained invalid UTF-8: {:?}", cwd)
 			},
 		}
 	}
@@ -90,17 +85,14 @@ struct Defaults {
 
 impl Defaults {
 	fn new(wrapper:&TextWrapper) -> Result<Self, DefaultsError> {
-		let cwd =
-			env::current_dir().map_err(DefaultsError::CurrentDirFailed)?;
-		let dir_name = cwd
-			.file_name()
-			.ok_or_else(|| DefaultsError::CurrentDirHasNoName(cwd.clone()))?;
+		let cwd = env::current_dir().map_err(DefaultsError::CurrentDirFailed)?;
+		let dir_name =
+			cwd.file_name().ok_or_else(|| DefaultsError::CurrentDirHasNoName(cwd.clone()))?;
 		let dir_name = dir_name
 			.to_str()
 			.ok_or_else(|| DefaultsError::CurrentDirInvalidUtf8(cwd.clone()))?;
 		let name = name::transliterate(&dir_name.to_kebab_case());
-		let dot_name =
-			name.as_ref().map(|n| format!(".{n}")).unwrap_or_default();
+		let dot_name = name.as_ref().map(|n| format!(".{n}")).unwrap_or_default();
 		Ok(Self {
 			identifier:default_identifier(wrapper, &dot_name)
 				.ok()
@@ -175,8 +167,7 @@ pub struct Raw {
 
 impl Raw {
 	pub fn detect(wrapper:&TextWrapper) -> Result<Self, DetectError> {
-		let defaults =
-			Defaults::new(wrapper).map_err(DetectError::DefaultsFailed)?;
+		let defaults = Defaults::new(wrapper).map_err(DetectError::DefaultsFailed)?;
 		Ok(Self {
 			name:defaults.name.ok_or_else(|| DetectError::NameNotDetected)?,
 			lib_name:None,
@@ -189,11 +180,9 @@ impl Raw {
 	}
 
 	pub fn prompt(wrapper:&TextWrapper) -> Result<Self, PromptError> {
-		let defaults =
-			Defaults::new(wrapper).map_err(PromptError::DefaultsFailed)?;
+		let defaults = Defaults::new(wrapper).map_err(PromptError::DefaultsFailed)?;
 		let (name, default_stylized) = Self::prompt_name(&defaults)?;
-		let stylized_name =
-			Self::prompt_stylized_name(&name, default_stylized)?;
+		let stylized_name = Self::prompt_stylized_name(&name, default_stylized)?;
 		let identifier = Self::prompt_identifier(wrapper, &defaults)?;
 		let template_pack = Some(Self::prompt_template_pack(wrapper)?)
 			.filter(|pack| pack != super::IMPLIED_TEMPLATE_PACK);
@@ -209,13 +198,10 @@ impl Raw {
 }
 
 impl Raw {
-	fn prompt_name(
-		defaults:&Defaults,
-	) -> Result<(String, Option<String>), PromptError> {
+	fn prompt_name(defaults:&Defaults) -> Result<(String, Option<String>), PromptError> {
 		let default_name = defaults.name.clone();
-		let name =
-			prompt::default("Project name", default_name.as_deref(), None)
-				.map_err(PromptError::NamePromptFailed)?;
+		let name = prompt::default("Project name", default_name.as_deref(), None)
+			.map_err(PromptError::NamePromptFailed)?;
 		let default_stylized = Some(defaults.stylized_name.clone());
 		Ok((name, default_stylized))
 	}
@@ -224,39 +210,27 @@ impl Raw {
 		name:&str,
 		default_stylized:Option<String>,
 	) -> Result<String, PromptError> {
-		let stylized = default_stylized
-			.unwrap_or_else(|| name.replace(['-', '_'], " ").to_title_case());
+		let stylized =
+			default_stylized.unwrap_or_else(|| name.replace(['-', '_'], " ").to_title_case());
 		prompt::default("Stylized name", Some(&stylized), None)
 			.map_err(PromptError::StylizedNamePromptFailed)
 	}
 
-	fn prompt_identifier(
-		wrapper:&TextWrapper,
-		defaults:&Defaults,
-	) -> Result<String, PromptError> {
+	fn prompt_identifier(wrapper:&TextWrapper, defaults:&Defaults) -> Result<String, PromptError> {
 		Ok(loop {
-			let response =
-				prompt::default("Identifier", Some(&defaults.identifier), None)
-					.map_err(PromptError::IdentifierPromptFailed)?;
+			let response = prompt::default("Identifier", Some(&defaults.identifier), None)
+				.map_err(PromptError::IdentifierPromptFailed)?;
 			match identifier::check_identifier_syntax(response.as_str()) {
 				Ok(_) => break response,
 				Err(err) => {
-					println!(
-						"{}",
-						wrapper
-							.fill(&format!("Sorry! {}", err))
-							.bright_magenta()
-					)
+					println!("{}", wrapper.fill(&format!("Sorry! {}", err)).bright_magenta())
 				},
 			}
 		})
 	}
 
-	pub fn prompt_template_pack(
-		wrapper:&TextWrapper,
-	) -> Result<String, PromptError> {
-		let packs = templating::list_app_packs()
-			.map_err(PromptError::ListTemplatePacksFailed)?;
+	pub fn prompt_template_pack(wrapper:&TextWrapper) -> Result<String, PromptError> {
+		let packs = templating::list_app_packs().map_err(PromptError::ListTemplatePacksFailed)?;
 		let mut default_pack = None;
 		println!("Detected template packs:");
 		for (index, pack) in packs.iter().enumerate() {
@@ -265,13 +239,9 @@ impl Raw {
 				default_pack = Some(index.to_string());
 				println!(
 					"{}",
-					format!(
-						"  [{}] {}",
-						index.to_string().bright_green(),
-						pack,
-					)
-					.bright_white()
-					.bold()
+					format!("  [{}] {}", index.to_string().bright_green(), pack,)
+						.bright_white()
+						.bold()
 				);
 			} else {
 				println!("  [{}] {}", index.to_string().green(), pack);
@@ -281,29 +251,18 @@ impl Raw {
 			println!("  -- none --");
 		}
 		loop {
-			println!(
-				"  Enter an {} for a template pack above.",
-				"index".green(),
-			);
-			let pack_input = prompt::default(
-				"Template pack",
-				default_pack.as_deref(),
-				Some(Color::BrightGreen),
-			)
-			.map_err(PromptError::TemplatePackPromptFailed)?;
-			let pack_name = pack_input
-				.parse::<usize>()
-				.ok()
-				.and_then(|index| packs.get(index))
-				.cloned();
+			println!("  Enter an {} for a template pack above.", "index".green(),);
+			let pack_input =
+				prompt::default("Template pack", default_pack.as_deref(), Some(Color::BrightGreen))
+					.map_err(PromptError::TemplatePackPromptFailed)?;
+			let pack_name =
+				pack_input.parse::<usize>().ok().and_then(|index| packs.get(index)).cloned();
 			if let Some(pack_name) = pack_name {
 				break Ok(pack_name);
 			} else {
 				println!(
 					"{}",
-					wrapper
-						.fill("Uh-oh, you need to specify a template pack.")
-						.bright_magenta()
+					wrapper.fill("Uh-oh, you need to specify a template pack.").bright_magenta()
 				);
 			}
 		}

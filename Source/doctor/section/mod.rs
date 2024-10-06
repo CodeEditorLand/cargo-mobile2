@@ -44,9 +44,7 @@ impl Label {
 	}
 
 	fn format_title(self, title:&str) -> colored::ColoredString {
-		format!("[{}] {}", self.title_symbol(), title)
-			.color(self.color())
-			.bold()
+		format!("[{}] {}", self.title_symbol(), title).color(self.color()).bold()
 	}
 
 	fn format_item(self, msg:&str) -> colored::ColoredString {
@@ -69,9 +67,7 @@ impl<T:ToString, E:ToString> From<Result<T, E>> for Item {
 }
 
 impl Item {
-	fn new(label:Label, msg:impl ToString) -> Self {
-		Self { label, msg:msg.to_string() }
-	}
+	fn new(label:Label, msg:impl ToString) -> Self { Self { label, msg:msg.to_string() } }
 
 	fn victory(msg:impl ToString) -> Self { Self::new(Label::Victory, msg) }
 
@@ -88,9 +84,7 @@ impl Item {
 
 	fn is_failure(&self) -> bool { matches!(self.label, Label::Error) }
 
-	fn format(&self) -> colored::ColoredString {
-		self.label.format_item(&self.msg)
-	}
+	fn format(&self) -> colored::ColoredString { self.label.format_item(&self.msg) }
 }
 
 #[derive(Debug)]
@@ -109,26 +103,16 @@ impl Section {
 		self
 	}
 
-	fn with_victory(self, victory:impl ToString) -> Self {
-		self.with_item(Item::victory(victory))
-	}
+	fn with_victory(self, victory:impl ToString) -> Self { self.with_item(Item::victory(victory)) }
 
-	fn with_failure(self, failure:impl ToString) -> Self {
-		self.with_item(Item::failure(failure))
-	}
+	fn with_failure(self, failure:impl ToString) -> Self { self.with_item(Item::failure(failure)) }
 
-	fn with_items(
-		mut self,
-		items:impl IntoIterator<Item = impl Into<Item>>,
-	) -> Self {
+	fn with_items(mut self, items:impl IntoIterator<Item = impl Into<Item>>) -> Self {
 		self.items.extend(items.into_iter().map(Into::into));
 		self
 	}
 
-	fn with_victories(
-		self,
-		victories:impl IntoIterator<Item = impl ToString>,
-	) -> Self {
+	fn with_victories(self, victories:impl IntoIterator<Item = impl ToString>) -> Self {
 		self.with_items(victories.into_iter().map(Item::victory))
 	}
 

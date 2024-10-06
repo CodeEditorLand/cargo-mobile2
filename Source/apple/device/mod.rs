@@ -53,12 +53,8 @@ impl Reportable for RunError {
 					format!("Not found at either {:?} or {:?}", old, new),
 				)
 			},
-			Self::UnzipFailed(err) => {
-				Report::error("Failed to unzip archive", err)
-			},
-			Self::DeployFailed(err) => {
-				Report::error("Failed to deploy app", err)
-			},
+			Self::UnzipFailed(err) => Report::error("Failed to unzip archive", err),
+			Self::DeployFailed(err) => Report::error("Failed to deploy app", err),
 		}
 	}
 }
@@ -131,14 +127,7 @@ impl<'a> Device<'a> {
 			.map_err(RunError::BuildFailed)?;
 		println!("Archiving app...");
 		self.target
-			.archive(
-				config,
-				env,
-				noise_level,
-				profile,
-				None,
-				ArchiveConfig::new(),
-			)
+			.archive(config, env, noise_level, profile, None, ArchiveConfig::new())
 			.map_err(RunError::ArchiveFailed)?;
 
 		match self.kind {
@@ -158,9 +147,8 @@ impl<'a> Device<'a> {
 					.map_err(RunError::ExportFailed)?;
 				println!("Extracting IPA...");
 
-				let ipa_path = config
-					.ipa_path()
-					.map_err(|(old, new)| RunError::IpaMissing { old, new })?;
+				let ipa_path =
+					config.ipa_path().map_err(|(old, new)| RunError::IpaMissing { old, new })?;
 				let export_dir = config.export_dir();
 				let cmd = duct::cmd::<&str, [String; 0]>("unzip", [])
 					.vars(env.explicit_env())
@@ -176,24 +164,11 @@ impl<'a> Device<'a> {
 				cmd.run().map_err(RunError::UnzipFailed)?;
 
 				if self.kind == DeviceKind::IosDeployDevice {
-					ios_deploy::run_and_debug(
-						config,
-						env,
-						non_interactive,
-						&self.id,
-						noise_level,
-					)
-					.map_err(|e| RunError::DeployFailed(e.to_string()))
+					ios_deploy::run_and_debug(config, env, non_interactive, &self.id, noise_level)
+						.map_err(|e| RunError::DeployFailed(e.to_string()))
 				} else {
-					devicectl::run(
-						config,
-						env,
-						non_interactive,
-						&self.id,
-						self.paired,
-						noise_level,
-					)
-					.map_err(|e| RunError::DeployFailed(e.to_string()))
+					devicectl::run(config, env, non_interactive, &self.id, self.paired, noise_level)
+						.map_err(|e| RunError::DeployFailed(e.to_string()))
 				}
 			},
 		}

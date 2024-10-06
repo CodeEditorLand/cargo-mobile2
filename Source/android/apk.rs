@@ -28,18 +28,12 @@ impl Reportable for ApkError {
 	fn report(&self) -> Report {
 		match self {
 			Self::LibSymlinkCleaningFailed(err) => err.report(),
-			Self::AssembleFailed(err) => {
-				Report::error("Failed to assemble APK", err)
-			},
+			Self::AssembleFailed(err) => Report::error("Failed to assemble APK", err),
 		}
 	}
 }
 
-pub fn apks_paths(
-	config:&Config,
-	profile:Profile,
-	flavor:&str,
-) -> Vec<PathBuf> {
+pub fn apks_paths(config:&Config, profile:Profile, flavor:&str) -> Vec<PathBuf> {
 	profile
 		.suffixes()
 		.iter()
@@ -68,17 +62,14 @@ pub fn build(
 	targets:Vec<&Target>,
 	split_per_abi:bool,
 ) -> Result<Vec<PathBuf>, ApkError> {
-	JniLibs::remove_broken_links(config)
-		.map_err(ApkError::LibSymlinkCleaningFailed)?;
+	JniLibs::remove_broken_links(config).map_err(ApkError::LibSymlinkCleaningFailed)?;
 
 	let build_ty = profile.as_str().to_upper_camel_case();
 
 	let gradle_args = if split_per_abi {
 		targets
 			.iter()
-			.map(|t| {
-				format!("assemble{}{}", t.arch_upper_camel_case(), build_ty)
-			})
+			.map(|t| format!("assemble{}{}", t.arch_upper_camel_case(), build_ty))
 			.collect()
 	} else {
 		let mut args = vec![format!("assembleUniversal{}", build_ty)];
@@ -91,11 +82,7 @@ pub fn build(
 				),
 				format!(
 					"-ParchList={}",
-					targets
-						.iter()
-						.map(|t| t.arch)
-						.collect::<Vec<_>>()
-						.join(",")
+					targets.iter().map(|t| t.arch).collect::<Vec<_>>().join(",")
 				),
 				format!(
 					"-PtargetList={}",
@@ -124,8 +111,8 @@ pub fn build(
 		.inspect_err(|err| {
 			if err.kind() == std::io::ErrorKind::NotFound {
 				log::error!(
-					"`gradlew` not found. Make sure you have the Android SDK \
-					 installed and added to your PATH"
+					"`gradlew` not found. Make sure you have the Android SDK installed and added \
+					 to your PATH"
 				);
 			}
 		})?
@@ -135,12 +122,7 @@ pub fn build(
 	if split_per_abi {
 		let paths = targets
 			.iter()
-			.map(|t| {
-				apks_paths(config, profile, t.arch)
-					.into_iter()
-					.reduce(last_modified)
-					.unwrap()
-			})
+			.map(|t| apks_paths(config, profile, t.arch).into_iter().reduce(last_modified).unwrap())
 			.collect::<Vec<_>>();
 		outputs.extend(paths);
 	} else {
@@ -175,14 +157,7 @@ pub mod cli {
 				.join(", ")
 		);
 
-		let outputs = super::build(
-			config,
-			env,
-			noise_level,
-			profile,
-			targets,
-			split_per_abi,
-		)?;
+		let outputs = super::build(config, env, noise_level, profile, targets, split_per_abi)?;
 
 		println!("\nFinished building APK(s):");
 		for p in &outputs {

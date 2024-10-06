@@ -18,9 +18,7 @@ pub enum Error {
 }
 
 impl Reportable for Error {
-	fn report(&self) -> Report {
-		Report::error("Failed to read metadata from Cargo.toml", self)
-	}
+	fn report(&self) -> Report { Report::error("Failed to read metadata from Cargo.toml", self) }
 }
 
 #[derive(Debug, Default, Deserialize)]

@@ -77,41 +77,25 @@ impl Metadata {
 
 	pub fn features(&self) -> Option<&[String]> { self.features.as_deref() }
 
-	pub fn app_sources(&self) -> &[String] {
-		self.app_sources.as_deref().unwrap_or(&[])
-	}
+	pub fn app_sources(&self) -> &[String] { self.app_sources.as_deref().unwrap_or(&[]) }
 
-	pub fn app_plugins(&self) -> Option<&[String]> {
-		self.app_plugins.as_deref()
-	}
+	pub fn app_plugins(&self) -> Option<&[String]> { self.app_plugins.as_deref() }
 
-	pub fn project_dependencies(&self) -> Option<&[String]> {
-		self.project_dependencies.as_deref()
-	}
+	pub fn project_dependencies(&self) -> Option<&[String]> { self.project_dependencies.as_deref() }
 
-	pub fn app_dependencies(&self) -> Option<&[String]> {
-		self.app_dependencies.as_deref()
-	}
+	pub fn app_dependencies(&self) -> Option<&[String]> { self.app_dependencies.as_deref() }
 
 	pub fn app_dependencies_platform(&self) -> Option<&[String]> {
 		self.app_dependencies_platform.as_deref()
 	}
 
-	pub fn asset_packs(&self) -> Option<&[AssetPackInfo]> {
-		self.asset_packs.as_deref()
-	}
+	pub fn asset_packs(&self) -> Option<&[AssetPackInfo]> { self.asset_packs.as_deref() }
 
-	pub fn app_activity_name(&self) -> Option<&str> {
-		self.app_activity_name.as_deref()
-	}
+	pub fn app_activity_name(&self) -> Option<&str> { self.app_activity_name.as_deref() }
 
-	pub fn app_permissions(&self) -> Option<&[String]> {
-		self.app_permissions.as_deref()
-	}
+	pub fn app_permissions(&self) -> Option<&[String]> { self.app_permissions.as_deref() }
 
-	pub fn app_theme_parent(&self) -> Option<&str> {
-		self.app_theme_parent.as_deref()
-	}
+	pub fn app_theme_parent(&self) -> Option<&str> { self.app_theme_parent.as_deref() }
 
 	pub fn vulkan_validation(&self) -> Option<bool> { self.vulkan_validation }
 }
@@ -130,17 +114,12 @@ impl Display for ProjectDirInvalid {
 				write!(f, "{:?} couldn't be normalized: {}", project_dir, cause)
 			},
 			Self::OutsideOfAppRoot { project_dir, root_dir } => {
-				write!(
-					f,
-					"{:?} is outside of the app root {:?}",
-					project_dir, root_dir,
-				)
+				write!(f, "{:?} is outside of the app root {:?}", project_dir, root_dir,)
 			},
 			Self::ContainsSpaces { project_dir } => {
 				write!(
 					f,
-					"{:?} contains spaces, which the NDK is remarkably \
-					 intolerant of",
+					"{:?} contains spaces, which the NDK is remarkably intolerant of",
 					project_dir
 				)
 			},
@@ -189,67 +168,49 @@ impl Config {
 			return Err(Error::IdentifierCannotContainHyphens);
 		}
 
-		let min_sdk_version =
-			raw.min_sdk_version.unwrap_or(DEFAULT_MIN_SDK_VERSION);
+		let min_sdk_version = raw.min_sdk_version.unwrap_or(DEFAULT_MIN_SDK_VERSION);
 
 		let project_dir = if let Some(project_dir) = raw.project_dir {
 			if project_dir == DEFAULT_PROJECT_DIR {
 				log::warn!(
-					"`{}.project-dir` is set to the default value; you can \
-					 remove it from your config",
+					"`{}.project-dir` is set to the default value; you can remove it from your \
+					 config",
 					super::NAME
 				);
 			}
-			if util::under_root(&project_dir, app.root_dir()).map_err(
-				|cause| {
-					Error::ProjectDirInvalid(
-						ProjectDirInvalid::NormalizationFailed {
-							project_dir:project_dir.clone(),
-							cause,
-						},
-					)
-				},
-			)? {
+			if util::under_root(&project_dir, app.root_dir()).map_err(|cause| {
+				Error::ProjectDirInvalid(ProjectDirInvalid::NormalizationFailed {
+					project_dir:project_dir.clone(),
+					cause,
+				})
+			})? {
 				if !project_dir.contains(' ') {
 					Ok(project_dir.into())
 				} else {
-					Err(Error::ProjectDirInvalid(
-						ProjectDirInvalid::ContainsSpaces { project_dir },
-					))
+					Err(Error::ProjectDirInvalid(ProjectDirInvalid::ContainsSpaces { project_dir }))
 				}
 			} else {
-				Err(Error::ProjectDirInvalid(
-					ProjectDirInvalid::OutsideOfAppRoot {
-						project_dir,
-						root_dir:app.root_dir().to_owned(),
-					},
-				))
+				Err(Error::ProjectDirInvalid(ProjectDirInvalid::OutsideOfAppRoot {
+					project_dir,
+					root_dir:app.root_dir().to_owned(),
+				}))
 			}
 		} else {
 			Ok(DEFAULT_PROJECT_DIR.into())
 		}?;
 
-		Ok(Self {
-			app,
-			min_sdk_version,
-			project_dir,
-			logcat_filter_specs:raw.logcat_filter_specs,
-		})
+		Ok(Self { app, min_sdk_version, project_dir, logcat_filter_specs:raw.logcat_filter_specs })
 	}
 
 	pub fn app(&self) -> &App { &self.app }
 
 	pub fn logcat_filter_specs(&self) -> &[String] { &self.logcat_filter_specs }
 
-	pub fn so_name(&self) -> String {
-		format!("lib{}.so", self.app().lib_name())
-	}
+	pub fn so_name(&self) -> String { format!("lib{}.so", self.app().lib_name()) }
 
 	pub fn min_sdk_version(&self) -> u32 { self.min_sdk_version }
 
-	pub fn project_dir(&self) -> PathBuf {
-		self.app.prefix_path(&self.project_dir)
-	}
+	pub fn project_dir(&self) -> PathBuf { self.app.prefix_path(&self.project_dir) }
 
 	pub fn project_dir_exists(&self) -> bool { self.project_dir().is_dir() }
 }

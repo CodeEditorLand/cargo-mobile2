@@ -15,15 +15,11 @@ impl<'a> Git<'a> {
 	pub fn root(&'a self) -> &'a Path { self.root }
 
 	pub fn command(&self) -> duct::Expression {
-		duct::cmd(
-			"git",
-			["-C", self.root.as_os_str().to_str().unwrap_or_default()],
-		)
+		duct::cmd("git", ["-C", self.root.as_os_str().to_str().unwrap_or_default()])
 	}
 
 	pub fn command_parse(&self, arg_str:impl AsRef<str>) -> duct::Expression {
-		let mut args =
-			vec!["-C", self.root.as_os_str().to_str().unwrap_or_default()];
+		let mut args = vec!["-C", self.root.as_os_str().to_str().unwrap_or_default()];
 		for arg in arg_str.as_ref().split(' ') {
 			args.push(arg)
 		}
@@ -44,20 +40,12 @@ impl<'a> Git<'a> {
 
 	pub fn config(&self) -> io::Result<Option<String>> {
 		let path = self.root.join(".git/config");
-		if path.exists() {
-			fs::read_to_string(&path).map(Some)
-		} else {
-			Ok(None)
-		}
+		if path.exists() { fs::read_to_string(&path).map(Some) } else { Ok(None) }
 	}
 
 	pub fn modules(&self) -> io::Result<Option<String>> {
 		let path = self.root.join(".gitmodules");
-		if path.exists() {
-			fs::read_to_string(&path).map(Some)
-		} else {
-			Ok(None)
-		}
+		if path.exists() { fs::read_to_string(&path).map(Some) } else { Ok(None) }
 	}
 
 	pub fn user_name(&self) -> std::io::Result<String> {

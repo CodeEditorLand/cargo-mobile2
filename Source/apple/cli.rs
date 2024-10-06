@@ -62,9 +62,7 @@ pub struct Input {
 }
 
 impl Input {
-	pub fn new(flags:GlobalFlags, command:Command) -> Self {
-		Self { flags, command }
-	}
+	pub fn new(flags:GlobalFlags, command:Command) -> Self { Self { flags, command } }
 }
 
 fn macos_from_platform(platform:&str) -> bool { platform == "macOS" }
@@ -81,18 +79,12 @@ fn profile_from_configuration(configuration:&str) -> opts::Profile {
 pub enum Command {
 	#[structopt(name = "open", about = "Open project in Xcode")]
 	Open,
-	#[structopt(
-		name = "check",
-		about = "Checks if code compiles for target(s)"
-	)]
+	#[structopt(name = "check", about = "Checks if code compiles for target(s)")]
 	Check {
 		#[structopt(name = "targets", default_value = Target::DEFAULT_KEY, possible_values = &Target::name_list())]
 		targets:Vec<String>,
 	},
-	#[structopt(
-		name = "build",
-		about = "Builds static libraries for target(s)"
-	)]
+	#[structopt(name = "build", about = "Builds static libraries for target(s)")]
 	Build {
 		#[structopt(name = "targets", default_value = Target::DEFAULT_KEY, possible_values = &Target::name_list())]
 		targets:Vec<String>,
@@ -149,10 +141,7 @@ pub enum Command {
 			help = "Value of `GCC_PREPROCESSOR_DEFINITIONS` env var"
 		)]
 		gcc_preprocessor_definitions:String,
-		#[structopt(
-			long = "header-search-paths",
-			help = "Value of `HEADER_SEARCH_PATHS` env var"
-		)]
+		#[structopt(long = "header-search-paths", help = "Value of `HEADER_SEARCH_PATHS` env var")]
 		header_search_paths:String,
 		#[structopt(
             long = "configuration",
@@ -160,17 +149,9 @@ pub enum Command {
             parse(from_str = profile_from_configuration),
         )]
 		profile:opts::Profile,
-		#[structopt(
-			long = "force-color",
-			help = "Value of `FORCE_COLOR` env var"
-		)]
+		#[structopt(long = "force-color", help = "Value of `FORCE_COLOR` env var")]
 		force_color:bool,
-		#[structopt(
-			name = "ARCHS",
-			help = "Value of `ARCHS` env var",
-			index = 1,
-			required = true
-		)]
+		#[structopt(name = "ARCHS", help = "Value of `ARCHS` env var", index = 1, required = true)]
 		arches:Vec<String>,
 	},
 }
@@ -210,69 +191,47 @@ impl Reportable for Error {
 			Self::EnvInitFailed(err) => err.report(),
 			Self::RustVersionCheckFailed(err) => err.report(),
 			Self::DevicePromptFailed(err) => err.report(),
-			Self::TargetInvalid(err) => {
-				Report::error("Specified target was invalid", err)
-			},
+			Self::TargetInvalid(err) => Report::error("Specified target was invalid", err),
 			Self::ConfigFailed(err) => err.report(),
 			Self::MetadataFailed(err) => err.report(),
 			Self::Unsupported => {
 				Report::error(
 					"iOS is marked as unsupported in your Cargo.toml metadata",
-					"If your project should support Android, modify your \
-					 Cargo.toml, then run `cargo mobile init` and try again.",
+					"If your project should support Android, modify your Cargo.toml, then run \
+					 `cargo mobile init` and try again.",
 				)
 			},
 			Self::ProjectDirAbsent { project_dir } => {
 				Report::action_request(
 					"Please run `cargo mobile init` and try again!",
-					format!(
-						"Xcode project directory {:?} doesn't exist.",
-						project_dir
-					),
+					format!("Xcode project directory {:?} doesn't exist.", project_dir),
 				)
 			},
-			Self::OpenFailed(err) => {
-				Report::error("Failed to open project in Xcode", err)
-			},
+			Self::OpenFailed(err) => Report::error("Failed to open project in Xcode", err),
 			Self::CheckFailed(err) => err.report(),
 			Self::BuildFailed(err) => err.report(),
 			Self::ArchiveFailed(err) => err.report(),
 			Self::ExportFailed(err) => err.report(),
 			Self::RunFailed(err) => err.report(),
-			Self::ListFailed(err) => {
-				Report::error("Failed to list devices", err)
-			},
-			Self::NoHomeDir(err) => {
-				Report::error("Failed to load cargo env profile", err)
-			},
-			Self::CargoEnvFailed(err) => {
-				Report::error("Failed to load cargo env profile", err)
-			},
+			Self::ListFailed(err) => Report::error("Failed to list devices", err),
+			Self::NoHomeDir(err) => Report::error("Failed to load cargo env profile", err),
+			Self::CargoEnvFailed(err) => Report::error("Failed to load cargo env profile", err),
 			Self::SdkRootInvalid { sdk_root } => {
 				Report::error(
 					"SDK root provided by Xcode was invalid",
-					format!(
-						"{:?} doesn't exist or isn't a directory",
-						sdk_root
-					),
+					format!("{:?} doesn't exist or isn't a directory", sdk_root),
 				)
 			},
 			Self::IncludeDirInvalid { include_dir } => {
 				Report::error(
 					"Include dir was invalid",
-					format!(
-						"{:?} doesn't exist or isn't a directory",
-						include_dir
-					),
+					format!("{:?} doesn't exist or isn't a directory", include_dir),
 				)
 			},
 			Self::MacosSdkRootInvalid { macos_sdk_root } => {
 				Report::error(
 					"macOS SDK root was invalid",
-					format!(
-						"{:?} doesn't exist or isn't a directory",
-						macos_sdk_root
-					),
+					format!("{:?} doesn't exist or isn't a directory", macos_sdk_root),
 				)
 			},
 			Self::ArchInvalid { arch } => {
@@ -282,22 +241,16 @@ impl Reportable for Error {
 				)
 			},
 			Self::CompileLibFailed(err) => err.report(),
-			Self::PodCommandFailed(err) => {
-				Report::error("pod command failed", err)
-			},
+			Self::PodCommandFailed(err) => Report::error("pod command failed", err),
 			Self::CopyLibraryFailed(err) => {
-				Report::error(
-					"Failed to copy static library to Xcode Project",
-					err,
-				)
+				Report::error("Failed to copy static library to Xcode Project", err)
 			},
 			Self::LibNotFound { path } => {
 				Report::error(
 					"Library artifact not found",
 					format!(
-						"Library not found at {}. Make sure your Cargo.toml \
-						 file has a [lib] block with `crate-type = \
-						 [\"staticlib\", \"cdylib\", \"rlib\"]`",
+						"Library not found at {}. Make sure your Cargo.toml file has a [lib] \
+						 block with `crate-type = [\"staticlib\", \"cdylib\", \"rlib\"]`",
 						path.display()
 					),
 				)
@@ -322,11 +275,10 @@ impl Exec for Input {
 			wrapper:&TextWrapper,
 			f:impl FnOnce(&Config, &Metadata) -> Result<(), Error>,
 		) -> Result<(), Error> {
-			let (config, _origin) =
-				OmniConfig::load_or_gen(".", non_interactive, wrapper)
-					.map_err(Error::ConfigFailed)?;
-			let metadata = OmniMetadata::load(config.app().root_dir())
-				.map_err(Error::MetadataFailed)?;
+			let (config, _origin) = OmniConfig::load_or_gen(".", non_interactive, wrapper)
+				.map_err(Error::ConfigFailed)?;
+			let metadata =
+				OmniMetadata::load(config.app().root_dir()).map_err(Error::MetadataFailed)?;
 			if metadata.apple().supported() {
 				f(config.apple(), metadata.apple())
 			} else {
@@ -336,9 +288,7 @@ impl Exec for Input {
 
 		fn ensure_init(config:&Config) -> Result<(), Error> {
 			if !config.project_dir_exists() {
-				Err(Error::ProjectDirAbsent {
-					project_dir:config.project_dir(),
-				})
+				Err(Error::ProjectDirAbsent { project_dir:config.project_dir() })
 			} else {
 				Ok(())
 			}
@@ -348,14 +298,9 @@ impl Exec for Input {
 			os::open_in_xcode(config.project_dir()).map_err(Error::OpenFailed)
 		}
 
-		let version_check = || {
-			rust_version_check(wrapper).map_err(Error::RustVersionCheckFailed)
-		};
+		let version_check = || rust_version_check(wrapper).map_err(Error::RustVersionCheckFailed);
 
-		let Self {
-			flags: GlobalFlags { noise_level, non_interactive },
-			command,
-		} = self;
+		let Self { flags: GlobalFlags { noise_level, non_interactive }, command } = self;
 		let env = Env::new().map_err(Error::EnvInitFailed)?;
 		match command {
 			Command::Open => {
@@ -396,8 +341,7 @@ impl Exec for Input {
 									&env,
 									noise_level,
 									profile,
-									BuildConfig::default()
-										.allow_provisioning_updates(),
+									BuildConfig::default().allow_provisioning_updates(),
 								)
 								.map_err(Error::BuildFailed)
 						},
@@ -405,11 +349,7 @@ impl Exec for Input {
 					.map_err(Error::TargetInvalid)?
 				})
 			},
-			Command::Archive {
-				targets,
-				build_number,
-				profile: cli::Profile { profile },
-			} => {
+			Command::Archive { targets, build_number, profile: cli::Profile { profile } } => {
 				with_config(non_interactive, wrapper, |config, _| {
 					version_check()?;
 					ensure_init(config)?;
@@ -418,8 +358,7 @@ impl Exec for Input {
 						&detect_target_ok,
 						&env,
 						|target:&Target| {
-							let mut app_version =
-								config.bundle_version().clone();
+							let mut app_version = config.bundle_version().clone();
 							if let Some(build_number) = build_number {
 								app_version.push_extra(build_number);
 							}
@@ -430,8 +369,7 @@ impl Exec for Input {
 									&env,
 									noise_level,
 									profile,
-									BuildConfig::new()
-										.allow_provisioning_updates(),
+									BuildConfig::new().allow_provisioning_updates(),
 								)
 								.map_err(Error::BuildFailed)?;
 							target
@@ -441,8 +379,7 @@ impl Exec for Input {
 									noise_level,
 									profile,
 									Some(app_version),
-									ArchiveConfig::new()
-										.allow_provisioning_updates(),
+									ArchiveConfig::new().allow_provisioning_updates(),
 								)
 								.map_err(Error::ArchiveFailed)
 						},
@@ -456,40 +393,23 @@ impl Exec for Input {
 					ensure_init(config)?;
 					device_prompt(&env)
 						.map_err(Error::DevicePromptFailed)?
-						.run(
-							config,
-							&env,
-							noise_level,
-							non_interactive,
-							profile,
-						)
+						.run(config, &env, noise_level, non_interactive, profile)
 						.and_then(|h| {
-							h.wait().map(|_| ()).map_err(|e| {
-								RunError::DeployFailed(e.to_string())
-							})
+							h.wait().map(|_| ()).map_err(|e| RunError::DeployFailed(e.to_string()))
 						})
 						.map_err(Error::RunFailed)
 				})
 			},
 			Command::List => {
-				device::list_devices(&env).map_err(Error::ListFailed).map(
-					|device_list| {
-						prompt::list_display_only(
-							device_list.iter(),
-							device_list.len(),
-						);
-					},
-				)
+				device::list_devices(&env).map_err(Error::ListFailed).map(|device_list| {
+					prompt::list_display_only(device_list.iter(), device_list.len());
+				})
 			},
 			Command::Pod { mut arguments } => {
 				with_config(non_interactive, wrapper, |config, _| {
-					arguments.push(format!(
-						"--project-directory={}",
-						config.project_dir().display()
-					));
-					duct::cmd("pod", arguments)
-						.run()
-						.map_err(Error::PodCommandFailed)?;
+					arguments
+						.push(format!("--project-directory={}", config.project_dir().display()));
+					duct::cmd("pod", arguments).run().map_err(Error::PodCommandFailed)?;
 					Ok(())
 				})
 			},
@@ -508,9 +428,7 @@ impl Exec for Input {
 					// additions made by the user's profile, so we'll
 					// manually add cargo's `PATH`.
 					let env = env.prepend_to_path(
-						util::home_dir()
-							.map_err(Error::NoHomeDir)?
-							.join(".cargo/bin"),
+						util::home_dir().map_err(Error::NoHomeDir)?.join(".cargo/bin"),
 					);
 
 					if !sdk_root.is_dir() {
@@ -525,14 +443,10 @@ impl Exec for Input {
 
 					// Host flags that are used by build scripts
 					let (macos_isysroot, library_path) = {
-						let macos_sdk_root = sdk_root.join(
-							"../../../../MacOSX.platform/Developer/SDKs/\
-							 MacOSX.sdk",
-						);
+						let macos_sdk_root =
+							sdk_root.join("../../../../MacOSX.platform/Developer/SDKs/MacOSX.sdk");
 						if !macos_sdk_root.is_dir() {
-							return Err(Error::MacosSdkRootInvalid {
-								macos_sdk_root,
-							});
+							return Err(Error::MacosSdkRootInvalid { macos_sdk_root });
 						}
 						(
 							format!("-isysroot {}", macos_sdk_root.display()),
@@ -540,34 +454,20 @@ impl Exec for Input {
 						)
 					};
 					host_env.insert("MAC_FLAGS", macos_isysroot.as_ref());
-					host_env.insert(
-						"CFLAGS_x86_64_apple_darwin",
-						macos_isysroot.as_ref(),
-					);
-					host_env.insert(
-						"CXXFLAGS_x86_64_apple_darwin",
-						macos_isysroot.as_ref(),
-					);
+					host_env.insert("CFLAGS_x86_64_apple_darwin", macos_isysroot.as_ref());
+					host_env.insert("CXXFLAGS_x86_64_apple_darwin", macos_isysroot.as_ref());
 
-					host_env.insert(
-						"OBJC_INCLUDE_PATH_x86_64_apple_darwin",
-						include_dir.as_os_str(),
-					);
+					host_env
+						.insert("OBJC_INCLUDE_PATH_x86_64_apple_darwin", include_dir.as_os_str());
 
 					host_env.insert("RUST_BACKTRACE", "1".as_ref());
 
-					host_env.insert(
-						"FRAMEWORK_SEARCH_PATHS",
-						framework_search_paths.as_ref(),
-					);
+					host_env.insert("FRAMEWORK_SEARCH_PATHS", framework_search_paths.as_ref());
 					host_env.insert(
 						"GCC_PREPROCESSOR_DEFINITIONS",
 						gcc_preprocessor_definitions.as_ref(),
 					);
-					host_env.insert(
-						"HEADER_SEARCH_PATHS",
-						header_search_paths.as_ref(),
-					);
+					host_env.insert("HEADER_SEARCH_PATHS", header_search_paths.as_ref());
 
 					let macos_target = Target::macos();
 
@@ -582,40 +482,30 @@ impl Exec for Input {
 
 						// Set target-specific flags
 						let (triple, rust_triple) = match arch.as_str() {
-							"arm64" => {
-								("aarch64_apple_ios", "aarch64-apple-ios")
-							},
+							"arm64" => ("aarch64_apple_ios", "aarch64-apple-ios"),
 							// FIXME triple for cflags seems incorrect and we
 							// don't actually need to set it when cross
 							// compile simulator target. "arm64-sim" =>
 							// ("aarch64_apple_ios", "aarch64-apple-ios"),
-							"x86_64" => {
-								("x86_64_apple_ios", "x86_64-apple-ios")
-							},
+							"x86_64" => ("x86_64_apple_ios", "x86_64-apple-ios"),
 							_ => return Err(Error::ArchInvalid { arch }),
 						};
 						let cflags = format!("CFLAGS_{}", triple);
 						let cxxflags = format!("CFLAGS_{}", triple);
-						let objc_include_path =
-							format!("OBJC_INCLUDE_PATH_{}", triple);
+						let objc_include_path = format!("OBJC_INCLUDE_PATH_{}", triple);
 						let mut target_env = host_env.clone();
 						target_env.insert(cflags.as_ref(), isysroot.as_ref());
 						target_env.insert(cxxflags.as_ref(), isysroot.as_ref());
-						target_env.insert(
-							objc_include_path.as_ref(),
-							include_dir.as_ref(),
-						);
+						target_env.insert(objc_include_path.as_ref(), include_dir.as_ref());
 
 						let target = if macos {
 							// Prevents linker errors in build scripts and proc
 							// macros: https://github.com/signalapp/libsignal-client/commit/02899cac643a14b2ced7c058cc15a836a2165b6d
-							target_env
-								.insert("LIBRARY_PATH", library_path.as_ref());
+							target_env.insert("LIBRARY_PATH", library_path.as_ref());
 							&macos_target
 						} else {
-							Target::for_arch(&arch).ok_or_else(|| {
-								Error::ArchInvalid { arch:arch.to_owned() }
-							})?
+							Target::for_arch(&arch)
+								.ok_or_else(|| Error::ArchInvalid { arch:arch.to_owned() })?
 						};
 
 						target
@@ -635,9 +525,7 @@ impl Exec for Input {
 							profile.as_str(),
 							config.app().lib_name()
 						);
-						let lib_path = PathBuf::from(format!(
-							"../../target/{lib_location}"
-						));
+						let lib_path = PathBuf::from(format!("../../target/{lib_location}"));
 
 						if !lib_path.exists() {
 							return Err(Error::LibNotFound { path:lib_path });
@@ -651,11 +539,8 @@ impl Exec for Input {
 							))
 							.map_err(Error::CopyLibraryFailed)?;
 
-							std::fs::copy(
-								lib_path,
-								format!("Sources/{lib_location}"),
-							)
-							.map_err(Error::CopyLibraryFailed)?;
+							std::fs::copy(lib_path, format!("Sources/{lib_location}"))
+								.map_err(Error::CopyLibraryFailed)?;
 						}
 					}
 					Ok(())

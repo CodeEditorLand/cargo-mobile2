@@ -61,10 +61,7 @@ impl FromStr for VersionNumber {
 				let extra = Some(
 					s.map(|s| {
 						s.parse().map_err(|source| {
-							VersionNumberError::ExtraVersionInvalid {
-								version:v.to_owned(),
-								source,
-							}
+							VersionNumberError::ExtraVersionInvalid { version:v.to_owned(), source }
 						})
 					})
 					.collect::<Result<Vec<_>, _>>()?,
@@ -76,9 +73,7 @@ impl FromStr for VersionNumber {
 }
 
 impl VersionNumber {
-	pub fn new_from_triple(triple:VersionTriple) -> Self {
-		Self { triple, extra:None }
-	}
+	pub fn new_from_triple(triple:VersionTriple) -> Self { Self { triple, extra:None } }
 
 	pub const fn new(triple:VersionTriple, extra:Option<Vec<u32>>) -> Self {
 		Self { triple, extra }

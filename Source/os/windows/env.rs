@@ -13,14 +13,11 @@ impl Env {
 
 		let path = env::var_os("Path").ok_or(Error::NotSet("PATH"))?;
 		let pathext = env::var_os("PATHEXT").ok_or(Error::NotSet("PATHEXT"))?;
-		let program_data =
-			env::var_os("ProgramData").ok_or(Error::NotSet("ProgramData"))?;
-		let system_root =
-			env::var_os("SystemRoot").ok_or(Error::NotSet("SystemRoot"))?;
+		let program_data = env::var_os("ProgramData").ok_or(Error::NotSet("ProgramData"))?;
+		let system_root = env::var_os("SystemRoot").ok_or(Error::NotSet("SystemRoot"))?;
 		let temp = env::var_os("TEMP").ok_or(Error::NotSet("TEMP"))?;
 		let tmp = env::var_os("TMP").ok_or(Error::NotSet("TMP"))?;
-		let userprofile =
-			env::var_os("USERPROFILE").ok_or(Error::NotSet("USERPROFILE"))?;
+		let userprofile = env::var_os("USERPROFILE").ok_or(Error::NotSet("USERPROFILE"))?;
 
 		vars.insert("PATH".into(), path);
 		vars.insert("PATHEXT".into(), pathext);
@@ -50,9 +47,7 @@ impl Env {
 		self
 	}
 
-	pub fn insert_env_var(&mut self, key:String, value:OsString) {
-		self.vars.insert(key, value);
-	}
+	pub fn insert_env_var(&mut self, key:String, value:OsString) { self.vars.insert(key, value); }
 
 	pub fn explicit_env_vars(mut self, vars:HashMap<String, OsString>) -> Self {
 		self.vars.extend(vars);

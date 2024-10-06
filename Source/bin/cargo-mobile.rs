@@ -41,10 +41,7 @@ pub struct Input {
 
 #[derive(Clone, Debug, StructOpt)]
 pub enum Command {
-	#[structopt(
-		name = "init",
-		about = "Creates a new project in the current working directory"
-	)]
+	#[structopt(name = "init", about = "Creates a new project in the current working directory")]
 	Init {
 		#[structopt(flatten)]
 		skip_dev_tools:cli::SkipDevTools,
@@ -54,16 +51,10 @@ pub enum Command {
 		reinstall_deps:cli::ReinstallDeps,
 		#[structopt(long = "open", help = "Open in default code editor")]
 		open_in_editor:bool,
-		#[structopt(
-			long = "submodule-commit",
-			help = "Template pack commit to checkout"
-		)]
+		#[structopt(long = "submodule-commit", help = "Template pack commit to checkout")]
 		submodule_commit:Option<String>,
 	},
-	#[structopt(
-		name = "new",
-		about = "Creates a new project in a new directory"
-	)]
+	#[structopt(name = "new", about = "Creates a new project in a new directory")]
 	New {
 		#[structopt(flatten)]
 		skip_dev_tools:cli::SkipDevTools,
@@ -73,10 +64,7 @@ pub enum Command {
 		reinstall_deps:cli::ReinstallDeps,
 		#[structopt(long = "open", help = "Open in default code editor")]
 		open_in_editor:bool,
-		#[structopt(
-			long = "submodule-commit",
-			help = "Template pack commit to checkout"
-		)]
+		#[structopt(long = "submodule-commit", help = "Template pack commit to checkout")]
 		submodule_commit:Option<String>,
 		#[structopt(
 			name = "DIRECTORY",
@@ -90,26 +78,21 @@ pub enum Command {
 	Open,
 	#[structopt(name = "update", about = "Update `cargo-mobile2`")]
 	Update {
-		#[structopt(
-			long = "init",
-			help = "Regenerate project if update succeeds"
-		)]
+		#[structopt(long = "init", help = "Regenerate project if update succeeds")]
 		init:bool,
 	},
 	#[cfg_attr(
 		target_os = "macos",
 		structopt(
 			name = "apple",
-			about = "iOS commands (tip: type less by running `cargo apple` \
-			         instead!)"
+			about = "iOS commands (tip: type less by running `cargo apple` instead!)"
 		)
 	)]
 	#[cfg(target_os = "macos")]
 	Apple(cargo_mobile2::apple::cli::Command),
 	#[structopt(
 		name = "android",
-		about = "Android commands (tip: type less by running `cargo android` \
-		         instead!)"
+		about = "Android commands (tip: type less by running `cargo android` instead!)"
 	)]
 	Android(cargo_mobile2::android::cli::Command),
 	#[structopt(
@@ -143,32 +126,19 @@ impl Reportable for Error {
 		match self {
 			Self::InitFailed(err) => err.report(),
 			Self::DirCreationFailed { path, source } => {
-				Report::error(
-					format!("Failed to create directory {:?}", path),
-					source,
-				)
+				Report::error(format!("Failed to create directory {:?}", path), source)
 			},
 			Self::DirChangeFailed { path, source } => {
-				Report::error(
-					format!("Failed to change current directory {:?}", path),
-					source,
-				)
+				Report::error(format!("Failed to change current directory {:?}", path), source)
 			},
 			Self::OpenFailed(err) => {
-				Report::error(
-					"Failed to open project in default code editor",
-					err,
-				)
+				Report::error("Failed to open project in default code editor", err)
 			},
-			Self::UpdateFailed(err) => {
-				Report::error("Failed to update `cargo-mobile2`", err)
-			},
+			Self::UpdateFailed(err) => Report::error("Failed to update `cargo-mobile2`", err),
 			#[cfg(target_os = "macos")]
 			Self::AppleFailed(err) => err.report(),
 			Self::AndroidFailed(err) => err.report(),
-			Self::DoctorFailed(err) => {
-				Report::error("Failed to run doctor", err)
-			},
+			Self::DoctorFailed(err) => Report::error("Failed to run doctor", err),
 		}
 	}
 }
@@ -184,8 +154,7 @@ impl Exec for Input {
 		match command {
 			Command::Init {
 				skip_dev_tools: cli::SkipDevTools { skip_dev_tools },
-				skip_targets_install:
-					cli::SkipTargetsInstall { skip_targets_install },
+				skip_targets_install: cli::SkipTargetsInstall { skip_targets_install },
 				reinstall_deps: cli::ReinstallDeps { reinstall_deps },
 				open_in_editor,
 				submodule_commit,
@@ -205,8 +174,7 @@ impl Exec for Input {
 			},
 			Command::New {
 				skip_dev_tools: cli::SkipDevTools { skip_dev_tools },
-				skip_targets_install:
-					cli::SkipTargetsInstall { skip_targets_install },
+				skip_targets_install: cli::SkipTargetsInstall { skip_targets_install },
 				reinstall_deps: cli::ReinstallDeps { reinstall_deps },
 				open_in_editor,
 				submodule_commit,
@@ -215,9 +183,8 @@ impl Exec for Input {
 				std::fs::create_dir_all(&directory).map_err(|source| {
 					Error::DirCreationFailed { path:directory.clone(), source }
 				})?;
-				std::env::set_current_dir(&directory).map_err(|source| {
-					Error::DirChangeFailed { path:directory, source }
-				})?;
+				std::env::set_current_dir(&directory)
+					.map_err(|source| Error::DirChangeFailed { path:directory, source })?;
 				init::exec(
 					wrapper,
 					non_interactive,
@@ -231,9 +198,7 @@ impl Exec for Input {
 				.map(|_| ())
 				.map_err(|e| Error::InitFailed(*e))
 			},
-			Command::Open => {
-				util::open_in_editor(".").map_err(Error::OpenFailed)
-			},
+			Command::Open => util::open_in_editor(".").map_err(Error::OpenFailed),
 			Command::Update { init } => {
 				update::update(wrapper).map_err(Error::UpdateFailed)?;
 				if init {
@@ -262,9 +227,7 @@ impl Exec for Input {
 					.exec(wrapper)
 					.map_err(Error::AndroidFailed)
 			},
-			Command::Doctor => {
-				doctor::exec(wrapper).map_err(Error::DoctorFailed)
-			},
+			Command::Doctor => doctor::exec(wrapper).map_err(Error::DoctorFailed),
 		}
 	}
 }

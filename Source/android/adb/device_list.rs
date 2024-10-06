@@ -30,9 +30,7 @@ impl Reportable for Error {
 	fn report(&self) -> Report {
 		let msg = "Failed to detect connected Android devices";
 		match self {
-			Self::DevicesFailed(err) => {
-				err.report("Failed to run `adb devices`")
-			},
+			Self::DevicesFailed(err) => err.report("Failed to run `adb devices`"),
 			Self::NameFailed(err) => err.report(),
 			Self::ModelFailed(err) | Self::AbiFailed(err) => err.report(),
 			Self::AbiInvalid(_) => Report::error(msg, self),
@@ -56,12 +54,11 @@ pub fn device_list(env:&Env) -> Result<BTreeSet<Device<'static>>, Error> {
 					let serial_no = caps.get(1).unwrap().as_str().to_owned();
 					let model = get_prop(env, &serial_no, "ro.product.model")
 						.map_err(Error::ModelFailed)?;
-					let name = device_name(env, &serial_no)
-						.unwrap_or_else(|_| model.clone());
+					let name = device_name(env, &serial_no).unwrap_or_else(|_| model.clone());
 					let abi = get_prop(env, &serial_no, "ro.product.cpu.abi")
 						.map_err(Error::AbiFailed)?;
-					let target = Target::for_abi(&abi)
-						.ok_or_else(|| Error::AbiInvalid(abi.clone()))?;
+					let target =
+						Target::for_abi(&abi).ok_or_else(|| Error::AbiInvalid(abi.clone()))?;
 					Ok(Device::new(serial_no, name, model, target))
 				})
 				.collect()

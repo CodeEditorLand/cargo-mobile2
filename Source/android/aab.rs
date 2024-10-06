@@ -55,11 +55,7 @@ pub fn build(
 				),
 				format!(
 					"-ParchList={}",
-					targets
-						.iter()
-						.map(|t| t.arch)
-						.collect::<Vec<_>>()
-						.join(",")
+					targets.iter().map(|t| t.arch).collect::<Vec<_>>().join(",")
 				),
 				format!(
 					"-PtargetList={}",
@@ -87,8 +83,8 @@ pub fn build(
 		.inspect_err(|err| {
 			if err.kind() == std::io::ErrorKind::NotFound {
 				log::error!(
-					"`gradlew` not found. Make sure you have the Android SDK \
-					 installed and added to your PATH"
+					"`gradlew` not found. Make sure you have the Android SDK installed and added \
+					 to your PATH"
 				);
 			}
 		})?
@@ -96,14 +92,13 @@ pub fn build(
 
 	let mut outputs = Vec::new();
 	if split_per_abi {
-		outputs.extend(targets.iter().map(|t| {
-			dunce::simplified(&aab_path(config, profile, t.arch)).to_path_buf()
-		}));
-	} else {
-		outputs.push(
-			dunce::simplified(&aab_path(config, profile, "universal"))
-				.to_path_buf(),
+		outputs.extend(
+			targets
+				.iter()
+				.map(|t| dunce::simplified(&aab_path(config, profile, t.arch)).to_path_buf()),
 		);
+	} else {
+		outputs.push(dunce::simplified(&aab_path(config, profile, "universal")).to_path_buf());
 	}
 
 	Ok(outputs)
@@ -144,14 +139,7 @@ pub mod cli {
 				.join(", ")
 		);
 
-		let outputs = super::build(
-			config,
-			env,
-			noise_level,
-			profile,
-			targets,
-			split_per_abi,
-		)?;
+		let outputs = super::build(config, env, noise_level, profile, targets, split_per_abi)?;
 
 		println!("\nFinished building AAB(s):");
 		for p in &outputs {

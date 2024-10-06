@@ -27,14 +27,10 @@ pub fn check() -> Result<Info, Error> {
 	let name = regex!(r#"\bNAME="?(.*)\b"#)
 		.captures(&release)
 		.map(|caps| caps[1].to_owned())
-		.ok_or_else(|| {
-			Error::NameMissing { path:path.into(), text:release.to_owned() }
-		})?;
+		.ok_or_else(|| Error::NameMissing { path:path.into(), text:release.to_owned() })?;
 	let version = regex!(r#"\bVERSION="?(.*)\b"#)
 		.captures(&release)
 		.map(|caps| caps[1].to_owned())
-		.ok_or_else(|| {
-			Error::VersionMissing { path:path.into(), text:release.to_owned() }
-		})?;
+		.ok_or_else(|| Error::VersionMissing { path:path.into(), text:release.to_owned() })?;
 	Ok(Info { name, version })
 }

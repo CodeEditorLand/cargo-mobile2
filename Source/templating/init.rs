@@ -4,15 +4,7 @@ use handlebars::RenderErrorReason;
 
 use crate::{
 	bicycle::{
-		handlebars::{
-			self,
-			Context,
-			Handlebars,
-			Helper,
-			HelperResult,
-			Output,
-			RenderContext,
-		},
+		handlebars::{self, Context, Handlebars, Helper, HelperResult, Output, RenderContext},
 		Bicycle,
 		EscapeFn,
 		HelperDef,
@@ -27,14 +19,11 @@ fn get_str<'a>(helper:&'a Helper) -> &'a str {
 	helper.param(0).and_then(|v| v.value().as_str()).unwrap_or("")
 }
 
-fn get_str_array(
-	helper:&Helper,
-	formatter:impl Fn(&str) -> String,
-) -> Option<Vec<String>> {
+fn get_str_array(helper:&Helper, formatter:impl Fn(&str) -> String) -> Option<Vec<String>> {
 	helper.param(0).and_then(|v| {
-		v.value().as_array().and_then(|arr| {
-			arr.iter().map(|val| val.as_str().map(&formatter)).collect()
-		})
+		v.value()
+			.as_array()
+			.and_then(|arr| arr.iter().map(|val| val.as_str().map(&formatter)).collect())
 	})
 }
 
@@ -57,11 +46,7 @@ fn join(
 ) -> HelperResult {
 	out.write(
 		&get_str_array(helper, |s| s.to_string())
-			.ok_or_else(|| {
-				RenderErrorReason::Other(
-					"`join` helper wasn't given an array".into(),
-				)
-			})?
+			.ok_or_else(|| RenderErrorReason::Other("`join` helper wasn't given an array".into()))?
 			.join(", "),
 	)
 	.map_err(Into::into)
@@ -77,9 +62,7 @@ fn quote_and_join(
 	out.write(
 		&get_str_array(helper, |s| format!("{:?}", s))
 			.ok_or_else(|| {
-				RenderErrorReason::Other(
-					"`quote-and-join` helper wasn't given an array".into(),
-				)
+				RenderErrorReason::Other("`quote-and-join` helper wasn't given an array".into())
 			})?
 			.join(", "),
 	)
@@ -97,9 +80,7 @@ fn quote_and_join_colon_prefix(
 		&get_str_array(helper, |s| format!("{:?}", format!(":{}", s)))
 			.ok_or_else(|| {
 				RenderErrorReason::Other(
-					"`quote-and-join-colon-prefix` helper wasn't given an \
-					 array"
-						.into(),
+					"`quote-and-join-colon-prefix` helper wasn't given an array".into(),
 				)
 			})?
 			.join(", "),
@@ -167,19 +148,13 @@ fn app_root(ctx:&Context) -> Result<&str, RenderErrorReason> {
 	let app_root = ctx
 		.data()
 		.get(app::KEY)
-		.ok_or_else(|| {
-			RenderErrorReason::Other("`app` missing from template data.".into())
-		})?
+		.ok_or_else(|| RenderErrorReason::Other("`app` missing from template data.".into()))?
 		.get("root-dir")
 		.ok_or_else(|| {
-			RenderErrorReason::Other(
-				"`app.root-dir` missing from template data.".into(),
-			)
+			RenderErrorReason::Other("`app.root-dir` missing from template data.".into())
 		})?;
 	app_root.as_str().ok_or_else(|| {
-		RenderErrorReason::Other(
-			"`app.root-dir` contained invalid UTF-8..into()".into(),
-		)
+		RenderErrorReason::Other("`app.root-dir` contained invalid UTF-8..into()".into())
 	})
 }
 
@@ -190,17 +165,11 @@ fn prefix_path(
 	_:&mut RenderContext,
 	out:&mut dyn Output,
 ) -> HelperResult {
-	out.write(
-		util::prefix_path(app_root(ctx)?, get_str(helper))
-			.to_str()
-			.ok_or_else(|| {
-				RenderErrorReason::Other(
-					"Either the `app.root-dir` or the specified path \
-					 contained invalid UTF-8."
-						.into(),
-				)
-			})?,
-	)
+	out.write(util::prefix_path(app_root(ctx)?, get_str(helper)).to_str().ok_or_else(|| {
+		RenderErrorReason::Other(
+			"Either the `app.root-dir` or the specified path contained invalid UTF-8.".into(),
+		)
+	})?)
 	.map_err(Into::into)
 }
 
@@ -215,16 +184,13 @@ fn unprefix_path(
 		util::unprefix_path(app_root(ctx)?, get_str(helper))
 			.map_err(|_| {
 				RenderErrorReason::Other(
-					"Attempted to unprefix a path that wasn't in the app root \
-					 dir."
-						.into(),
+					"Attempted to unprefix a path that wasn't in the app root dir.".into(),
 				)
 			})?
 			.to_str()
 			.ok_or_else(|| {
 				RenderErrorReason::Other(
-					"Either the `app.root-dir` or the specified path \
-					 contained invalid UTF-8."
+					"Either the `app.root-dir` or the specified path contained invalid UTF-8."
 						.into(),
 				)
 			})?,
@@ -255,22 +221,15 @@ pub fn init(config:Option<&Config>) -> Bicycle {
 	Bicycle::new(
 		EscapeFn::None,
 		{
-			let mut helpers =
-				HashMap::<_, Box<dyn HelperDef + Send + Sync>>::new();
+			let mut helpers = HashMap::<_, Box<dyn HelperDef + Send + Sync>>::new();
 			helpers.insert("html-escape", Box::new(html_escape));
 			helpers.insert("join", Box::new(join));
 			helpers.insert("quote-and-join", Box::new(quote_and_join));
-			helpers.insert(
-				"quote-and-join-colon-prefix",
-				Box::new(quote_and_join_colon_prefix),
-			);
+			helpers.insert("quote-and-join-colon-prefix", Box::new(quote_and_join_colon_prefix));
 			helpers.insert("snake-case", Box::new(snake_case));
 			helpers.insert("ident-no-last-part", Box::new(ident_no_last_part));
 			helpers.insert("ident-last-part", Box::new(ident_last_part));
-			helpers.insert(
-				"escape-kotlin-keyword",
-				Box::new(escape_kotlin_keyword),
-			);
+			helpers.insert("escape-kotlin-keyword", Box::new(escape_kotlin_keyword));
 			helpers.insert("dot-to-slash", Box::new(dot_to_slash));
 			if config.is_some() {
 				// don't mix these up or very bad things will happen to all of

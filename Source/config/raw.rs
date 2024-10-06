@@ -76,8 +76,7 @@ impl Raw {
 	pub fn prompt(wrapper:&TextWrapper) -> Result<Self, PromptError> {
 		let app = app::Raw::prompt(wrapper).map_err(PromptError::AppFailed)?;
 		#[cfg(target_os = "macos")]
-		let apple = apple::config::Raw::prompt(wrapper)
-			.map_err(PromptError::AppleFailed)?;
+		let apple = apple::config::Raw::prompt(wrapper).map_err(PromptError::AppleFailed)?;
 		Ok(Self {
 			app,
 			#[cfg(target_os = "macos")]
@@ -116,21 +115,16 @@ impl Raw {
 		Ok(Some(path))
 	}
 
-	pub fn load(
-		cwd:impl AsRef<Path>,
-	) -> Result<Option<(PathBuf, Self)>, LoadError> {
+	pub fn load(cwd:impl AsRef<Path>) -> Result<Option<(PathBuf, Self)>, LoadError> {
 		Self::discover_root(cwd)
 			.map_err(LoadError::Discover)?
 			.map(|root_dir| {
 				let path = root_dir.join(super::file_name());
-				let toml_str = fs::read_to_string(&path).map_err(|cause| {
-					LoadError::Read { path:path.clone(), cause }
-				})?;
+				let toml_str = fs::read_to_string(&path)
+					.map_err(|cause| LoadError::Read { path:path.clone(), cause })?;
 				toml::from_str::<Self>(&toml_str)
 					.map(|raw| (root_dir, raw))
-					.map_err(|cause| {
-						LoadError::Parse { path:path.clone(), cause }
-					})
+					.map_err(|cause| LoadError::Parse { path:path.clone(), cause })
 			})
 			.transpose()
 	}

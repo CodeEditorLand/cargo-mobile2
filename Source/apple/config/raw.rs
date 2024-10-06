@@ -47,8 +47,7 @@ fn value_to_string(value:&PlistValue) -> String {
 		PlistValue::Bool(bool) => bool.to_string(),
 		PlistValue::String(string) => string.to_owned(),
 		PlistValue::Array(array) => {
-			let string =
-				array.iter().map(value_to_string).collect::<Vec<_>>().join(",");
+			let string = array.iter().map(value_to_string).collect::<Vec<_>>().join(",");
 			format!("[{}]", string)
 		},
 		PlistValue::Dictionary(dict) => dictionary_to_string(dict),
@@ -129,8 +128,8 @@ pub struct Raw {
 
 impl Raw {
 	pub fn detect() -> Result<Self, DetectError> {
-		let development_teams = teams::find_development_teams()
-			.map_err(DetectError::DeveloperTeamLookupFailed)?;
+		let development_teams =
+			teams::find_development_teams().map_err(DetectError::DeveloperTeamLookupFailed)?;
 		Ok(Self {
 			development_team:development_teams
 				.first()
@@ -153,10 +152,9 @@ impl Raw {
 
 	pub fn prompt(wrapper:&TextWrapper) -> Result<Self, PromptError> {
 		let development_team = {
-			let development_teams = teams::find_development_teams()
-				.map_err(PromptError::DeveloperTeamLookupFailed)?;
-			let default_team =
-				if !development_teams.is_empty() { Some("0") } else { None };
+			let development_teams =
+				teams::find_development_teams().map_err(PromptError::DeveloperTeamLookupFailed)?;
+			let default_team = if !development_teams.is_empty() { Some("0") } else { None };
 			println!("Detected development teams:");
 			for (index, team) in development_teams.iter().enumerate() {
 				if index == 0 {
@@ -207,10 +205,7 @@ impl Raw {
 					println!(
 						"{}",
 						wrapper
-							.fill(
-								"Uh-oh, you need to specify a development \
-								 team ID."
-							)
+							.fill("Uh-oh, you need to specify a development team ID.")
 							.bright_magenta()
 					);
 				}

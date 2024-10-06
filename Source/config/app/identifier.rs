@@ -108,9 +108,7 @@ impl fmt::Display for IdentifierError {
 	}
 }
 
-pub fn check_identifier_syntax(
-	identifier_name:&str,
-) -> Result<(), IdentifierError> {
+pub fn check_identifier_syntax(identifier_name:&str) -> Result<(), IdentifierError> {
 	if identifier_name.is_empty() {
 		return Err(IdentifierError::Empty);
 	}
@@ -123,21 +121,14 @@ pub fn check_identifier_syntax(
 			return Err(IdentifierError::EmptyLabel);
 		}
 		if RESERVED_JAVA_KEYWORDS.contains(&label) {
-			return Err(IdentifierError::ReservedKeyword {
-				keyword:label.to_owned(),
-			});
+			return Err(IdentifierError::ReservedKeyword { keyword:label.to_owned() });
 		}
 		if label.chars().next().unwrap().is_ascii_digit() {
-			return Err(IdentifierError::StartsWithDigit {
-				label:label.to_owned(),
-			});
+			return Err(IdentifierError::StartsWithDigit { label:label.to_owned() });
 		}
 		let mut bad_chars = Vec::new();
 		for c in label.chars() {
-			if !(c.is_ascii_alphanumeric()
-				|| c == '_' || c == '-'
-				|| bad_chars.contains(&c))
-			{
+			if !(c.is_ascii_alphanumeric() || c == '_' || c == '-' || bad_chars.contains(&c)) {
 				bad_chars.push(c);
 			}
 		}
@@ -147,9 +138,7 @@ pub fn check_identifier_syntax(
 	}
 	for pkg_name in RESERVED_PACKAGE_NAMES.iter() {
 		if identifier_name.ends_with(pkg_name) {
-			return Err(IdentifierError::ReservedPackageName {
-				package_name:pkg_name.to_string(),
-			});
+			return Err(IdentifierError::ReservedPackageName { package_name:pkg_name.to_string() });
 		}
 	}
 	Ok(())
@@ -171,9 +160,7 @@ mod test {
 		case("com.tauri-apps.dev"),
 		case("com-tauri.apps_demo.core")
 	)]
-	fn test_check_identifier_syntax_correct(input:&str) {
-		check_identifier_syntax(input).unwrap();
-	}
+	fn test_check_identifier_syntax_correct(input:&str) { check_identifier_syntax(input).unwrap(); }
 
 	#[rstest(input, error,
         case("ラスト.テスト", IdentifierError::NotAsciiAlphanumeric { bad_chars: vec!['ラ', 'ス', 'ト'] }),
@@ -185,9 +172,6 @@ mod test {
         case("com..empty.label", IdentifierError::EmptyLabel)
     )]
 	fn test_check_identifier_syntax_error(input:&str, error:IdentifierError) {
-		assert_eq!(
-			check_identifier_syntax(input).unwrap_err().to_string(),
-			error.to_string()
-		)
+		assert_eq!(check_identifier_syntax(input).unwrap_err().to_string(), error.to_string())
 	}
 }

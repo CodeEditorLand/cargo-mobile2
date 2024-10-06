@@ -52,30 +52,22 @@ impl FancyPack {
 
 		let path = path.as_ref();
 		let raw = {
-			let toml_str = fs::read_to_string(path).map_err(|cause| {
-				FancyPackParseError::ReadFailed { path:path.to_owned(), cause }
-			})?;
-			toml::from_str::<Raw>(&toml_str).map_err(|cause| {
-				FancyPackParseError::ParseFailed { path:path.to_owned(), cause }
-			})?
+			let toml_str = fs::read_to_string(path)
+				.map_err(|cause| FancyPackParseError::ReadFailed { path:path.to_owned(), cause })?;
+			toml::from_str::<Raw>(&toml_str)
+				.map_err(|cause| FancyPackParseError::ParseFailed { path:path.to_owned(), cause })?
 		};
 
-		let raw_path = path
-			.parent()
-			.map(|p| p.join(&raw.path))
-			.unwrap_or(raw.path.clone());
+		let raw_path = path.parent().map(|p| p.join(&raw.path)).unwrap_or(raw.path.clone());
 
-		let real_path = util::expand_home(raw_path)
-			.map_err(FancyPackParseError::NoHomeDir)?;
+		let real_path = util::expand_home(raw_path).map_err(FancyPackParseError::NoHomeDir)?;
 		let this = Self {
 			path:real_path,
 			base:raw
 				.base
 				.map(|name| {
 					Pack::lookup(
-						path.parent().expect(
-							"developer error: templates dir had no parent",
-						),
+						path.parent().expect("developer error: templates dir had no parent"),
 						name,
 					)
 				})
@@ -110,9 +102,7 @@ impl FancyPack {
 				.map(|base| {
 					base.resolve(
 						git,
-						submodule_commit.filter(|_| {
-							base.submodule_path() == self.submodule_path()
-						}),
+						submodule_commit.filter(|_| base.submodule_path() == self.submodule_path()),
 					)
 				})
 				.transpose()?

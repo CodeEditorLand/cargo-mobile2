@@ -25,10 +25,7 @@ pub use duct::Handle as ChildHandle;
 pub static NAME:&str = "mobile";
 
 trait DuctExpressionExt {
-	fn vars(
-		self,
-		vars:impl IntoIterator<Item = (impl AsRef<OsStr>, impl AsRef<OsStr>)>,
-	) -> Self;
+	fn vars(self, vars:impl IntoIterator<Item = (impl AsRef<OsStr>, impl AsRef<OsStr>)>) -> Self;
 	fn run_and_detach(self) -> Result<(), std::io::Error>;
 	// Sets the stdin, stdout and stderr to properly
 	// show the command output in a Node.js wrapper (napi-rs).
@@ -60,21 +57,13 @@ impl DuctExpressionExt for duct::Expression {
 					match libc::fork() {
 						-1 => {
 							let err = std::io::Error::last_os_error();
-							log::error!(
-								"`fork` failed for command {:?}: {}",
-								display,
-								err
-							);
+							log::error!("`fork` failed for command {:?}: {}", display, err);
 							Err(err)
 						},
 						0 => {
 							if libc::setsid() == -1 {
 								let err = std::io::Error::last_os_error();
-								log::error!(
-									"`setsid` failed for command {:?}: {}",
-									display,
-									err
-								);
+								log::error!("`setsid` failed for command {:?}: {}", display, err);
 								Err(err)
 							} else {
 								Ok(())

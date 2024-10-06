@@ -36,13 +36,8 @@ pub enum Error {
 	#[error("`app.identifier` {identifier} isn't valid: {cause}")]
 	IdentifierInvalid { identifier:String, cause:identifier::IdentifierError },
 	#[error("`app.asset-dir` {asset_dir} couldn't be normalized: {cause}")]
-	AssetDirNormalizationFailed {
-		asset_dir:PathBuf,
-		cause:util::NormalizationError,
-	},
-	#[error(
-		"`app.asset-dir` {asset_dir} is outside of the app root {root_dir}"
-	)]
+	AssetDirNormalizationFailed { asset_dir:PathBuf, cause:util::NormalizationError },
+	#[error("`app.asset-dir` {asset_dir} is outside of the app root {root_dir}")]
 	AssetDirOutsideOfAppRoot { asset_dir:PathBuf, root_dir:PathBuf },
 	#[error(transparent)]
 	TemplatePackNotFound(templating::LookupError),
@@ -94,51 +89,36 @@ impl App {
 		let identifier = {
 			let identifier = raw.identifier;
 			identifier::check_identifier_syntax(&identifier)
-				.map_err(|cause| {
-					Error::IdentifierInvalid {
-						identifier:identifier.clone(),
-						cause,
-					}
-				})
+				.map_err(|cause| Error::IdentifierInvalid { identifier:identifier.clone(), cause })
 				.map(|()| identifier)
 		}?;
 
 		if raw.asset_dir.as_deref() == Some(DEFAULT_ASSET_DIR) {
 			log::warn!(
-				"`{}.asset-dir` is set to the default value; you can remove \
-				 it from your config",
+				"`{}.asset-dir` is set to the default value; you can remove it from your config",
 				KEY
 			);
 		}
-		let asset_dir = raw
-			.asset_dir
-			.map(PathBuf::from)
-			.unwrap_or_else(|| DEFAULT_ASSET_DIR.into());
+		let asset_dir =
+			raw.asset_dir.map(PathBuf::from).unwrap_or_else(|| DEFAULT_ASSET_DIR.into());
 		if !util::under_root(&asset_dir, &root_dir).map_err(|cause| {
-			Error::AssetDirNormalizationFailed {
-				asset_dir:asset_dir.clone(),
-				cause,
-			}
+			Error::AssetDirNormalizationFailed { asset_dir:asset_dir.clone(), cause }
 		})? {
-			return Err(Error::AssetDirOutsideOfAppRoot {
-				asset_dir,
-				root_dir,
-			});
+			return Err(Error::AssetDirOutsideOfAppRoot { asset_dir, root_dir });
 		}
 
 		let template_pack = {
 			if raw.template_pack.as_deref() == Some(IMPLIED_TEMPLATE_PACK) {
 				log::warn!(
-					"`{}.template-pack` is set to the implied value; you can \
-					 remove it from your config",
+					"`{}.template-pack` is set to the implied value; you can remove it from your \
+					 config",
 					KEY
 				);
 			}
 			raw.template_pack.as_deref().unwrap_or(IMPLIED_TEMPLATE_PACK)
 		};
 		let template_pack = if cfg!(feature = "cli") {
-			Pack::lookup_app(template_pack)
-				.map_err(Error::TemplatePackNotFound)?
+			Pack::lookup_app(template_pack).map_err(Error::TemplatePackNotFound)?
 		} else {
 			Pack::Simple(Default::default())
 		};
@@ -155,9 +135,7 @@ impl App {
 		})
 	}
 
-	pub fn with_target_dir_resolver<
-		F:Fn(&str, Profile) -> PathBuf + 'static,
-	>(
+	pub fn with_target_dir_resolver<F:Fn(&str, Profile) -> PathBuf + 'static>(
 		mut self,
 		resolver:F,
 	) -> Self {
@@ -171,19 +149,9 @@ impl App {
 		if let Some(resolver) = &self.target_dir_resolver {
 			resolver(triple, profile)
 		} else if let Ok(target) = std::env::var("CARGO_TARGET_DIR") {
-			self.prefix_path(format!(
-				"{}/{}/{}",
-				target,
-				triple,
-				profile.as_str()
-			))
+			self.prefix_path(format!("{}/{}/{}", target, triple, profile.as_str()))
 		} else if let Ok(target) = std::env::var("CARGO_BUILD_TARGET_DIR") {
-			self.prefix_path(format!(
-				"{}/{}/{}",
-				target,
-				triple,
-				profile.as_str()
-			))
+			self.prefix_path(format!("{}/{}/{}", target, triple, profile.as_str()))
 		} else {
 			self.prefix_path(format!("target/{}/{}", triple, profile.as_str()))
 		}
@@ -193,10 +161,7 @@ impl App {
 		util::prefix_path(self.root_dir(), path)
 	}
 
-	pub fn unprefix_path(
-		&self,
-		path:impl AsRef<Path>,
-	) -> Result<PathBuf, util::PathNotPrefixed> {
+	pub fn unprefix_path(&self, path:impl AsRef<Path>) -> Result<PathBuf, util::PathNotPrefixed> {
 		util::unprefix_path(self.root_dir(), path)
 	}
 
@@ -207,9 +172,7 @@ impl App {
 		self.name().to_snek_case()
 	}
 
-	pub fn lib_name(&self) -> String {
-		self.lib_name.clone().unwrap_or_else(|| self.name_snake())
-	}
+	pub fn lib_name(&self) -> String { self.lib_name.clone().unwrap_or_else(|| self.name_snake()) }
 
 	pub fn stylized_name(&self) -> &str { &self.stylized_name }
 
@@ -229,9 +192,7 @@ impl App {
 			.join(".")
 	}
 
-	pub fn manifest_path(&self) -> PathBuf {
-		self.root_dir().join("Cargo.toml")
-	}
+	pub fn manifest_path(&self) -> PathBuf { self.root_dir().join("Cargo.toml") }
 
 	pub fn asset_dir(&self) -> PathBuf { self.root_dir().join(&self.asset_dir) }
 

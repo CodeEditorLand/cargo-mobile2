@@ -14,9 +14,7 @@ pub struct Emulator {
 }
 
 impl Display for Emulator {
-	fn fmt(&self, f:&mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-		write!(f, "{}", self.name)
-	}
+	fn fmt(&self, f:&mut std::fmt::Formatter<'_>) -> std::fmt::Result { write!(f, "{}", self.name) }
 }
 
 impl Emulator {
@@ -33,9 +31,7 @@ impl Emulator {
 		.dup_stdio()
 	}
 
-	pub fn start(&self, env:&Env) -> Result<Handle, std::io::Error> {
-		self.command(env).start()
-	}
+	pub fn start(&self, env:&Env) -> Result<Handle, std::io::Error> { self.command(env).start() }
 
 	pub fn start_detached(&self, env:&Env) -> Result<(), std::io::Error> {
 		self.command(env).run_and_detach()?;

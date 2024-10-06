@@ -68,10 +68,7 @@ impl Display for ErrorCause {
 	fn fmt(&self, f:&mut fmt::Formatter<'_>) -> fmt::Result {
 		match self {
 			Self::MissingFileName => {
-				write!(
-					f,
-					"Neither the source nor target contained a file name.",
-				)
+				write!(f, "Neither the source nor target contained a file name.",)
 			},
 			Self::CommandFailed(err) => {
 				write!(f, "`ln` command failed: {}", err)
@@ -124,12 +121,7 @@ impl Display for Error {
 		write!(
 			f,
 			"Failed to create a {} link from {:?} to {} {:?} ({}): {}",
-			self.link_type,
-			self.source,
-			self.target_style,
-			self.target,
-			self.force,
-			self.cause
+			self.link_type, self.source, self.target_style, self.target, self.force, self.cause
 		)
 	}
 }
@@ -172,14 +164,7 @@ impl<'a> Call<'a> {
 		} else {
 			Cow::Borrowed(target)
 		};
-		Ok(Self {
-			link_type,
-			force,
-			source,
-			target,
-			target_override,
-			target_style,
-		})
+		Ok(Self { link_type, force, source, target, target_override, target_style })
 	}
 
 	pub fn exec(self) -> Result<(), Error> {
@@ -193,9 +178,8 @@ impl<'a> Call<'a> {
 			},
 			Clobber::FileOrDirectory => {
 				if self.target_override.is_dir() {
-					remove_dir_all(self.target).map_err(|err| {
-						self.make_error(ErrorCause::IOError(err))
-					})?;
+					remove_dir_all(self.target)
+						.map_err(|err| self.make_error(ErrorCause::IOError(err)))?;
 				}
 				args.push("-f");
 			},
@@ -246,15 +230,9 @@ pub fn force_symlink_relative(
 ) -> Result<(), Error> {
 	let (abs_source, abs_target) = (abs_source.as_ref(), abs_target.as_ref());
 	let rel_source = super::relativize_path(abs_source, abs_target);
-	if target_style == TargetStyle::Directory
-		&& rel_source.file_name().is_none()
-	{
+	if target_style == TargetStyle::Directory && rel_source.file_name().is_none() {
 		if let Some(file_name) = abs_source.file_name() {
-			force_symlink(
-				rel_source,
-				abs_target.join(file_name),
-				TargetStyle::File,
-			)
+			force_symlink(rel_source, abs_target.join(file_name), TargetStyle::File)
 		} else {
 			Err(Error {
 				link_type:LinkType::Symbolic,

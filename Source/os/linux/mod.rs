@@ -18,18 +18,14 @@ pub use crate::{
 #[derive(Debug, Error)]
 pub enum DetectEditorError {
 	#[error(
-		"No default editor is set: xdg-mime queries for \"text/rust\" and \
-		 \"text/plain\" both failed"
+		"No default editor is set: xdg-mime queries for \"text/rust\" and \"text/plain\" both \
+		 failed"
 	)]
 	NoDefaultEditorSet,
-	#[error(
-		"Entry Not Found: xdg-mime returned an entry name that could not be \
-		 found"
-	)]
+	#[error("Entry Not Found: xdg-mime returned an entry name that could not be found")]
 	FreeDesktopEntryNotFound,
 	#[error(
-		"Entry Parse Error: xdg-mime returned an entry that could not be \
-		 parsed. Caused by {0}"
+		"Entry Parse Error: xdg-mime returned an entry that could not be parsed. Caused by {0}"
 	)]
 	FreeDesktopEntryParseError(io::Error),
 	#[error("Entry Parse Error: file lookup failed. Caused by {0}")]
@@ -96,10 +92,7 @@ impl Application {
             .unwrap_or(Err(DetectEditorError::FreeDesktopEntryNotFound))
 	}
 
-	pub fn open_file(
-		&self,
-		path:impl AsRef<Path>,
-	) -> Result<(), OpenFileError> {
+	pub fn open_file(&self, path:impl AsRef<Path>) -> Result<(), OpenFileError> {
 		let path = path.as_ref();
 
 		let maybe_icon = self.icon.as_deref();

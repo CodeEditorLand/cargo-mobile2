@@ -49,21 +49,14 @@ impl Action {
 		transform_path:impl Fn(&Path) -> Result<PathBuf, E>,
 	) -> Result<Self, E> {
 		let dest = append_path(dest, src, true);
-		Ok(Self::WriteTemplate {
-			src:src.to_owned(),
-			dest:transform_path(&dest)?,
-		})
+		Ok(Self::WriteTemplate { src:src.to_owned(), dest:transform_path(&dest)? })
 	}
 
-	pub fn is_create_directory(&self) -> bool {
-		matches!(self, Self::CreateDirectory { .. })
-	}
+	pub fn is_create_directory(&self) -> bool { matches!(self, Self::CreateDirectory { .. }) }
 
 	pub fn is_copy_file(&self) -> bool { matches!(self, Self::CopyFile { .. }) }
 
-	pub fn is_write_template(&self) -> bool {
-		matches!(self, Self::WriteTemplate { .. })
-	}
+	pub fn is_write_template(&self) -> bool { matches!(self, Self::WriteTemplate { .. }) }
 
 	/// Gets the destination of any [`Action`] variant.
 	pub fn dest(&self) -> &Path {
@@ -91,9 +84,7 @@ fn file_action<E>(
 	template_ext:Option<&str>,
 ) -> Result<Action, E> {
 	let is_template = template_ext
-		.and_then(|template_ext| {
-			src.extension().filter(|ext| *ext == template_ext)
-		})
+		.and_then(|template_ext| src.extension().filter(|ext| *ext == template_ext))
 		.is_some();
 	if is_template {
 		Action::new_write_template(src, dest, transform_path)
@@ -104,9 +95,7 @@ fn file_action<E>(
 
 /// An error encountered when traversing a file tree.
 #[derive(Debug, Error)]
-pub enum TraversalError<
-	E:Debug + Display + StdError + 'static = super::RenderingError,
-> {
+pub enum TraversalError<E:Debug + Display + StdError + 'static = super::RenderingError> {
 	/// Failed to get directory listing.
 	#[error("Failed to read directory at {path:?}: {cause}")]
 	DirectoryRead {
@@ -139,33 +128,19 @@ fn traverse_dir<E:Debug + Display + StdError>(
 ) -> Result<(), TraversalError<E>> {
 	if src.is_file() {
 		actions.push_back(
-			file_action(src, dest, transform_path, template_ext).map_err(
-				|cause| {
-					TraversalError::PathTransform {
-						path:dest.to_owned(),
-						cause,
-					}
-				},
-			)?,
+			file_action(src, dest, transform_path, template_ext)
+				.map_err(|cause| TraversalError::PathTransform { path:dest.to_owned(), cause })?,
 		);
 	} else {
 		actions.push_front(
-			Action::new_create_directory(dest, transform_path).map_err(
-				|cause| {
-					TraversalError::PathTransform {
-						path:dest.to_owned(),
-						cause,
-					}
-				},
-			)?,
+			Action::new_create_directory(dest, transform_path)
+				.map_err(|cause| TraversalError::PathTransform { path:dest.to_owned(), cause })?,
 		);
-		for entry in fs::read_dir(src).map_err(|cause| {
-			TraversalError::DirectoryRead { path:src.to_owned(), cause }
-		})? {
+		for entry in fs::read_dir(src)
+			.map_err(|cause| TraversalError::DirectoryRead { path:src.to_owned(), cause })?
+		{
 			let path = entry
-				.map_err(|cause| {
-					TraversalError::EntryRead { dir:src.to_owned(), cause }
-				})?
+				.map_err(|cause| TraversalError::EntryRead { dir:src.to_owned(), cause })?
 				.path();
 			if path.is_dir() {
 				traverse_dir(
@@ -176,15 +151,9 @@ fn traverse_dir<E:Debug + Display + StdError>(
 					actions,
 				)?;
 			} else {
-				actions.push_back(
-					file_action(&path, dest, transform_path, template_ext)
-						.map_err(|cause| {
-							TraversalError::PathTransform {
-								path:path.to_owned(),
-								cause,
-							}
-						})?,
-				);
+				actions.push_back(file_action(&path, dest, transform_path, template_ext).map_err(
+					|cause| TraversalError::PathTransform { path:path.to_owned(), cause },
+				)?);
 			}
 		}
 	}
@@ -216,14 +185,11 @@ pub fn traverse<E:Debug + Display + StdError>(
 	let src = src.as_ref();
 	let dest = dest.as_ref();
 	let mut actions = VecDeque::new();
-	traverse_dir(src, dest, &transform_path, template_ext, &mut actions)
-		.map(|_| actions)
+	traverse_dir(src, dest, &transform_path, template_ext, &mut actions).map(|_| actions)
 }
 
 /// Pass this to `traverse` if you don't want any path transformation at all.
-pub fn no_transform(path:&Path) -> Result<PathBuf, std::convert::Infallible> {
-	Ok(path.to_owned())
-}
+pub fn no_transform(path:&Path) -> Result<PathBuf, std::convert::Infallible> { Ok(path.to_owned()) }
 
 /// `Some("hbs")`. Pass this to `traverse` to get the same template
 /// identification behavior as `Bicycle::process`.

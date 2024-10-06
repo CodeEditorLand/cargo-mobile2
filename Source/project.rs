@@ -20,17 +20,12 @@ pub enum Error {
 impl Reportable for Error {
 	fn report(&self) -> Report {
 		match self {
-			Self::GitInit(err) => {
-				Report::error("Failed to initialize git", err)
-			},
-			Self::TemplatePackResolve(err) => {
-				Report::error("Failed to resolve template pack", err)
-			},
+			Self::GitInit(err) => Report::error("Failed to initialize git", err),
+			Self::TemplatePackResolve(err) => Report::error("Failed to resolve template pack", err),
 			Self::Processing { src, dest, cause } => {
 				Report::error(
 					format!(
-						"Base project template processing from src {:?} to \
-						 dest {:?} failed",
+						"Base project template processing from src {:?} to dest {:?} failed",
 						src, dest,
 					),
 					cause,
@@ -58,15 +53,9 @@ pub fn gen(
 	log::info!("template pack chain: {:#?}", pack_chain);
 	for pack in pack_chain {
 		log::info!("traversing template pack {:#?}", pack);
-		bike.filter_and_process(pack, root, |_| (), filter.fun()).map_err(
-			|cause| {
-				Error::Processing {
-					src:pack.to_owned(),
-					dest:root.to_owned(),
-					cause,
-				}
-			},
-		)?;
+		bike.filter_and_process(pack, root, |_| (), filter.fun()).map_err(|cause| {
+			Error::Processing { src:pack.to_owned(), dest:root.to_owned(), cause }
+		})?;
 	}
 	Ok(())
 }

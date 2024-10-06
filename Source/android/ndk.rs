@@ -71,19 +71,11 @@ pub struct MissingToolError {
 
 impl MissingToolError {
 	fn check_file(path:PathBuf, name:&'static str) -> Result<PathBuf, Self> {
-		if path.is_file() {
-			Ok(path)
-		} else {
-			Err(Self { name, tried_path:path })
-		}
+		if path.is_file() { Ok(path) } else { Err(Self { name, tried_path:path }) }
 	}
 
 	fn check_dir(path:PathBuf, name:&'static str) -> Result<PathBuf, Self> {
-		if path.is_dir() {
-			Ok(path)
-		} else {
-			Err(Self { name, tried_path:path })
-		}
+		if path.is_dir() { Ok(path) } else { Err(Self { name, tried_path:path }) }
 	}
 }
 
@@ -97,10 +89,10 @@ impl Display for NdkVersion {
 			write!(
 				f,
 				"{}",
-				(b'a'..=b'z').map(char::from).nth(self.0.minor as _).expect(
-					"NDK minor version exceeded the number of letters in the \
-					 alphabet"
-				)
+				(b'a'..=b'z')
+					.map(char::from)
+					.nth(self.0.minor as _)
+					.expect("NDK minor version exceeded the number of letters in the alphabet")
 			)?;
 		}
 		Ok(())
@@ -117,28 +109,23 @@ impl From<source_props::Revision> for NdkVersion {
 pub enum Error {
 	// TODO: link to docs/etc.
 	#[error(
-		"Have you installed the NDK? The `NDK_HOME` environment variable \
-		 isn't set, and is required: {0}"
+		"Have you installed the NDK? The `NDK_HOME` environment variable isn't set, and is \
+		 required: {0}"
 	)]
 	NdkHomeNotSet(#[from] std::env::VarError),
 	#[error(
-		"Have you installed the NDK? The `NDK_HOME` environment variable is \
-		 set, but doesn't point to an existing directory."
+		"Have you installed the NDK? The `NDK_HOME` environment variable is set, but doesn't \
+		 point to an existing directory."
 	)]
 	NdkHomeNotADir,
 	#[error("Failed to lookup version of installed NDK: {0}")]
 	VersionLookupFailed(#[from] source_props::Error),
-	#[error(
-		"At least NDK {you_need} is required (you currently have NDK \
-		 {you_have})"
-	)]
+	#[error("At least NDK {you_need} is required (you currently have NDK {you_have})")]
 	VersionTooLow { you_have:NdkVersion, you_need:NdkVersion },
 }
 
 impl Reportable for Error {
-	fn report(&self) -> Report {
-		Report::error("Failed to initialize NDK environment", self)
-	}
+	fn report(&self) -> Report { Report::error("Failed to initialize NDK environment", self) }
 }
 
 #[derive(Debug, Error)]
@@ -152,9 +139,7 @@ pub enum RequiredLibsError {
 }
 
 impl Reportable for RequiredLibsError {
-	fn report(&self) -> Report {
-		Report::error("Failed to get list of required libs", self)
-	}
+	fn report(&self) -> Report { Report::error("Failed to get list of required libs", self) }
 }
 
 #[derive(Debug, Clone)]
@@ -168,40 +153,27 @@ impl Env {
 			.map_err(Error::NdkHomeNotSet)
 			.map(PathBuf::from)
 			.and_then(|ndk_home| {
-				if ndk_home.is_dir() {
-					Ok(ndk_home)
-				} else {
-					Err(Error::NdkHomeNotADir)
-				}
-			})?;
+			if ndk_home.is_dir() { Ok(ndk_home) } else { Err(Error::NdkHomeNotADir) }
+		})?;
 		let env = Self { ndk_home };
-		let version = env
-			.version()
-			.map(NdkVersion::from)
-			.map_err(Error::VersionLookupFailed)?;
+		let version = env.version().map(NdkVersion::from).map_err(Error::VersionLookupFailed)?;
 		if version >= MIN_NDK_VERSION {
 			Ok(env)
 		} else {
-			Err(Error::VersionTooLow {
-				you_have:version,
-				you_need:MIN_NDK_VERSION,
-			})
+			Err(Error::VersionTooLow { you_have:version, you_need:MIN_NDK_VERSION })
 		}
 	}
 
 	pub fn home(&self) -> &Path { &self.ndk_home }
 
-	pub fn version(
-		&self,
-	) -> Result<source_props::Revision, source_props::Error> {
+	pub fn version(&self) -> Result<source_props::Revision, source_props::Error> {
 		SourceProps::from_path(self.ndk_home.join("source.properties"))
 			.map(|props| props.pkg.revision)
 	}
 
 	pub fn prebuilt_dir(&self) -> Result<PathBuf, MissingToolError> {
 		MissingToolError::check_dir(
-			self.ndk_home
-				.join(format!("toolchains/llvm/prebuilt/{}", host_tag())),
+			self.ndk_home.join(format!("toolchains/llvm/prebuilt/{}", host_tag())),
 			// TODO: shove this square peg into a squarer hole
 			"prebuilt toolchain",
 		)
@@ -218,31 +190,19 @@ impl Env {
 		min_api:u32,
 	) -> Result<PathBuf, MissingToolError> {
 		MissingToolError::check_file(
-			self.tool_dir()?.join(format!(
-				"{}{}-{}",
-				triple,
-				min_api,
-				compiler.as_str()
-			)),
+			self.tool_dir()?.join(format!("{}{}-{}", triple, min_api, compiler.as_str())),
 			compiler.as_str(),
 		)
 	}
 
-	pub fn binutil_path(
-		&self,
-		binutil:Binutil,
-		triple:&str,
-	) -> Result<PathBuf, MissingToolError> {
+	pub fn binutil_path(&self, binutil:Binutil, triple:&str) -> Result<PathBuf, MissingToolError> {
 		MissingToolError::check_file(
 			self.tool_dir()?.join(format!("{}-{}", triple, binutil.as_str())),
 			binutil.as_str(),
 		)
 	}
 
-	pub fn libcxx_shared_path(
-		&self,
-		target:Target<'_>,
-	) -> Result<PathBuf, MissingToolError> {
+	pub fn libcxx_shared_path(&self, target:Target<'_>) -> Result<PathBuf, MissingToolError> {
 		static LIB:&str = "libc++_shared.so";
 		let ndk_ver = self.version().unwrap_or_default();
 		let so_path = if ndk_ver.triple.major >= 22 {
@@ -253,9 +213,7 @@ impl Env {
 			};
 			self.prebuilt_dir()?.join("sysroot/usr/lib").join(ndk_triple)
 		} else {
-			self.ndk_home
-				.join("sources/cxx-stl/llvm-libc++/libs")
-				.join(target.abi)
+			self.ndk_home.join("sources/cxx-stl/llvm-libc++/libs").join(target.abi)
 		};
 		MissingToolError::check_file(so_path.join(LIB), LIB)
 	}
@@ -298,10 +256,8 @@ impl Env {
 					.as_str(),
 			)
 			.map(|caps| {
-				let lib = caps
-					.get(1)
-					.expect("developer error: regex match had no captures")
-					.as_str();
+				let lib =
+					caps.get(1).expect("developer error: regex match had no captures").as_str();
 				log::info!("{:?} requires shared lib {:?}", elf, lib);
 				lib.to_owned()
 			})

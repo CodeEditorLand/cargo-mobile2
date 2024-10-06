@@ -10,9 +10,10 @@ pub struct TextWrapper(pub textwrap::Options<'static>);
 
 impl Default for TextWrapper {
 	fn default() -> Self {
-		Self(textwrap::Options::with_termwidth().word_splitter(
-			textwrap::word_splitters::WordSplitter::NoHyphenation,
-		))
+		Self(
+			textwrap::Options::with_termwidth()
+				.word_splitter(textwrap::word_splitters::WordSplitter::NoHyphenation),
+		)
 	}
 }
 
@@ -92,17 +93,14 @@ impl Report {
 		let head = if colored::control::SHOULD_COLORIZE.should_colorize() {
 			wrapper.fill(&format!(
 				"{} {}",
-				format!("{}:", self.label.as_str())
-					.color(self.label.color())
-					.bold(),
+				format!("{}:", self.label.as_str()).color(self.label.color()).bold(),
 				self.msg.color(self.label.color())
 			))
 		} else {
 			wrapper.fill(&format!("{}: {}", self.label.as_str(), &self.msg))
 		};
-		let wrapper = TextWrapper(
-			wrapper.clone().0.initial_indent(INDENT).subsequent_indent(INDENT),
-		);
+		let wrapper =
+			TextWrapper(wrapper.clone().0.initial_indent(INDENT).subsequent_indent(INDENT));
 		format!("{}\n{}\n", head, wrapper.fill(&self.details))
 	}
 
@@ -142,8 +140,7 @@ mod interface {
 		AppSettings::VersionlessSubcommands,
 	];
 
-	pub static SETTINGS:&[AppSettings] =
-		&[AppSettings::SubcommandRequiredElseHelp];
+	pub static SETTINGS:&[AppSettings] = &[AppSettings::SubcommandRequiredElseHelp];
 
 	pub fn bin_name(name:&str) -> String { format!("cargo {}", name) }
 
@@ -193,8 +190,7 @@ mod interface {
 	pub struct SkipTargetsInstall {
 		#[structopt(
 			long = "skip-targets-install",
-			help = "Skip installing android/ios targets for rust through \
-			        rustup "
+			help = "Skip installing android/ios targets for rust through rustup "
 		)]
 		pub skip_targets_install:bool,
 	}
@@ -253,8 +249,7 @@ mod interface {
 				"cargo_mobile=info,cargo_android=info,cargo_apple=info,hit=info"
 			},
 			opts::NoiseLevel::FranklyQuitePedantic => {
-				"info,cargo_mobile=debug,cargo_android=debug,cargo_apple=debug,\
-				 hit=debug"
+				"info,cargo_mobile=debug,cargo_android=debug,cargo_apple=debug,hit=debug"
 			},
 		};
 		let env = Env::default().default_filter_or(default_level);
