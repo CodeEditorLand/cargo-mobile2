@@ -3,6 +3,7 @@ use crate::{android, doctor::Unrecoverable, os::Env, util};
 
 pub fn check(env:&Env) -> Result<Section, Unrecoverable> {
 	let section = Section::new("Android developer tools");
+
 	Ok(match android::env::Env::from_env(env.clone()) {
 		Ok(android_env) => {
 			section

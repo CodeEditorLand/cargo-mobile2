@@ -70,6 +70,7 @@ pub struct DotCargo {
 impl DotCargo {
 	fn create_dir_and_get_path(app:&App) -> Result<PathBuf, (PathBuf, io::Error)> {
 		let dir = app.prefix_path(".cargo");
+
 		fs::create_dir_all(&dir)
 			.map(|()| dir.join("config.toml"))
 			.map_err(|cause| (dir, cause))
@@ -78,19 +79,23 @@ impl DotCargo {
 	pub fn load(app:&App) -> Result<Self, LoadError> {
 		let path = Self::create_dir_and_get_path(app)
 			.map_err(|(path, cause)| LoadError::DirCreationFailed { path, cause })?;
+
 		let old_style = path
 			.parent()
 			.expect("developer error: cargo config path had no parent")
 			.join("config");
+
 		if old_style.is_file() {
 			// Migrate from old-style cargo config
 			std::fs::rename(&old_style, &path).map_err(|cause| {
 				LoadError::MigrateFailed { from:old_style, to:path.clone(), cause }
 			})?;
 		}
+
 		if path.is_file() {
 			let toml_str = fs::read_to_string(&path)
 				.map_err(|cause| LoadError::ReadFailed { path:path.clone(), cause })?;
+
 			toml::from_str(&toml_str).map_err(|cause| LoadError::DeserializeFailed { path, cause })
 		} else {
 			Ok(Self::default())
@@ -111,7 +116,9 @@ impl DotCargo {
 	pub fn write(self, app:&App) -> Result<(), WriteError> {
 		let path = Self::create_dir_and_get_path(app)
 			.map_err(|(path, cause)| WriteError::DirCreationFailed { path, cause })?;
+
 		let ser = toml::to_string_pretty(&self).map_err(WriteError::SerializeFailed)?;
+
 		fs::write(&path, ser).map_err(|cause| WriteError::WriteFailed { path, cause })
 	}
 }

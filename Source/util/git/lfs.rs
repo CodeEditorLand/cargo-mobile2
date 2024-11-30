@@ -37,9 +37,11 @@ pub fn ensure_present() -> Result<(), Error> {
 			println!("Running `git lfs install` for you...");
 		}
 	}
+
 	duct::cmd("git", ["lfs", "install"])
 		.dup_stdio()
 		.run()
 		.map_err(Error::InstallFailed)?;
+
 	Ok(())
 }

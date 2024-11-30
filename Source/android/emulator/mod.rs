@@ -35,6 +35,7 @@ impl Emulator {
 
 	pub fn start_detached(&self, env:&Env) -> Result<(), std::io::Error> {
 		self.command(env).run_and_detach()?;
+
 		Ok(())
 	}
 }

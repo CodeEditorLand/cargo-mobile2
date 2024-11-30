@@ -132,24 +132,32 @@ pub fn exec(
 	cwd:impl AsRef<Path>,
 ) -> Result<Config, Box<Error>> {
 	let cwd = cwd.as_ref();
+
 	let (config, config_origin) =
 		Config::load_or_gen(cwd, non_interactive, wrapper).map_err(Error::ConfigLoadOrGenFailed)?;
+
 	let dot_first_init_path = config.app().root_dir().join(DOT_FIRST_INIT_FILE_NAME);
+
 	let dot_first_init_exists = {
 		let dot_first_init_exists = dot_first_init_path.exists();
+
 		if config_origin.freshly_minted() && !dot_first_init_exists {
 			// indicate first init is ongoing, so that if we error out and exit
 			// the next init will know to still use `WildWest` filtering
 			log::info!("creating first init dot file at {:?}", dot_first_init_path);
+
 			fs::write(&dot_first_init_path, DOT_FIRST_INIT_CONTENTS).map_err(|cause| {
 				Error::DotFirstInitWriteFailed { path:dot_first_init_path.clone(), cause }
 			})?;
+
 			true
 		} else {
 			dot_first_init_exists
 		}
 	};
+
 	let bike = config.build_a_bike();
+
 	let filter = templating::Filter::new(&config, config_origin, dot_first_init_exists)
 		.map_err(Error::FilterConfigureFailed)?;
 
@@ -157,22 +165,27 @@ pub fn exec(
 	project::gen(&config, &bike, &filter, submodule_commit).map_err(Error::ProjectInitFailed)?;
 
 	let asset_dir = config.app().asset_dir();
+
 	if !asset_dir.is_dir() {
 		fs::create_dir_all(&asset_dir)
 			.map_err(|cause| Error::AssetDirCreationFailed { asset_dir, cause })?;
 	}
+
 	if !skip_dev_tools && util::command_present("code").map_err(Error::CodeCommandPresentFailed)? {
 		code_command()
 			.before_spawn(move |cmd| {
 				cmd.args(["--install-extension", "vadimcn.vscode-lldb"]);
+
 				if non_interactive {
 					cmd.arg("--force");
 				}
+
 				Ok(())
 			})
 			.run()
 			.map_err(Error::LldbExtensionInstallFailed)?;
 	}
+
 	let mut dot_cargo =
 		dot_cargo::DotCargo::load(config.app()).map_err(Error::DotCargoLoadFailed)?;
 
@@ -234,14 +247,19 @@ pub fn exec(
 	}
 
 	dot_cargo.write(config.app()).map_err(Error::DotCargoWriteFailed)?;
+
 	if dot_first_init_exists {
 		log::info!("deleting first init dot file at {:?}", dot_first_init_path);
+
 		fs::remove_file(&dot_first_init_path)
 			.map_err(|cause| Error::DotFirstInitDeleteFailed { path:dot_first_init_path, cause })?;
 	}
+
 	Report::victory("Project generated successfully!", "Make cool apps! 🌻 🐕 🎉").print(wrapper);
+
 	if open_in_editor {
 		util::open_in_editor(cwd).map_err(Error::OpenInEditorFailed)?;
 	}
+
 	Ok(config)
 }

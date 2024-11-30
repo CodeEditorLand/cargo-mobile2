@@ -67,32 +67,44 @@ pub fn check() -> Result<Info, Error> {
 		wProductType:0,
 		wReserved:0,
 	};
+
 	let condition_mask =
 		unsafe { VerSetConditionMask(0, VER_MAJORVERSION, VER_GREATER_EQUAL as u8) };
+
 	let condition_mask =
 		unsafe { VerSetConditionMask(condition_mask, VER_MINORVERSION, VER_GREATER_EQUAL as u8) };
+
 	let condition_mask = unsafe {
 		VerSetConditionMask(condition_mask, VER_SERVICEPACKMAJOR, VER_GREATER_EQUAL as u8)
 	};
+
 	let condition_mask =
 		unsafe { VerSetConditionMask(condition_mask, VER_PRODUCT_TYPE, VER_EQUAL as u8) };
+
 	let type_mask = VER_MAJORVERSION | VER_MINORVERSION | VER_SERVICEPACKMAJOR | VER_PRODUCT_TYPE;
 
 	for &(name, major, minor, service_pack, product_type, build_number) in VERSION_LIST {
 		osvi.dwMajorVersion = major;
+
 		osvi.dwMinorVersion = minor;
+
 		osvi.wServicePackMajor = service_pack;
+
 		osvi.wProductType = product_type;
+
 		let (condition_mask, type_mask) = if let Some(build_number) = build_number {
 			let condition_mask = unsafe {
 				VerSetConditionMask(condition_mask, VER_BUILDNUMBER, VER_GREATER_EQUAL as u8)
 			};
+
 			let type_mask = type_mask | VER_BUILDNUMBER;
+
 			osvi.dwBuildNumber = build_number;
 			(condition_mask, type_mask)
 		} else {
 			(condition_mask, type_mask)
 		};
+
 		if unsafe { VerifyVersionInfoW(&mut osvi as *mut _, type_mask, condition_mask) }.is_ok() {
 			return Ok(Info { name:name.to_string(), version:format!("{}.{}", major, minor) });
 		};

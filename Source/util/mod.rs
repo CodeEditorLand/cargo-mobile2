@@ -38,6 +38,7 @@ pub fn list_display(list:&[impl Display]) -> String {
 		format!("{} and {}", list[0], list[1])
 	} else {
 		let mut display = String::new();
+
 		for (idx, item) in list.iter().enumerate() {
 			let formatted = if idx + 1 == list.len() {
 				// this is the last item
@@ -45,8 +46,10 @@ pub fn list_display(list:&[impl Display]) -> String {
 			} else {
 				format!("{}, ", item)
 			};
+
 			display.push_str(&formatted);
 		}
+
 		display
 	}
 }
@@ -83,7 +86,9 @@ pub fn host_target_triple() -> Result<String, HostTargetTripleError> {
 		regex!(r"host: ([\w-]+)"),
 		|_text, caps| {
 			let triple = caps[1].to_owned();
+
 			log::info!("detected host target triple {:?}", triple);
+
 			triple
 		},
 	)
@@ -153,6 +158,7 @@ impl FromStr for VersionTriple {
 			},
 			2 => {
 				let mut s = v.split('.');
+
 				Ok(VersionTriple {
 					major:s.next().unwrap().parse().map_err(|source| {
 						VersionTripleError::MajorInvalid { version:v.to_owned(), source }
@@ -165,6 +171,7 @@ impl FromStr for VersionTriple {
 			},
 			3 => {
 				let mut s = v.split('.');
+
 				Self::from_split(&mut s, v)
 			},
 			_ => Err(VersionTripleError::VersionStringInvalid { version:v.to_owned() }),
@@ -177,9 +184,13 @@ impl VersionTriple {
 
 	pub fn from_caps<'a>(caps:&'a Captures<'a>) -> Result<(Self, &'a str), VersionTripleError> {
 		let version_str = &caps["version"];
+
 		let parse_major = parse!("major", VersionTripleError, MajorInvalid, version);
+
 		let parse_minor = parse!("minor", VersionTripleError, MinorInvalid, version);
+
 		let parse_patch = parse!("patch", VersionTripleError, PatchInvalid, version);
+
 		Ok((
 			Self {
 				major:parse_major(caps, version_str)?,
@@ -254,6 +265,7 @@ impl FromStr for VersionDouble {
 			},
 			2 => {
 				let mut s = v.split('.');
+
 				Ok(VersionDouble {
 					major:s.next().unwrap().parse().map_err(|source| {
 						VersionDoubleError::MajorInvalid { version:v.to_owned(), source }
@@ -321,12 +333,15 @@ pub struct RustVersion {
 impl Display for RustVersion {
 	fn fmt(&self, f:&mut fmt::Formatter<'_>) -> fmt::Result {
 		write!(f, "{}", self.triple)?;
+
 		if let Some(flavor) = &self.flavor {
 			write!(f, "-{}", flavor.flavor)?;
+
 			if let Some(candidate) = &flavor.candidate {
 				write!(f, ".{}", candidate)?;
 			}
 		}
+
 		if let Some(details) = &self.details {
 			write!(
 				f,
@@ -334,6 +349,7 @@ impl Display for RustVersion {
 				details.hash, details.date.0, details.date.1, details.date.2
 			)?;
 		}
+
 		Ok(())
 	}
 }
@@ -347,6 +363,7 @@ impl RustVersion {
 			),
 			|_text, caps| {
 				let (triple, _version_str) = VersionTriple::from_caps(&caps)?;
+
 				let this = Self {
 					triple,
 					flavor:caps.name("flavor").map(|flavor| {
@@ -361,9 +378,13 @@ impl RustVersion {
 						.name("details")
 						.map(|_details| -> Result<_, RustVersionError> {
 							let date_str = &caps["date"];
+
 							let parse_year = parse!("year", RustVersionError, YearInvalid, date);
+
 							let parse_month = parse!("month", RustVersionError, MonthInvalid, date);
+
 							let parse_day = parse!("day", RustVersionError, DayInvalid, date);
+
 							Ok(RustVersionDetails {
 								hash:caps["hash"].to_owned(),
 								date:(
@@ -375,7 +396,9 @@ impl RustVersion {
 						})
 						.transpose()?,
 				};
+
 				log::info!("detected rustc version {}", this);
+
 				Ok(this)
 			},
 		)?
@@ -384,10 +407,13 @@ impl RustVersion {
 	pub fn valid(&self) -> bool {
 		if cfg!(target_os = "macos") {
 			const LAST_GOOD_STABLE:VersionTriple = VersionTriple::new(1, 45, 2);
+
 			const NEXT_GOOD_STABLE:VersionTriple = VersionTriple::new(1, 49, 0);
+
 			const FIRST_GOOD_NIGHTLY:(u32, u32, u32) = (2020, 10, 24);
 
 			let old_good = self.triple <= LAST_GOOD_STABLE;
+
 			let new_good = self.triple >= NEXT_GOOD_STABLE
 				&& self
 					.details
@@ -398,6 +424,7 @@ impl RustVersion {
 							"output of `rustc --version` didn't contain date info; continuing \
 							 with the assumption that the release date is at least 2020-10-24"
 						);
+
 						true
 					});
 
@@ -457,6 +484,7 @@ pub fn run_and_search<T>(
 	f:impl FnOnce(&str, Captures<'_>) -> T,
 ) -> Result<T, RunAndSearchError> {
 	let command_string = format!("{command:?}");
+
 	command
 		.read()
 		.map(|output| {
@@ -505,6 +533,7 @@ pub enum OpenInEditorError {
 
 pub fn open_in_editor(path:impl AsRef<Path>) -> Result<(), OpenInEditorError> {
 	let path = path.as_ref();
+
 	os::Application::detect_editor()
 		.map_err(OpenInEditorError::DetectFailed)?
 		.open_file(path)
@@ -521,6 +550,7 @@ pub enum InstalledCommitMsgError {
 
 pub fn installed_commit_msg() -> Result<Option<String>, InstalledCommitMsgError> {
 	let path = install_dir()?.join("commit");
+
 	if path.is_file() {
 		std::fs::read_to_string(&path)
 			.map(Some)
@@ -558,13 +588,18 @@ where
 	E: StdError,
 	E: From<IE>, {
 	let working_dir = working_dir.as_ref();
+
 	let current_dir = std::env::current_dir().map_err(WithWorkingDirError::CurrentDirGetFailed)?;
+
 	std::env::set_current_dir(working_dir).map_err(|source| {
 		WithWorkingDirError::CurrentDirSetFailed { path:working_dir.to_owned(), source }
 	})?;
+
 	let result = f().map_err(E::from)?;
+
 	std::env::set_current_dir(&current_dir)
 		.map_err(|source| WithWorkingDirError::CurrentDirSetFailed { path:current_dir, source })?;
+
 	Ok(result)
 }
 
@@ -592,6 +627,7 @@ impl<T:Debug> Serialize for OneOrMany<T> {
 			Self::One(one) => format!("{:?}", one),
 			Self::Many(vec) => format!("{:?}", vec),
 		};
+
 		serializer.serialize_str(&serialized_str)
 	}
 }
@@ -607,7 +643,9 @@ pub fn gradlew(
 	let (gradlew, gradle) = ("gradlew", "gradle");
 
 	let project_dir = dunce::simplified(&project_dir);
+
 	let gradlew_p = project_dir.join(gradlew);
+
 	if gradlew_p.exists() {
 		duct::cmd(gradlew_p, [OsStr::new("--project-dir"), project_dir.as_ref()])
 			.vars(env.explicit_env())

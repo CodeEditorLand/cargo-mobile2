@@ -24,10 +24,14 @@ pub enum Unrecoverable {
 
 pub fn exec(wrapper:&TextWrapper) -> Result<(), Unrecoverable> {
 	let env = Env::new()?;
+
 	section::cargo_mobile::check()?.print(wrapper);
 	#[cfg(target_os = "macos")]
 	section::apple::check().print(wrapper);
+
 	section::android::check(&env)?.print(wrapper);
+
 	section::device_list::check(&env).print(wrapper);
+
 	Ok(())
 }

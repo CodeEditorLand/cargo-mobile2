@@ -150,7 +150,9 @@ impl Exec for Input {
 
 	fn exec(self, wrapper:&TextWrapper) -> Result<(), Self::Report> {
 		let Self { flags, command } = self;
+
 		let GlobalFlags { non_interactive, .. } = flags;
+
 		match command {
 			Command::Init {
 				skip_dev_tools: cli::SkipDevTools { skip_dev_tools },
@@ -183,8 +185,10 @@ impl Exec for Input {
 				std::fs::create_dir_all(&directory).map_err(|source| {
 					Error::DirCreationFailed { path:directory.clone(), source }
 				})?;
+
 				std::env::set_current_dir(&directory)
 					.map_err(|source| Error::DirChangeFailed { path:directory, source })?;
+
 				init::exec(
 					wrapper,
 					non_interactive,
@@ -201,6 +205,7 @@ impl Exec for Input {
 			Command::Open => util::open_in_editor(".").map_err(Error::OpenFailed),
 			Command::Update { init } => {
 				update::update(wrapper).map_err(Error::UpdateFailed)?;
+
 				if init {
 					init::exec(
 						wrapper,
@@ -214,6 +219,7 @@ impl Exec for Input {
 					)
 					.map_err(|e| Error::InitFailed(*e))?;
 				}
+
 				Ok(())
 			},
 			#[cfg(target_os = "macos")]

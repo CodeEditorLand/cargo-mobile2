@@ -75,6 +75,7 @@ impl Team {
 
 		let name = if let Some(organization) = organization {
 			log::debug!("found cert {:?} with organization {:?}", common_name, organization);
+
 			organization
 		} else {
 			log::debug!(
@@ -82,6 +83,7 @@ impl Team {
 				 common name",
 				common_name
 			);
+
 			regex!(r"Apple Develop\w+: (.*) \(.+\)")
 				.captures(&common_name)
 				.map(|caps| caps[1].to_owned())
@@ -91,6 +93,7 @@ impl Team {
 						 displaying full name",
 						common_name
 					);
+
 					common_name.clone()
 				})
 		};
@@ -109,19 +112,25 @@ impl Team {
 pub fn find_development_teams() -> Result<Vec<Team>, Error> {
 	let certs = {
 		let new = get_pem_list_new_name_scheme().map_err(Error::SecurityCommandFailed)?;
+
 		let mut certs =
 			X509Certificate::from_pem_multiple(new.stdout).map_err(Error::X509ParseFailed)?;
+
 		let old = get_pem_list_old_name_scheme().map_err(Error::SecurityCommandFailed)?;
+
 		certs.append(
 			&mut X509Certificate::from_pem_multiple(old.stdout).map_err(Error::X509ParseFailed)?,
 		);
+
 		certs
 	};
+
 	Ok(certs
         .into_iter()
         .flat_map(|cert| {
             Team::from_x509(cert).map_err(|err| {
                 log::error!("{}", err);
+
                 err
             })
         })

@@ -121,35 +121,45 @@ pub fn check_domain_syntax(domain_name:&str) -> Result<(), DomainError> {
 	if domain_name.is_empty() {
 		return Err(DomainError::Empty);
 	}
+
 	if domain_name.starts_with('.') || domain_name.ends_with('.') {
 		return Err(DomainError::StartsOrEndsWithADot);
 	}
+
 	let labels = domain_name.split('.');
+
 	for label in labels {
 		if label.is_empty() {
 			return Err(DomainError::EmptyLabel);
 		}
+
 		if RESERVED_KEYWORDS.contains(&label) {
 			return Err(DomainError::ReservedKeyword { keyword:label.to_owned() });
 		}
+
 		if label.chars().next().unwrap().is_ascii_digit() {
 			return Err(DomainError::StartsWithDigit { label:label.to_owned() });
 		}
+
 		let mut bad_chars = Vec::new();
+
 		for c in label.chars() {
 			if !c.is_ascii_alphanumeric() && !bad_chars.contains(&c) {
 				bad_chars.push(c);
 			}
 		}
+
 		if !bad_chars.is_empty() {
 			return Err(DomainError::NotAsciiAlphanumeric { bad_chars });
 		}
 	}
+
 	for pkg_name in RESERVED_PACKAGE_NAMES.iter() {
 		if domain_name.ends_with(pkg_name) {
 			return Err(DomainError::ReservedPackageName { package_name:pkg_name.to_string() });
 		}
 	}
+
 	Ok(())
 }
 

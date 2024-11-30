@@ -61,6 +61,7 @@ impl Application {
             .iter()
             .find_map(|dir| {
                 let dir = dir.join("applications");
+
                 xdg::find_entry_in_dir(&dir, &entry)
                     // If finding an entry (a filename) in that directory, returns an error (such as if the directory
                     // is non existent, or the directory exists but for whatever reason listing its contents failed),
@@ -124,12 +125,14 @@ pub fn open_file_with(
 	env:&Env,
 ) -> Result<(), OpenFileError> {
 	let app_str = application.as_ref();
+
 	let path_str = path.as_ref();
 
 	let command_parts = xdg::get_xdg_data_dirs()
         .iter()
         .find_map(|dir| {
             let dir = dir.join("applications");
+
             let (entry, entry_path) = xdg::find_entry_by_app_name(&dir, app_str)?;
 
             let command_parts = entry
@@ -137,6 +140,7 @@ pub fn open_file_with(
                 .attr("Exec")
                 .map(|str_entry| {
                     let osstring_entry: OsString = str_entry.into();
+
                     xdg::parse_command(
                         &osstring_entry,
                         path_str,
@@ -179,9 +183,14 @@ pub fn replace_path_separator(path:OsString) -> OsString { path }
 
 pub mod consts {
 	pub const CLANG:&str = "clang";
+
 	pub const CLANGXX:&str = "clang++";
+
 	pub const AR:&str = "ar";
+
 	pub const LD:&str = "ld";
+
 	pub const READELF:&str = "readelf";
+
 	pub const NDK_STACK:&str = "ndk-stack";
 }

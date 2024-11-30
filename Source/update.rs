@@ -68,42 +68,58 @@ pub(crate) fn updating_marker_path(repo:&Repo) -> PathBuf {
 
 pub fn update(wrapper:&TextWrapper) -> Result<(), Error> {
 	let repo = cargo_mobile_repo().map_err(Error::NoHomeDir)?;
+
 	let marker = updating_marker_path(&repo);
+
 	let marker_exists = marker.is_file();
+
 	if marker_exists {
 		log::info!("marker file present at {:?}", marker);
 	} else {
 		log::info!("no marker file present at {:?}", marker);
 	}
+
 	let msg = if marker_exists || repo.status().map_err(Error::StatusFailed)?.stale() {
 		File::create(&marker)
 			.map_err(|cause| Error::MarkerCreateFailed { path:marker.to_owned(), cause })?;
+
 		repo.update("https://github.com/tauri-apps/cargo-mobile2", "dev")
 			.map_err(Error::UpdateFailed)?;
+
 		println!("Installing updated `cargo-mobile2`...");
+
 		let repo_c = repo.clone();
+
 		duct::cmd("cargo", ["install", "--force", "--path"])
 			.dup_stdio()
 			.before_spawn(move |cmd| {
 				cmd.arg(repo_c.path());
+
 				cmd.args(["--no-default-features", "--features"]);
+
 				cmd.arg(ENABLED_FEATURES.join(" "));
+
 				Ok(())
 			})
 			.run()
 			.map_err(Error::InstallFailed)?;
+
 		fs::remove_file(&marker)
 			.map_err(|cause| Error::MarkerDeleteFailed { path:marker.to_owned(), cause })?;
+
 		log::info!("deleted marker file at {:?}", marker);
 		"installed new version of `cargo-mobile2`"
 	} else {
 		"`cargo-mobile2` is already up-to-date"
 	};
+
 	let details = util::unwrap_either(
 		repo.latest_subject()
 			.map(util::format_commit_msg)
 			.map_err(|err| format!("But we failed to get the latest commit message: {}", err)),
 	);
+
 	Report::victory(msg, details).print(wrapper);
+
 	Ok(())
 }

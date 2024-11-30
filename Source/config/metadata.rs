@@ -44,10 +44,13 @@ impl Metadata {
 		}
 
 		let path = project_root.join("Cargo.toml");
+
 		let toml_str = fs::read_to_string(&path)
 			.map_err(|cause| Error::ReadFailed { path:path.clone(), cause })?;
+
 		let cargo_toml = toml::from_str::<CargoToml>(&toml_str)
 			.map_err(|cause| Error::ParseFailed { path, cause })?;
+
 		Ok(cargo_toml.package.metadata.unwrap_or_default())
 	}
 

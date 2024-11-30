@@ -85,21 +85,26 @@ impl Repo {
 			Status::Stale
 		} else {
 			let git = self.git();
+
 			git.command_parse("fetch origin").run().map_err(Error::FetchFailed)?;
+
 			let local = git
 				.command_parse("rev-parse HEAD")
 				.stderr_capture()
 				.stdout_capture()
 				.run()
 				.map_err(Error::RevParseLocalFailed)?;
+
 			let remote = git
 				.command_parse("rev-parse @{u}")
 				.stderr_capture()
 				.stdout_capture()
 				.run()
 				.map_err(Error::RevParseRemoteFailed)?;
+
 			if local.stdout != remote.stdout { Status::Stale } else { Status::Fresh }
 		};
+
 		Ok(status)
 	}
 
@@ -121,13 +126,16 @@ impl Repo {
 
 	pub fn update(&self, url:impl AsRef<OsStr>, branch:&str) -> Result<(), Error> {
 		let path = self.path();
+
 		if !path.is_dir() {
 			let parent = self.path().parent().expect("developer error: `Repo` path was at root");
+
 			if !parent.is_dir() {
 				std::fs::create_dir_all(parent).map_err(|cause| {
 					Error::ParentDirCreationFailed { path:parent.to_owned(), cause }
 				})?;
 			}
+
 			Git::new(parent)
 				.command_parse(format!(
 					"clone --depth 1 --single-branch {} {}",
@@ -144,16 +152,20 @@ impl Repo {
 				)
 				.display()
 			);
+
 			self.git().command_parse("fetch --depth 1").run().map_err(Error::FetchFailed)?;
+
 			self.git()
 				.command_parse(format!("reset --hard origin/{branch}"))
 				.run()
 				.map_err(Error::ResetFailed)?;
+
 			self.git()
 				.command_parse("clean -dfx --exclude /target")
 				.run()
 				.map_err(Error::CleanFailed)?;
 		}
+
 		Ok(())
 	}
 }

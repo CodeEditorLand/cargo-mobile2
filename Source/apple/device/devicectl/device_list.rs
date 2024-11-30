@@ -103,12 +103,15 @@ fn parse_device_list<'a>(json:String) -> Result<BTreeSet<Device<'a>>, DeviceList
 
 pub fn device_list<'a>(env:&Env) -> Result<BTreeSet<Device<'a>>, DeviceListError> {
 	let json_output_path = temp_dir().join("devicelist.json");
+
 	let json_output_path_ = json_output_path.clone();
+
 	std::fs::write(&json_output_path, "")?;
 
 	duct::cmd("xcrun", ["devicectl", "list", "devices", "--json-output"])
 		.before_spawn(move |cmd| {
 			cmd.arg(&json_output_path);
+
 			Ok(())
 		})
 		.stderr_capture()
@@ -118,5 +121,6 @@ pub fn device_list<'a>(env:&Env) -> Result<BTreeSet<Device<'a>>, DeviceListError
 		.map_err(DeviceListError::DetectionFailed)?;
 
 	let contents = read_to_string(json_output_path_)?;
+
 	parse_device_list(contents)
 }

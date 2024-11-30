@@ -29,6 +29,7 @@ pub enum Error {
 impl Reportable for Error {
 	fn report(&self) -> Report {
 		let msg = "Failed to detect connected Android devices";
+
 		match self {
 			Self::DevicesFailed(err) => err.report("Failed to run `adb devices`"),
 			Self::NameFailed(err) => err.report(),
@@ -43,6 +44,7 @@ const ADB_DEVICE_REGEX:&str = r"^([\S]{6,100})	device\b";
 
 pub fn device_list(env:&Env) -> Result<BTreeSet<Device<'static>>, Error> {
 	let mut cmd = Command::new(env.platform_tools_path().join("adb"));
+
 	cmd.arg("devices").envs(env.explicit_env());
 
 	super::check_authorized(&cmd.output()?)
@@ -51,14 +53,20 @@ pub fn device_list(env:&Env) -> Result<BTreeSet<Device<'static>>, Error> {
 				.captures_iter(&raw_list)
 				.map(|caps| {
 					assert_eq!(caps.len(), 2);
+
 					let serial_no = caps.get(1).unwrap().as_str().to_owned();
+
 					let model = get_prop(env, &serial_no, "ro.product.model")
 						.map_err(Error::ModelFailed)?;
+
 					let name = device_name(env, &serial_no).unwrap_or_else(|_| model.clone());
+
 					let abi = get_prop(env, &serial_no, "ro.product.cpu.abi")
 						.map_err(Error::AbiFailed)?;
+
 					let target =
 						Target::for_abi(&abi).ok_or_else(|| Error::AbiInvalid(abi.clone()))?;
+
 					Ok(Device::new(serial_no, name, model, target))
 				})
 				.collect()
@@ -93,11 +101,14 @@ mod test {
     )]
 	fn test_adb_output_regex(input:&str, devices:Vec<&'static str>) {
 		let regex = regex_multi_line!(ADB_DEVICE_REGEX);
+
 		println!("{}", input);
+
 		let captures = regex
 			.captures_iter(input)
 			.map(|x| x.get(1).unwrap().as_str())
 			.collect::<Vec<_>>();
+
 		assert_eq!(captures, devices);
 	}
 }

@@ -46,6 +46,7 @@ pub fn device_list(env:&Env) -> Result<BTreeSet<Device>, DeviceListError> {
 		.stdout_capture()
 		.stderr_capture()
 		.run();
+
 	match result {
 		Ok(output) => {
 			if output.stdout.is_empty() && output.stderr.is_empty() {
@@ -53,6 +54,7 @@ pub fn device_list(env:&Env) -> Result<BTreeSet<Device>, DeviceListError> {
 					"device detection returned a non-zero exit code, but stdout and stderr are \
 					 both empty; interpreting as a successful run with no devices connected"
 				);
+
 				Ok(Default::default())
 			} else {
 				parse_device_list(&output)

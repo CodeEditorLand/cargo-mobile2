@@ -164,14 +164,17 @@ impl<'a> Call<'a> {
 		} else {
 			Cow::Borrowed(target)
 		};
+
 		Ok(Self { link_type, force, source, target, target_override, target_style })
 	}
 
 	pub fn exec(self) -> Result<(), Error> {
 		let mut args = vec!["-n" /* don't follow symlinks */];
+
 		if let LinkType::Symbolic = self.link_type {
 			args.push("-s");
 		}
+
 		match self.force {
 			Clobber::FileOnly => {
 				args.push("-f");
@@ -181,18 +184,25 @@ impl<'a> Call<'a> {
 					remove_dir_all(self.target)
 						.map_err(|err| self.make_error(ErrorCause::IOError(err)))?;
 				}
+
 				args.push("-f");
 			},
 			_ => (),
 		}
+
 		let source = self.source.to_string_lossy();
+
 		let target_override = self.target_override.as_ref().to_string_lossy();
+
 		args.push(&source);
+
 		args.push(&target_override);
+
 		duct::cmd("ln", args)
 			.dup_stdio()
 			.run()
 			.map_err(|err| self.make_error(ErrorCause::CommandFailed(err)))?;
+
 		Ok(())
 	}
 
@@ -229,7 +239,9 @@ pub fn force_symlink_relative(
 	target_style:TargetStyle,
 ) -> Result<(), Error> {
 	let (abs_source, abs_target) = (abs_source.as_ref(), abs_target.as_ref());
+
 	let rel_source = super::relativize_path(abs_source, abs_target);
+
 	if target_style == TargetStyle::Directory && rel_source.file_name().is_none() {
 		if let Some(file_name) = abs_source.file_name() {
 			force_symlink(rel_source, abs_target.join(file_name), TargetStyle::File)

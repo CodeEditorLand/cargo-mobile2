@@ -30,9 +30,11 @@ pub struct Revision {
 impl Display for Revision {
 	fn fmt(&self, f:&mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		write!(f, "{}", self.triple)?;
+
 		if let Some(beta) = self.beta {
 			write!(f, "-beta{}", beta)?;
 		}
+
 		Ok(())
 	}
 }
@@ -45,7 +47,9 @@ impl Revision {
 		)
 		.captures(revision)
 		.ok_or_else(|| RevisionError::SearchFailed { revision:revision.to_owned() })?;
+
 		let (triple, version_str) = util::VersionTriple::from_caps(&caps)?;
+
 		Ok(Self {
 			triple,
 			beta:caps.name("beta").map(|beta| beta.as_str().parse()).transpose().map_err(
@@ -74,6 +78,7 @@ impl Pkg {
 			.get("Pkg.Revision")
 			.ok_or(PkgError::RevisionMissing)
 			.and_then(|s| Revision::from_str(s).map_err(Into::into))?;
+
 		Ok(Self { revision })
 	}
 }
@@ -96,12 +101,16 @@ pub struct SourceProps {
 impl SourceProps {
 	pub fn from_path(path:impl AsRef<Path>) -> Result<Self, Error> {
 		let path = path.as_ref();
+
 		let file = std::fs::File::open(path)
 			.map_err(|source| Error::OpenFailed { path:path.to_owned(), source })?;
+
 		let props = java_properties::read(file)
 			.map_err(|source| Error::ParseFailed { path:path.to_owned(), source })?;
+
 		let pkg = Pkg::from_props(&props)
 			.map_err(|source| Error::PkgInvalid { path:path.to_owned(), source })?;
+
 		Ok(Self { pkg })
 	}
 }

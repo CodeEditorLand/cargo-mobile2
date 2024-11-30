@@ -49,6 +49,7 @@ impl Label {
 
 	fn format_item(self, msg:&str) -> colored::ColoredString {
 		let item = format!("{} {}", self.item_symbol(), msg);
+
 		match self {
 			Self::Victory => item.normal(),
 			_ => item.color(self.color()).bold(),
@@ -100,6 +101,7 @@ impl Section {
 
 	fn with_item(mut self, item:impl Into<Item>) -> Self {
 		self.items.push(item.into());
+
 		self
 	}
 
@@ -109,6 +111,7 @@ impl Section {
 
 	fn with_items(mut self, items:impl IntoIterator<Item = impl Into<Item>>) -> Self {
 		self.items.extend(items.into_iter().map(Into::into));
+
 		self
 	}
 
@@ -134,7 +137,9 @@ impl Section {
 
 	pub fn print(&self, wrapper:&TextWrapper) {
 		static BULLET_INDENT:&str = "    ";
+
 		static HANGING_INDENT:&str = "      ";
+
 		let bullet_wrapper = TextWrapper(
 			wrapper
 				.clone()
@@ -142,6 +147,7 @@ impl Section {
 				.initial_indent(BULLET_INDENT)
 				.subsequent_indent(HANGING_INDENT),
 		);
+
 		println!(
 			"\n{}",
 			// The `.to_string()` at the end is necessary for the color/bold to
@@ -149,6 +155,7 @@ impl Section {
 			// satisfy `TextWrapper::fill` and the formatting is left behind.
 			wrapper.fill(&self.label().format_title(&self.title))
 		);
+
 		for report_bullet in &self.items {
 			println!("{}", bullet_wrapper.fill(&report_bullet.format()));
 		}

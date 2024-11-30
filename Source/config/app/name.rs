@@ -70,9 +70,11 @@ impl Display for Invalid {
 				)?
 			},
 		}
+
 		if let Some(suggested) = self.suggested() {
 			write!(f, " \"{}\" would work, if you'd like!", suggested)?;
 		}
+
 		Ok(())
 	}
 }
@@ -80,6 +82,7 @@ impl Display for Invalid {
 impl Invalid {
 	fn from_reservation(reservation:Reservation, app_name:impl Into<String>) -> Self {
 		let app_name = app_name.into();
+
 		match reservation {
 			Reservation::Keywords => Self::ReservedKeyword { app_name },
 			Reservation::Windows => Self::ReservedWindows { app_name },
@@ -107,11 +110,13 @@ pub fn transliterate(s:&str) -> Option<String> {
 	// guaranteed not to recurse even if we hadn't already split out a separate
 	// non-recursive function.
 	let all_ascii = normalize_case(&deunicode::deunicode(s));
+
 	let transliterated = if has_initial_number(&all_ascii) {
 		transliterate_initial_number(&all_ascii)
 	} else {
 		all_ascii
 	};
+
 	validate_non_recursive(transliterated).ok()
 }
 
@@ -123,14 +128,18 @@ fn transliterate_initial_number(s:&str) -> String {
 			"developer error: called `transliterate_initial_number` on an app name that didn't \
 			 actually start with a number",
 		);
+
 	let (number, tail) = s.split_at(last_digit_indx + 1);
+
 	let number:i64 = number.parse().expect(
 		"developer error: despite being digits, the initial digits couldn't be parsed as a number",
 	);
+
 	let transliterated = english_numbers::convert(
 		number,
 		english_numbers::Formatting { spaces:true, ..english_numbers::Formatting::none() },
 	);
+
 	normalize_case(&format!("{}-{}", transliterated, tail))
 }
 
@@ -163,11 +172,13 @@ fn validate_non_recursive<T:Deref<Target = str>>(app_name:T) -> Result<T, Invali
 							Ok(app_name)
 						} else {
 							let mut naughty_chars = Vec::new();
+
 							for c in app_name.chars().filter(|c| char_naughty(*c)) {
 								if !naughty_chars.contains(&c) {
 									naughty_chars.push(c);
 								}
 							}
+
 							Err(Invalid::NotAlphanumericHyphenOrUnderscore {
 								app_name:app_name.to_owned(),
 								naughty_chars,
@@ -192,8 +203,10 @@ pub fn validate<T:Deref<Target = str>>(app_name:T) -> Result<T, Invalid> {
 	// Suggestion generation could recurse, so we have a separate slightly
 	// dumber function that doesn't generate suggestions.
 	let mut result = validate_non_recursive(app_name);
+
 	if let Err(err) = result.as_mut() {
 		assert!(err.suggested().is_none());
+
 		match err {
 			Invalid::NotAscii { app_name, suggested } => {
 				*suggested = transliterate(app_name.deref());
@@ -208,5 +221,6 @@ pub fn validate<T:Deref<Target = str>>(app_name:T) -> Result<T, Invalid> {
 			_ => (),
 		}
 	}
+
 	result
 }

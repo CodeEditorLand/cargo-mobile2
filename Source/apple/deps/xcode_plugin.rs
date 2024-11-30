@@ -132,19 +132,27 @@ pub struct Context {
 impl Context {
 	pub fn new(xcode_version:(u32, u32)) -> Result<Self, Error> {
 		let repo = Repo::checkouts_dir("rust-xcode-plugin").map_err(Error::NoHomeDir)?;
+
 		let xcode_user_dir = xcode_user_dir()?;
+
 		let xcode_plugins_dir = xcode_user_dir.join("Plug-ins");
+
 		let xcode_app_dir = xcode_developer_dir().map(|path| xcode_app_dir(&path).to_owned())?;
+
 		let xcode_lang_res_dir =
 			xcode_app_dir.join("SharedFrameworks/SourceModel.framework/Versions/A/Resources");
+
 		let xcode_spec_dir = if xcode_version.0 >= 11 {
 			xcode_lang_res_dir.join("LanguageSpecifications")
 		} else {
 			xcode_app_dir.join("Specifications")
 		};
+
 		let spec_dst = xcode_spec_dir.join("Rust.xclangspec");
+
 		let meta_dst =
 			xcode_lang_res_dir.join("LanguageMetadata/Xcode.SourceCodeLanguage.Rust.plist");
+
 		Ok(Self {
 			repo,
 			xcode_version,
@@ -160,21 +168,30 @@ impl Context {
 	// if so, this is the last step, unless `reinstall_deps` is enabled
 	pub fn check_installation(&self) -> Result<InstallationStatus, Error> {
 		let plugin_dst = self.xcode_plugins_dir.join("Rust.ideplugin");
+
 		let plugin_present = plugin_dst.is_dir();
+
 		log::info!("plugin present at {:?}: {}", plugin_dst, plugin_present);
+
 		let lang_spec_present = self.spec_dst.is_file();
+
 		log::info!("lang spec present at {:?}: {}", self.spec_dst, lang_spec_present);
+
 		let lang_metadata_present = if self.xcode_version.0 >= 11 {
 			let present = self.meta_dst.is_file();
+
 			log::info!("lang metadata present at {:?}: {}", self.meta_dst, present);
+
 			present
 		} else {
 			true
 		};
+
 		self.repo
 			.status()
 			.map(|status| {
 				log::info!("`rust-xcode-plugin` repo status: {:?}", status);
+
 				InstallationStatus {
 					plugin_present,
 					lang_spec_present,
@@ -195,19 +212,25 @@ impl Context {
 	// Step 3: check if uuid is supported, and prompt user to open issue if not
 	pub fn check_uuid(&self) -> Result<UuidStatus, Error> {
 		let info_path = self.xcode_app_dir.join("Info");
+
 		let uuid = duct::cmd("defaults", ["read"])
 			.before_spawn(move |cmd| {
 				cmd.arg(&info_path).arg("DVTPlugInCompatibilityUUID");
+
 				Ok(())
 			})
 			.stderr_capture()
 			.read()
 			.map(|s| s.trim().to_owned())
 			.map_err(Error::UuidLookupFailed)?;
+
 		let plist_path = self.repo.path().join("Plug-ins/Rust.ideplugin/Contents/Info.plist");
+
 		let plist = std::fs::read_to_string(&plist_path)
 			.map_err(|cause| Error::PlistReadFailed { path:plist_path, cause })?;
+
 		let supported = plist.contains(&uuid);
+
 		Ok(UuidStatus { uuid, supported })
 	}
 
@@ -218,24 +241,34 @@ impl Context {
 				Error::PluginsDirCreationFailed { path:self.xcode_plugins_dir.to_owned(), cause }
 			})?;
 		}
+
 		let checkout = self.repo.path();
+
 		let ide_plugin_path = checkout.join("Plug-ins/Rust.ideplugin");
+
 		let xcode_plugins_dir = self.xcode_plugins_dir.clone();
+
 		duct::cmd("cp", ["-r"])
 			.before_spawn(move |cmd| {
 				cmd.arg(&ide_plugin_path).arg(&xcode_plugins_dir);
+
 				Ok(())
 			})
 			.dup_stdio()
 			.run()
 			.map_err(Error::PluginCopyFailed)?;
+
 		let spec_src = checkout.join("Specifications/Rust.xclangspec");
+
 		if self.xcode_version.0 >= 11 {
 			let spec_dst = self.spec_dst.clone();
+
 			println!("`sudo` is required to add new languages to Xcode");
+
 			duct::cmd("sudo", ["cp"])
 				.before_spawn(move |cmd| {
 					cmd.arg(&spec_src).arg(&spec_dst);
+
 					Ok(())
 				})
 				.dup_stdio()
@@ -247,29 +280,36 @@ impl Context {
 					Error::SpecDirCreationFailed { path:self.xcode_spec_dir.to_owned(), cause }
 				})?;
 			}
+
 			duct::cmd("cp", [&spec_src, &self.spec_dst])
 				.dup_stdio()
 				.run()
 				.map_err(Error::SpecCopyFailed)?;
 		}
+
 		if self.xcode_version.0 >= 11 {
 			let meta_src = checkout.join("Xcode.SourceCodeLanguage.Rust.plist");
+
 			let meta_dst = self.meta_dst.clone();
+
 			duct::cmd("sudo", ["cp"])
 				.before_spawn(move |cmd| {
 					cmd.arg(&meta_src).arg(&meta_dst);
+
 					Ok(())
 				})
 				.dup_stdio()
 				.run()
 				.map_err(Error::MetaCopyFailed)?;
 		}
+
 		Report::victory(
 			"`rust-xcode-plugin` installed successfully!",
 			"Please restart Xcode and click \"Load Bundle\" when an alert shows about \
 			 `Rust.ideplugin`",
 		)
 		.print(wrapper);
+
 		Ok(())
 	}
 }
@@ -281,15 +321,20 @@ pub fn install(
 	xcode_version:(u32, u32),
 ) -> Result<(), Error> {
 	let ctx = Context::new(xcode_version)?;
+
 	if !ctx.check_installation()?.perfect() || reinstall_deps {
 		println!("Installing `rust-xcode-plugin`...");
+
 		ctx.update_repo()?;
+
 		let uuid_status = ctx.check_uuid()?;
+
 		if uuid_status.supported {
 			ctx.install(wrapper)?;
 		} else {
 			uuid_status.print_action_request(wrapper, ctx.xcode_version);
 		}
 	}
+
 	Ok(())
 }

@@ -26,11 +26,13 @@ fn default_identifier(
     let email = Git::new(".".as_ref())
         .user_email()
         .map_err(DefaultIdentifierError::FailedToGetGitEmailAddr)?;
+
     let domain = email
         .trim()
         .split('@')
         .last()
         .ok_or(DefaultIdentifierError::FailedToParseEmailAddr)?;
+
     Ok(
         if !COMMON_EMAIL_PROVIDERS.contains(&domain)
             && identifier::check_identifier_syntax(domain).is_ok()
@@ -44,6 +46,7 @@ fn default_identifier(
             }
 
             let reverse_domain = domain.split('.').rev().collect::<Vec<_>>().join(".");
+
             Some(format!("{reverse_domain}{name}"))
         } else {
             None
@@ -64,9 +67,11 @@ impl Display for DefaultsError {
             Self::CurrentDirFailed(err) => {
                 write!(f, "Failed to get current working directory: {}", err)
             }
+
             Self::CurrentDirHasNoName(cwd) => {
                 write!(f, "Current working directory has no name: {:?}", cwd)
             }
+
             Self::CurrentDirInvalidUtf8(cwd) => write!(
                 f,
                 "Current working directory contained invalid UTF-8: {:?}",
@@ -86,18 +91,23 @@ struct Defaults {
 impl Defaults {
     fn new(wrapper: &TextWrapper) -> Result<Self, DefaultsError> {
         let cwd = env::current_dir().map_err(DefaultsError::CurrentDirFailed)?;
+
         let dir_name = cwd
             .file_name()
             .ok_or_else(|| DefaultsError::CurrentDirHasNoName(cwd.clone()))?;
+
         let dir_name = dir_name
             .to_str()
             .ok_or_else(|| DefaultsError::CurrentDirInvalidUtf8(cwd.clone()))?;
+
         let name = name::transliterate(&dir_name.to_kebab_case());
+
         let dot_name = name
             .as_ref()
             .map(|n| format!(".{n}"))
             .unwrap_or_default()
             .replace("-", "_");
+
         Ok(Self {
             identifier: default_identifier(wrapper, &dot_name)
                 .ok()
@@ -142,9 +152,11 @@ impl Display for PromptError {
             Self::StylizedNamePromptFailed(err) => {
                 write!(f, "Failed to prompt for stylized name: {}", err)
             }
+
             Self::IdentifierPromptFailed(err) => {
                 write!(f, "Failed to prompt for identifier: {}", err)
             }
+
             Self::ListTemplatePacksFailed(err) => write!(f, "{}", err),
             Self::TemplatePackPromptFailed(err) => {
                 write!(f, "Failed to prompt for template pack: {}", err)
@@ -167,6 +179,7 @@ pub struct Raw {
 impl Raw {
     pub fn detect(wrapper: &TextWrapper) -> Result<Self, DetectError> {
         let defaults = Defaults::new(wrapper).map_err(DetectError::DefaultsFailed)?;
+
         Ok(Self {
             name: defaults.name.ok_or_else(|| DetectError::NameNotDetected)?,
             lib_name: None,
@@ -180,11 +193,16 @@ impl Raw {
 
     pub fn prompt(wrapper: &TextWrapper) -> Result<Self, PromptError> {
         let defaults = Defaults::new(wrapper).map_err(PromptError::DefaultsFailed)?;
+
         let (name, default_stylized) = Self::prompt_name(&defaults)?;
+
         let stylized_name = Self::prompt_stylized_name(&name, default_stylized)?;
+
         let identifier = Self::prompt_identifier(wrapper, &defaults)?;
+
         let template_pack = Some(Self::prompt_template_pack(wrapper)?)
             .filter(|pack| pack != super::IMPLIED_TEMPLATE_PACK);
+
         Ok(Self {
             name,
             lib_name: None,
@@ -199,9 +217,12 @@ impl Raw {
 impl Raw {
     fn prompt_name(defaults: &Defaults) -> Result<(String, Option<String>), PromptError> {
         let default_name = defaults.name.clone();
+
         let name = prompt::default("Project name", default_name.as_deref(), None)
             .map_err(PromptError::NamePromptFailed)?;
+
         let default_stylized = Some(defaults.stylized_name.clone());
+
         Ok((name, default_stylized))
     }
 
@@ -211,6 +232,7 @@ impl Raw {
     ) -> Result<String, PromptError> {
         let stylized =
             default_stylized.unwrap_or_else(|| name.replace(['-', '_'], " ").to_title_case());
+
         prompt::default("Stylized name", Some(&stylized), None)
             .map_err(PromptError::StylizedNamePromptFailed)
     }
@@ -222,6 +244,7 @@ impl Raw {
         Ok(loop {
             let response = prompt::default("Identifier", Some(&defaults.identifier), None)
                 .map_err(PromptError::IdentifierPromptFailed)?;
+
             match identifier::check_identifier_syntax(response.as_str()) {
                 Ok(_) => break response,
                 Err(err) => {
@@ -236,12 +259,17 @@ impl Raw {
 
     pub fn prompt_template_pack(wrapper: &TextWrapper) -> Result<String, PromptError> {
         let packs = templating::list_app_packs().map_err(PromptError::ListTemplatePacksFailed)?;
+
         let mut default_pack = None;
+
         println!("Detected template packs:");
+
         for (index, pack) in packs.iter().enumerate() {
             let default = pack == super::DEFAULT_TEMPLATE_PACK;
+
             if default {
                 default_pack = Some(index.to_string());
+
                 println!(
                     "{}",
                     format!("  [{}] {}", index.to_string().bright_green(), pack,)
@@ -252,22 +280,27 @@ impl Raw {
                 println!("  [{}] {}", index.to_string().green(), pack);
             }
         }
+
         if packs.is_empty() {
             println!("  -- none --");
         }
+
         loop {
             println!("  Enter an {} for a template pack above.", "index".green(),);
+
             let pack_input = prompt::default(
                 "Template pack",
                 default_pack.as_deref(),
                 Some(Color::BrightGreen),
             )
             .map_err(PromptError::TemplatePackPromptFailed)?;
+
             let pack_name = pack_input
                 .parse::<usize>()
                 .ok()
                 .and_then(|index| packs.get(index))
                 .cloned();
+
             if let Some(pack_name) = pack_name {
                 break Ok(pack_name);
             } else {

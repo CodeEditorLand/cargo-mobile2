@@ -7,8 +7,11 @@ use colored::{Color, Colorize as _};
 
 pub fn minimal(msg:impl Display) -> io::Result<String> {
 	let mut input = String::new();
+
 	print!("{}: ", msg);
+
 	io::stdout().flush()?;
+
 	io::stdin().read_line(&mut input)?;
 
 	Ok(input.trim().to_owned())
@@ -25,6 +28,7 @@ pub fn default(
 		} else {
 			format!("{} ({})", msg, default)
 		};
+
 		minimal(msg)
 	} else {
 		minimal(msg)
@@ -45,6 +49,7 @@ pub fn yes_no(msg:impl Display, default:Option<bool>) -> io::Result<Option<bool>
 		Some(false) => "[y/N]",
 		None => "[y/n]",
 	};
+
 	minimal(format!("{} {}", msg, y_n)).map(|response| {
 		if response.eq_ignore_ascii_case("y") {
 			Some(true)
@@ -54,6 +59,7 @@ pub fn yes_no(msg:impl Display, default:Option<bool>) -> io::Result<Option<bool>
 			default
 		} else {
 			println!("That was neither a Y nor an N! You're pretty silly.");
+
 			None
 		}
 	})
@@ -77,8 +83,11 @@ pub fn list(
 	msg:impl Display,
 ) -> io::Result<usize> {
 	println!("{}:", header);
+
 	let choice_count = choices.len();
+
 	list_display_only(choices, choice_count);
+
 	if let Some(alternative) = alternative {
 		println!(
 			"  Enter an {} for a {} above, or enter a {} manually.",
@@ -89,9 +98,11 @@ pub fn list(
 	} else {
 		println!("  Enter an {} for a {} above.", "index".green(), noun);
 	}
+
 	loop {
 		let response =
 			default(&msg, if choice_count == 1 { Some("0") } else { None }, Some(Color::Green))?;
+
 		if !response.is_empty() {
 			if let Ok(index) = response.parse::<usize>() {
 				if index < choice_count {

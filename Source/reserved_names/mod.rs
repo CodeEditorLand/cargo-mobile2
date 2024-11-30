@@ -40,6 +40,7 @@ pub enum Reservation {
 
 pub fn is_reserved(s:impl AsRef<str>) -> Result<(), Reservation> {
 	let s = s.as_ref();
+
 	if in_keywords(s) {
 		Err(Reservation::Keywords)
 	} else if in_windows(s) {

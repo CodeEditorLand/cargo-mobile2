@@ -32,15 +32,18 @@ pub fn run_and_debug(
 	println!("Deploying app to device...");
 
 	let app_path = config.app_path();
+
 	let deploy_cmd = duct::cmd("ios-deploy", ["--debug", "--id", id, "--no-wifi"])
 		.vars(env.explicit_env())
 		.before_spawn(move |cmd| {
 			cmd.arg("--bundle").arg(&app_path);
+
 			if non_interactive {
 				cmd.arg("--noninteractive");
 			} else {
 				cmd.arg("--justlaunch");
 			}
+
 			Ok(())
 		})
 		.dup_stdio();
@@ -64,6 +67,7 @@ pub fn run_and_debug(
 					// Name[processID]: message`
 					cmd.arg("--match").arg(format!("{app_name}["));
 				}
+
 				Ok(())
 			})
 			.vars(env.explicit_env())

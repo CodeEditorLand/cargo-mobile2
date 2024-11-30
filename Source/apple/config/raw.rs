@@ -48,6 +48,7 @@ fn value_to_string(value:&PlistValue) -> String {
 		PlistValue::String(string) => string.to_owned(),
 		PlistValue::Array(array) => {
 			let string = array.iter().map(value_to_string).collect::<Vec<_>>().join(",");
+
 			format!("[{}]", string)
 		},
 		PlistValue::Dictionary(dict) => dictionary_to_string(dict),
@@ -65,6 +66,7 @@ fn dictionary_to_string(dict:&PlistDictionary) -> String {
 		.map(|pair| pair_to_string(&pair.0.key, &pair.0.value))
 		.collect::<Vec<_>>()
 		.join(",");
+
 	format!("{{{}}}", joint)
 }
 
@@ -130,6 +132,7 @@ impl Raw {
 	pub fn detect() -> Result<Self, DetectError> {
 		let development_teams =
 			teams::find_development_teams().map_err(DetectError::DeveloperTeamLookupFailed)?;
+
 		Ok(Self {
 			development_team:development_teams
 				.first()
@@ -154,8 +157,11 @@ impl Raw {
 		let development_team = {
 			let development_teams =
 				teams::find_development_teams().map_err(PromptError::DeveloperTeamLookupFailed)?;
+
 			let default_team = if !development_teams.is_empty() { Some("0") } else { None };
+
 			println!("Detected development teams:");
+
 			for (index, team) in development_teams.iter().enumerate() {
 				if index == 0 {
 					println!(
@@ -178,27 +184,32 @@ impl Raw {
 					);
 				}
 			}
+
 			if development_teams.is_empty() {
 				println!("  -- none --");
 			}
+
 			loop {
 				println!(
 					"  Enter an {} for a team above, or enter a {} manually.",
 					"index".green(),
 					"team ID".cyan(),
 				);
+
 				let team_input = prompt::default(
 					"Apple development team",
 					default_team,
 					Some(Color::BrightGreen),
 				)
 				.map_err(PromptError::DeveloperTeamPromptFailed)?;
+
 				let team_id = team_input
 					.parse::<usize>()
 					.ok()
 					.and_then(|index| development_teams.get(index))
 					.map(|team| team.id.clone())
 					.unwrap_or_else(|| team_input);
+
 				if !team_id.is_empty() {
 					break team_id;
 				} else {
@@ -211,6 +222,7 @@ impl Raw {
 				}
 			}
 		};
+
 		Ok(Self {
 			development_team:Some(development_team),
 			project_dir:None,

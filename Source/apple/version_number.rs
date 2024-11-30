@@ -25,11 +25,13 @@ pub struct VersionNumber {
 impl Display for VersionNumber {
 	fn fmt(&self, f:&mut fmt::Formatter<'_>) -> fmt::Result {
 		write!(f, "{}", self.triple)?;
+
 		if let Some(extra) = &self.extra {
 			for number in extra {
 				write!(f, ".{}", number)?;
 			}
 		}
+
 		Ok(())
 	}
 }
@@ -49,6 +51,7 @@ impl FromStr for VersionNumber {
 		match v.split('.').count() {
 			1..=3 => {
 				let triple = VersionTriple::from_str(v)?;
+
 				Ok(Self { triple, extra:None })
 			},
 			// Even when splitting a string that does not contain the delimeter,
@@ -57,7 +60,9 @@ impl FromStr for VersionNumber {
 			0 => unreachable!(),
 			_ => {
 				let mut s = v.split('.');
+
 				let triple = VersionTriple::from_split(&mut s, v)?;
+
 				let extra = Some(
 					s.map(|s| {
 						s.parse().map_err(|source| {
@@ -66,6 +71,7 @@ impl FromStr for VersionNumber {
 					})
 					.collect::<Result<Vec<_>, _>>()?,
 				);
+
 				Ok(Self { triple, extra })
 			},
 		}

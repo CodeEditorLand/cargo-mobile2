@@ -21,6 +21,7 @@ fn check_rust() -> Result<String, String> {
 
 pub fn check() -> Result<Section, Unrecoverable> {
 	let section = Section::new(format!("cargo-mobile {}", VERSION_SHORT));
+
 	Ok(match util::install_dir() {
 		Ok(install_dir) => {
 			section

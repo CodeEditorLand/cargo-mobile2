@@ -102,8 +102,10 @@ impl Config {
 		#[cfg(target_os = "macos")]
 		let apple = apple::config::Config::from_raw(app.clone(), raw.apple)
 			.map_err(FromRawError::AppleConfigInvalid)?;
+
 		let android = android::config::Config::from_raw(app.clone(), raw.android)
 			.map_err(FromRawError::AndroidConfigInvalid)?;
+
 		Ok(Self {
 			app,
 			#[cfg(target_os = "macos")]
@@ -122,11 +124,16 @@ impl Config {
 		} else {
 			Raw::detect(wrapper).map_err(GenError::DetectFailed)
 		}?;
+
 		let root_dir = cwd.as_ref().canonicalize().map_err(GenError::CanonicalizeFailed)?;
+
 		let config =
 			Self::from_raw(root_dir.clone(), raw.clone()).map_err(GenError::FromRawFailed)?;
+
 		log::info!("generated config: {:#?}", config);
+
 		raw.write(&root_dir).map_err(GenError::WriteFailed)?;
+
 		Ok(config)
 	}
 
@@ -136,6 +143,7 @@ impl Config {
 		wrapper:&TextWrapper,
 	) -> Result<(Self, Origin), LoadOrGenError> {
 		let cwd = cwd.as_ref();
+
 		if let Some((root_dir, raw)) = Raw::load(cwd).map_err(LoadOrGenError::LoadFailed)? {
 			Self::from_raw(root_dir.clone(), raw)
 				.map(|config| (config, Origin::Loaded))

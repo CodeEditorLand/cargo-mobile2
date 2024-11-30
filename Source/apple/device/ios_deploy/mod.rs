@@ -44,6 +44,7 @@ impl Event {
 				match serde_json::from_str(s) {
 					Ok(event) => {
 						log::debug!("parsed `ios-deploy` event: {:#?}", event);
+
 						docs.push(event)
 					},
 					Err(err) => {
@@ -61,10 +62,13 @@ impl Event {
 			s.match_indices("}{")
 				.fold((Vec::new(), 0), |(mut docs, prev_index), (index, _)| {
 					let end = index + 1;
+
 					parse_and_push(&s[prev_index..end], &mut docs);
 					(docs, end)
 				});
+
 		parse_and_push(&s[prev_index..], &mut docs);
+
 		docs
 	}
 

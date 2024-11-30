@@ -105,6 +105,7 @@ pub fn build(
 				NoiseLevel::LoudAndProud => "--info",
 				NoiseLevel::FranklyQuitePedantic => "--debug",
 			});
+
 			Ok(())
 		})
 		.start()
@@ -119,17 +120,20 @@ pub fn build(
 		.wait()?;
 
 	let mut outputs = Vec::new();
+
 	if split_per_abi {
 		let paths = targets
 			.iter()
 			.map(|t| apks_paths(config, profile, t.arch).into_iter().reduce(last_modified).unwrap())
 			.collect::<Vec<_>>();
+
 		outputs.extend(paths);
 	} else {
 		let path = apks_paths(config, profile, "universal")
 			.into_iter()
 			.reduce(last_modified)
 			.unwrap();
+
 		outputs.push(path);
 	}
 
@@ -138,6 +142,7 @@ pub fn build(
 
 pub mod cli {
 	use super::*;
+
 	pub fn build(
 		config:&Config,
 		env:&Env,
@@ -160,9 +165,11 @@ pub mod cli {
 		let outputs = super::build(config, env, noise_level, profile, targets, split_per_abi)?;
 
 		println!("\nFinished building APK(s):");
+
 		for p in &outputs {
 			println!("    {}", p.to_string_lossy().green(),);
 		}
+
 		Ok(())
 	}
 }

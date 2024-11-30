@@ -218,14 +218,17 @@ impl VersionInfo {
 			.map(VersionNumber::from_str)
 			.transpose()
 			.map_err(Error::IosVersionNumberInvalid)?;
+
 		let short_version_number = short_version_string
 			.as_deref()
 			.map(VersionTriple::from_str)
 			.transpose()
 			.map_err(Error::BundleVersionInvalid)?;
+
 		if short_version_number.is_some() && version_number.is_none() {
 			return Err(Error::InvalidVersionConfiguration);
 		}
+
 		if let Some((version_number, short_version_number)) =
 			version_number.as_ref().zip(short_version_number)
 		{
@@ -233,6 +236,7 @@ impl VersionInfo {
 				return Err(Error::IosVersionNumberMismatch);
 			}
 		}
+
 		Ok(Self { version_number, short_version_number })
 	}
 }
@@ -276,6 +280,7 @@ impl Config {
 						super::NAME
 					);
 				}
+
 				if util::under_root(&project_dir, app.root_dir()).map_err(|cause| {
 					Error::ProjectDirInvalid(ProjectDirInvalid::NormalizationFailed {
 						project_dir:project_dir.clone(),
@@ -344,6 +349,7 @@ impl Config {
 
 	pub fn workspace_path(&self) -> PathBuf {
 		let root_workspace = self.project_dir().join(format!("{}.xcworkspace/", self.app.name()));
+
 		if root_workspace.exists() {
 			root_workspace
 		} else {
@@ -362,9 +368,11 @@ impl Config {
 
 	pub fn ipa_path(&self) -> Result<PathBuf, (PathBuf, PathBuf)> {
 		let path = |tail:&str| self.export_dir().join(format!("{}.ipa", tail));
+
 		let old = path(&self.scheme());
 		// It seems like the format changed recently?
 		let new = path(self.app.stylized_name());
+
 		std::iter::once(&old)
 			.chain(std::iter::once(&new))
 			.find(|path| path.is_file())

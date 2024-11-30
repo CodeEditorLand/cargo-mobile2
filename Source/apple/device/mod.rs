@@ -95,6 +95,7 @@ impl<'a> Device<'a> {
 
 	pub fn paired(mut self, paired:bool) -> Self {
 		self.paired = paired;
+
 		self
 	}
 
@@ -116,6 +117,7 @@ impl<'a> Device<'a> {
 	) -> Result<duct::Handle, RunError> {
 		// TODO: These steps are run unconditionally, which is slooooooow
 		println!("Building app...");
+
 		self.target
 			.build(
 				config,
@@ -125,7 +127,9 @@ impl<'a> Device<'a> {
 				BuildConfig::new().allow_provisioning_updates(),
 			)
 			.map_err(RunError::BuildFailed)?;
+
 		println!("Archiving app...");
+
 		self.target
 			.archive(config, env, noise_level, profile, None, ArchiveConfig::new())
 			.map_err(RunError::ArchiveFailed)?;
@@ -137,6 +141,7 @@ impl<'a> Device<'a> {
 			},
 			DeviceKind::IosDeployDevice | DeviceKind::DeviceCtlDevice => {
 				println!("Exporting app...");
+
 				self.target
 					.export(
 						config,
@@ -145,18 +150,23 @@ impl<'a> Device<'a> {
 						ExportConfig::default().allow_provisioning_updates(),
 					)
 					.map_err(RunError::ExportFailed)?;
+
 				println!("Extracting IPA...");
 
 				let ipa_path =
 					config.ipa_path().map_err(|(old, new)| RunError::IpaMissing { old, new })?;
+
 				let export_dir = config.export_dir();
+
 				let cmd = duct::cmd::<&str, [String; 0]>("unzip", [])
 					.vars(env.explicit_env())
 					.before_spawn(move |cmd| {
 						if noise_level.pedantic() {
 							cmd.arg("-q");
 						}
+
 						cmd.arg("-o").arg(&ipa_path).arg("-d").arg(&export_dir);
+
 						Ok(())
 					})
 					.dup_stdio();
@@ -177,6 +187,7 @@ impl<'a> Device<'a> {
 
 pub fn list_devices<'a>(env:&Env) -> Result<BTreeSet<Device<'a>>, String> {
 	let mut devices = BTreeSet::default();
+
 	let mut error = None;
 
 	// devicectl
@@ -194,6 +205,7 @@ pub fn list_devices<'a>(env:&Env) -> Result<BTreeSet<Device<'a>>, String> {
 		PackageSpec::brew("ios-deploy")
 			.install(false, &mut GemCache::new())
 			.map_err(|e| e.to_string())?;
+
 		return ios_deploy::device_list(env).map_err(|e| e.to_string());
 	}
 

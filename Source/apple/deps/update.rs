@@ -59,8 +59,10 @@ impl Formula {
 
 		let name = util::get_string_for_group(&caps, "name", revision)
 			.map_err(RegexError::InvalidCaptureGroup)?;
+
 		let installed_version = util::get_string_for_group(&caps, "installed_version", revision)
 			.map_err(RegexError::InvalidCaptureGroup)?;
+
 		let current_version = util::get_string_for_group(&caps, "current_version", revision)
 			.map_err(RegexError::InvalidCaptureGroup)?;
 
@@ -112,9 +114,11 @@ impl Outdated {
 			.stderr_capture()
 			.read()
 			.map_err(OutdatedError::CommandFailed)?;
+
 		let packages = Self::outdated_brew_deps()?
 			.chain(Self::outdated_gem_deps(&outdated_strings, gem_cache)?)
 			.collect::<Result<_, _>>()?;
+
 		Ok(Self { packages })
 	}
 
@@ -136,6 +140,7 @@ impl Outdated {
 	pub fn print_notice(&self) {
 		if !self.is_empty() {
 			println!("Outdated dependencies:");
+
 			for package in self.packages.iter() {
 				package.print_notice();
 			}

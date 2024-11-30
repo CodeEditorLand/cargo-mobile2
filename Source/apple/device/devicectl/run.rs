@@ -80,13 +80,18 @@ pub fn run(
 		.join(format!("{}_iOS.xcarchive", config.app().name()))
 		.join("Products/Applications")
 		.join(format!("{}.app", config.app().stylized_name()));
+
 	let json_output_path = temp_dir().join("deviceinstall.json");
+
 	let json_output_path_ = json_output_path.clone();
+
 	std::fs::write(&json_output_path, "").map_err(RunError::DeployFailed)?;
+
 	let cmd = duct::cmd("xcrun", ["devicectl", "device", "install", "app", "--device", id])
 		.vars(env.explicit_env())
 		.before_spawn(move |cmd| {
 			cmd.arg(&app_dir).arg("--json-output").arg(&json_output_path_);
+
 			Ok(())
 		})
 		.dup_stdio();
@@ -94,13 +99,16 @@ pub fn run(
 	cmd.run().map_err(RunError::DeployFailed)?;
 
 	let install_output_json = read_to_string(&json_output_path).map_err(RunError::DeployFailed)?;
+
 	let install_output = serde_json::from_str::<InstallOutput>(&install_output_json)?;
+
 	let installed_application = install_output
 		.result
 		.installed_applications
 		.into_iter()
 		.next()
 		.ok_or(RunError::MissingInstalledApplication)?;
+
 	let app_id = installed_application.bundle_id;
 
 	let launcher_cmd =
@@ -127,6 +135,7 @@ pub fn run(
 					// Name[processID]: message`
 					cmd.arg("--match").arg(format!("{app_name}["));
 				}
+
 				Ok(())
 			})
 			.vars(env.explicit_env())

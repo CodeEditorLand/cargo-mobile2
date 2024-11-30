@@ -16,6 +16,7 @@ pub fn query_mime_entry(mime_type:&str) -> Option<PathBuf> {
 		.read()
 		.map(|out_str| {
 			log::debug!("query_mime_entry got output {:?}", out_str);
+
 			if !out_str.is_empty() { Some(PathBuf::from(out_str.trim())) } else { None }
 		})
 		.ok()?
@@ -40,6 +41,7 @@ pub fn find_entry_in_dir(dir_path:&Path, target:&Path) -> std::io::Result<Option
 			}
 		}
 	}
+
 	Ok(None)
 }
 
@@ -70,6 +72,7 @@ pub fn find_entry_by_app_name(
 			}
 		}
 	}
+
 	None
 }
 
@@ -79,15 +82,18 @@ fn replace_on_pattern(
 	regex:&Regex,
 ) -> OsString {
 	let text = text.as_ref();
+
 	let replace_by = replace_by.as_ref();
 
 	// Vec<u8> is easier to deal with than OsString, and on unix they're pretty
 	// much the same thing (OsStringExt).
 	let mut result_text = Vec::new();
+
 	let mut last_index_read = 0;
 
 	for mat in regex.find_iter(text.as_bytes()) {
 		let start = mat.start();
+
 		let end = mat.end();
 
 		// We put the values from the last index we read, to the start of the
@@ -115,11 +121,14 @@ fn parse_quoted_text(
 ) -> OsString {
 	// We parse the escape character (\) again on the quoted text
 	let mut result = Vec::new();
+
 	let mut escaping = false;
+
 	for &c in text.as_bytes() {
 		if escaping {
 			// If escaping, then pass whatever char c is, then stop escaping
 			result.push(c);
+
 			escaping = false;
 		} else {
 			// If not escaping, check for whether c is escape ('\'), going into
@@ -132,6 +141,7 @@ fn parse_quoted_text(
 			}
 		}
 	}
+
 	let result = OsString::from_vec(result);
 
 	// Now we do the unquoted part
@@ -148,13 +158,16 @@ fn parse_unquoted_text(
 	// We only have one file path (not an URL). Any instance of these ones
 	// needs to be replaced by the file path in this particular case.
 	let arg_re = byte_regex!(r"%u|%U|%f|%F");
+
 	let result = replace_on_pattern(text, argument, arg_re);
 
 	// Then the other flags
 	let icon_replace = icon.unwrap_or_else(|| "".as_ref());
+
 	let result = replace_on_pattern(result, icon_replace, byte_regex!("%i"));
 
 	let desktop_entry_replace = desktop_entry_path.unwrap_or_else(|| "".as_ref());
+
 	let result = replace_on_pattern(result, desktop_entry_replace, byte_regex!("%k"));
 
 	// The other % flags are deprecated so we clear them, except double
@@ -180,11 +193,15 @@ pub fn parse_command(
 	log::debug!("Parsing XDG Exec command {:?}, with argument {:?}", command, argument);
 
 	// let command_name_re = byte_regex!(r#"^[^ \t"]+|"[^ \t]+""#);
+
 	let mut escape_char = false;
+
 	let mut reading_quoted = false;
+
 	let mut reading_singlequoted = false;
 
 	let mut parsed_command_parts = Vec::new();
+
 	let mut text_atom = Vec::new();
 
 	// I think doing it like this, although a bit big, is the clearest way to
@@ -201,6 +218,7 @@ pub fn parse_command(
 		// If we are escaping something we will just let it pass
 		if escape_char {
 			text_atom.push(c);
+
 			escape_char = false;
 		// Otherwise, we have to pay special attention to backslash
 		} else if c == b'\\' {
@@ -221,7 +239,9 @@ pub fn parse_command(
 						icon,
 						desktop_entry_path,
 					);
+
 					parsed_command_parts.push(text_atom_string);
+
 					text_atom.clear();
 				}
 				// And the quoted ended
@@ -242,7 +262,9 @@ pub fn parse_command(
 						icon,
 						desktop_entry_path,
 					);
+
 					parsed_command_parts.push(text_atom_string);
+
 					text_atom.clear();
 				}
 				// And the quoting ended
@@ -258,7 +280,9 @@ pub fn parse_command(
 					icon,
 					desktop_entry_path,
 				);
+
 				parsed_command_parts.push(text_atom_string);
+
 				text_atom.clear();
 			}
 		// If a non whitespace, nor backslash character, when we're neither
@@ -279,11 +303,14 @@ pub fn parse_command(
 		// character, and not on EOF, so this should be unquoted.
 		let text_atom_string =
 			parse_unquoted_text(OsStr::from_bytes(&text_atom), argument, icon, desktop_entry_path);
+
 		parsed_command_parts.push(text_atom_string);
+
 		text_atom.clear();
 	}
 
 	log::debug!("XDG parsed command {:?} to {:?}", command, parsed_command_parts);
+
 	parsed_command_parts
 }
 
@@ -304,10 +331,12 @@ pub fn get_xdg_data_dirs() -> Vec<PathBuf> {
 
 	if let Ok(var) = env::var("XDG_DATA_DIRS") {
 		let entries = var.split(':').map(PathBuf::from);
+
 		result.extend(entries);
 	} else {
 		// These are the default ones we'll use in case the var is not set
 		result.push(PathBuf::from("/usr/local/share"));
+
 		result.push(PathBuf::from("/usr/share"));
 	};
 

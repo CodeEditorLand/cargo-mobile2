@@ -46,8 +46,10 @@ impl Pack {
 	pub(super) fn lookup(dir:impl AsRef<Path>, name:impl AsRef<str>) -> Result<Self, LookupError> {
 		fn check_path(name:&str, path:&Path) -> Option<PathBuf> {
 			log::info!("checking for template pack \"{}\" at {:?}", name, path);
+
 			if path.exists() {
 				log::info!("found template pack \"{}\" at {:?}", name, path);
+
 				Some(path.to_owned())
 			} else {
 				None
@@ -56,15 +58,21 @@ impl Pack {
 
 		let path = {
 			let dir = dir.as_ref();
+
 			let name = name.as_ref();
+
 			let toml_path = dir.join(format!("{}.toml", name));
+
 			let path = dir.join(name);
+
 			check_path(name, &toml_path).or_else(|| check_path(name, &path)).ok_or_else(|| {
 				LookupError::MissingPack { name:name.to_owned(), tried_toml:toml_path, tried:path }
 			})
 		}?;
+
 		if path.extension() == Some("toml".as_ref()) {
 			let pack = FancyPack::parse(path).map_err(LookupError::FancyPackParseFailed)?;
+
 			Ok(Pack::Fancy(pack))
 		} else {
 			Ok(Pack::Simple(path))
@@ -109,6 +117,7 @@ impl Pack {
 						path
 					);
 				}
+
 				Ok(vec![path])
 			},
 			Self::Fancy(pack) => pack.resolve(git, submodule_commit),
@@ -139,21 +148,28 @@ impl Display for ListError {
 
 pub fn list_app_packs() -> Result<Vec<String>, ListError> {
 	let dir = app_pack_dir().map_err(ListError::NoHomeDir)?;
+
 	let mut packs = Vec::new();
+
 	for entry in
 		fs::read_dir(&dir).map_err(|cause| ListError::DirReadFailed { dir:dir.clone(), cause })?
 	{
 		let entry =
 			entry.map_err(|cause| ListError::DirEntryReadFailed { dir:dir.clone(), cause })?;
+
 		if let Some(name) = entry.path().file_stem() {
 			let name = name.to_string_lossy();
+
 			if !BRAINIUM.contains(&name.as_ref()) {
 				packs.push(name.into_owned());
 			}
 		}
 	}
+
 	packs.sort_unstable();
+
 	packs.dedup();
+
 	Ok(if cfg!(feature = "brainium") {
 		// This solution is slightly devious...
 		BRAINIUM.iter().map(ToString::to_string).chain(packs).collect()

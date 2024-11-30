@@ -112,35 +112,45 @@ pub fn check_identifier_syntax(identifier_name:&str) -> Result<(), IdentifierErr
 	if identifier_name.is_empty() {
 		return Err(IdentifierError::Empty);
 	}
+
 	if identifier_name.starts_with('.') || identifier_name.ends_with('.') {
 		return Err(IdentifierError::StartsOrEndsWithADot);
 	}
+
 	let labels = identifier_name.split('.');
+
 	for label in labels {
 		if label.is_empty() {
 			return Err(IdentifierError::EmptyLabel);
 		}
+
 		if RESERVED_JAVA_KEYWORDS.contains(&label) {
 			return Err(IdentifierError::ReservedKeyword { keyword:label.to_owned() });
 		}
+
 		if label.chars().next().unwrap().is_ascii_digit() {
 			return Err(IdentifierError::StartsWithDigit { label:label.to_owned() });
 		}
+
 		let mut bad_chars = Vec::new();
+
 		for c in label.chars() {
 			if !(c.is_ascii_alphanumeric() || c == '_' || c == '-' || bad_chars.contains(&c)) {
 				bad_chars.push(c);
 			}
 		}
+
 		if !bad_chars.is_empty() {
 			return Err(IdentifierError::NotAsciiAlphanumeric { bad_chars });
 		}
 	}
+
 	for pkg_name in RESERVED_PACKAGE_NAMES.iter() {
 		if identifier_name.ends_with(pkg_name) {
 			return Err(IdentifierError::ReservedPackageName { package_name:pkg_name.to_string() });
 		}
 	}
+
 	Ok(())
 }
 

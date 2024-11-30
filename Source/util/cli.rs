@@ -25,8 +25,11 @@ pub mod colors {
 	use colored::Color::{self, *};
 
 	pub const ERROR:Color = BrightRed;
+
 	pub const WARNING:Color = BrightYellow;
+
 	pub const ACTION_REQUEST:Color = BrightMagenta;
+
 	pub const VICTORY:Color = BrightGreen;
 }
 
@@ -90,6 +93,7 @@ impl Report {
 
 	fn format(&self, wrapper:&TextWrapper) -> String {
 		static INDENT:&str = "    ";
+
 		let head = if colored::control::SHOULD_COLORIZE.should_colorize() {
 			wrapper.fill(&format!(
 				"{} {}",
@@ -99,13 +103,16 @@ impl Report {
 		} else {
 			wrapper.fill(&format!("{}: {}", self.label.as_str(), &self.msg))
 		};
+
 		let wrapper =
 			TextWrapper(wrapper.clone().0.initial_indent(INDENT).subsequent_indent(INDENT));
+
 		format!("{}\n{}\n", head, wrapper.fill(&self.details))
 	}
 
 	pub fn print(&self, wrapper:&TextWrapper) {
 		let s = self.format(wrapper);
+
 		if matches!(self.label, Label::Error) {
 			eprint!("{}", s)
 		} else {
@@ -126,12 +133,14 @@ mod interface {
 	use std::fmt::Debug;
 
 	use once_cell_regex::exports::once_cell::sync::Lazy;
+
 	use structopt::{
 		clap::{self, AppSettings},
 		StructOpt,
 	};
 
 	use super::*;
+
 	use crate::{opts, util};
 
 	pub static GLOBAL_SETTINGS:&[AppSettings] = &[
@@ -152,6 +161,7 @@ mod interface {
 			Ok(None) => VERSION_SHORT.to_owned(),
 			Err(err) => {
 				log::error!("failed to get current commit msg: {}", err);
+
 				VERSION_SHORT.to_owned()
 			},
 		}
@@ -238,11 +248,13 @@ mod interface {
 		if args.get(1).map(String::as_str) == Some(name) {
 			args.remove(1);
 		}
+
 		args
 	}
 
 	fn init_logging(noise_level:opts::NoiseLevel) {
 		use env_logger::{Builder, Env};
+
 		let default_level = match noise_level {
 			opts::NoiseLevel::Polite => "warn",
 			opts::NoiseLevel::LoudAndProud => {
@@ -252,7 +264,9 @@ mod interface {
 				"info,cargo_mobile=debug,cargo_android=debug,cargo_apple=debug,hit=debug"
 			},
 		};
+
 		let env = Env::default().default_filter_or(default_level);
+
 		Builder::from_env(env).init();
 	}
 
@@ -265,6 +279,7 @@ mod interface {
 	impl Exit {
 		fn report(reportable:impl Reportable) -> Self {
 			log::info!("exiting with {:#?}", reportable);
+
 			Self::Report(reportable.report())
 		}
 
@@ -272,6 +287,7 @@ mod interface {
 			match self {
 				Self::Report(report) => {
 					report.print(&wrapper);
+
 					std::process::exit(report.label.exit_code().into())
 				},
 				Self::Clap(err) => err.exit(),
@@ -280,6 +296,7 @@ mod interface {
 
 		pub fn main(inner:impl FnOnce(&TextWrapper) -> Result<(), Self>) {
 			let wrapper = TextWrapper::default();
+
 			if let Err(exit) = inner(&wrapper) {
 				exit.do_the_thing(wrapper)
 			}
@@ -289,9 +306,13 @@ mod interface {
 	pub fn exec<E:Exec>(name:&str) {
 		Exit::main(|wrapper| {
 			let args = get_args(name);
+
 			let input = E::from_iter_safe(&args).map_err(Exit::Clap)?;
+
 			init_logging(input.global_flags().noise_level);
+
 			log::debug!("raw args: {:#?}", args);
+
 			input.exec(wrapper).map_err(Exit::report)
 		})
 	}

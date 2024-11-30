@@ -31,6 +31,7 @@ pub fn force_symlink(
 	target_style:TargetStyle,
 ) -> Result<(), Error> {
 	let (source, target) = (source.as_ref(), target.as_ref());
+
 	let error = |cause:ErrorCause| {
 		Error::new(
 			LinkType::Symbolic,
@@ -41,20 +42,24 @@ pub fn force_symlink(
 			cause,
 		)
 	};
+
 	let target = if target_style == TargetStyle::Directory {
 		let file_name = if let Some(file_name) = source.file_name() {
 			file_name
 		} else {
 			return Err(error(ErrorCause::MissingFileName));
 		};
+
 		Cow::Owned(target.join(file_name))
 	} else {
 		Cow::Borrowed(target)
 	};
+
 	let is_directory = target
 		.parent()
 		.map(|parent| prefix_path(parent, source).is_dir())
 		.unwrap_or(false);
+
 	if is_symlink(&target) {
 		delete_symlink(&target).map_err(|err| error(ErrorCause::IOError(err.into())))?;
 	} else if target.is_file() {
@@ -62,11 +67,13 @@ pub fn force_symlink(
 	} else if target.is_dir() {
 		remove_dir_all(&target).map_err(|err| error(ErrorCause::IOError(err)))?;
 	}
+
 	let result = if is_directory {
 		std::os::windows::fs::symlink_dir(source, target)
 	} else {
 		std::os::windows::fs::symlink_file(source, target)
 	};
+
 	result.map_err(|err| {
 		if err.raw_os_error() == Some(ERROR_PRIVILEGE_NOT_HELD.0 as i32) {
 			error(ErrorCause::SymlinkNotAllowed)
@@ -74,6 +81,7 @@ pub fn force_symlink(
 			error(ErrorCause::IOError(err))
 		}
 	})?;
+
 	Ok(())
 }
 
@@ -83,7 +91,9 @@ pub fn force_symlink_relative(
 	target_style:TargetStyle,
 ) -> Result<(), Error> {
 	let (abs_source, abs_target) = (abs_source.as_ref(), abs_target.as_ref());
+
 	let rel_source = crate::util::relativize_path(abs_source, abs_target);
+
 	if target_style == TargetStyle::Directory && rel_source.file_name().is_none() {
 		if let Some(file_name) = abs_source.file_name() {
 			force_symlink(rel_source, abs_target.join(file_name), TargetStyle::File)
@@ -117,6 +127,7 @@ fn delete_symlink(filename:&Path) -> Result<(), core::Error> {
 		)
 	} {
 		unsafe { CloseHandle(handle)? };
+
 		Ok(())
 	} else {
 		Err(core::Error::from_win32())

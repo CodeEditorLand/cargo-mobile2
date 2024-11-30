@@ -167,11 +167,13 @@ impl ExportConfig {
 
 	pub fn allow_provisioning_updates(mut self) -> Self {
 		self.xcodebuild_options.allow_provisioning_updates = true;
+
 		self
 	}
 
 	pub fn authentication_credentials(mut self, credentials:AuthCredentials) -> Self {
 		self.xcodebuild_options.authentication_credentials.replace(credentials);
+
 		self
 	}
 }
@@ -186,16 +188,19 @@ impl BuildConfig {
 
 	pub fn allow_provisioning_updates(mut self) -> Self {
 		self.xcodebuild_options.allow_provisioning_updates = true;
+
 		self
 	}
 
 	pub fn skip_codesign(mut self) -> Self {
 		self.xcodebuild_options.skip_codesign = true;
+
 		self
 	}
 
 	pub fn authentication_credentials(mut self, credentials:AuthCredentials) -> Self {
 		self.xcodebuild_options.authentication_credentials.replace(credentials);
+
 		self
 	}
 }
@@ -210,16 +215,19 @@ impl ArchiveConfig {
 
 	pub fn allow_provisioning_updates(mut self) -> Self {
 		self.xcodebuild_options.allow_provisioning_updates = true;
+
 		self
 	}
 
 	pub fn skip_codesign(mut self) -> Self {
 		self.xcodebuild_options.skip_codesign = true;
+
 		self
 	}
 
 	pub fn authentication_credentials(mut self, credentials:AuthCredentials) -> Self {
 		self.xcodebuild_options.authentication_credentials.replace(credentials);
+
 		self
 	}
 }
@@ -238,8 +246,10 @@ impl<'a> TargetTrait<'a> for Target<'a> {
 
 	fn all() -> &'a BTreeMap<&'a str, Self> {
 		static TARGETS:OnceCell<BTreeMap<&'static str, Target<'static>>> = OnceCell::new();
+
 		TARGETS.get_or_init(|| {
 			let mut targets = BTreeMap::new();
+
 			targets.insert(
 				"aarch64",
 				Target {
@@ -250,6 +260,7 @@ impl<'a> TargetTrait<'a> for Target<'a> {
 					min_xcode_version:None,
 				},
 			);
+
 			targets.insert(
 				"x86_64",
 				Target {
@@ -265,6 +276,7 @@ impl<'a> TargetTrait<'a> for Target<'a> {
 					min_xcode_version:Some(((11, 0), "iOS Simulator doesn't support Metal until")),
 				},
 			);
+
 			targets.insert(
 				"aarch64-sim",
 				Target {
@@ -275,6 +287,7 @@ impl<'a> TargetTrait<'a> for Target<'a> {
 					min_xcode_version:None,
 				},
 			);
+
 			targets
 		})
 	}
@@ -310,7 +323,9 @@ impl<'a> Target<'a> {
 		self.min_xcode_version
 			.map(|(min_version, msg)| {
 				let tool_info = DeveloperTools::new().map_err(VersionCheckError::LookupFailed)?;
+
 				let installed_version = tool_info.version;
+
 				if installed_version >= min_version {
 					Ok(())
 				} else {
@@ -331,6 +346,7 @@ impl<'a> Target<'a> {
 		subcommand:&'a str,
 	) -> Result<CargoCommand<'a>, VersionCheckError> {
 		let metadata = if self.is_macos() { metadata.macos() } else { metadata.ios() };
+
 		self.min_xcode_version_satisfied().map(|()| {
 			CargoCommand::new(subcommand)
 				.with_package(Some(config.app().name()))
@@ -355,6 +371,7 @@ impl<'a> Target<'a> {
 			.build(env)
 			.run()
 			.map_err(CheckError::CargoCheckFailed)?;
+
 		Ok(())
 	}
 
@@ -374,6 +391,7 @@ impl<'a> Target<'a> {
 	) -> Result<(), CompileLibError> {
 		// Force color when running from CLI
 		let color = if force_color { "always" } else { "auto" };
+
 		self.cargo(config, metadata, "build")
 			.map_err(CompileLibError::VersionCheckFailed)?
 			.with_verbose(noise_level.pedantic())
@@ -381,11 +399,13 @@ impl<'a> Target<'a> {
 			.build(env)
 			.before_spawn(move |cmd| {
 				cmd.args(["--color", color]);
+
 				Ok(())
 			})
 			.vars(cc_env)
 			.run()
 			.map_err(CompileLibError::CargoBuildFailed)?;
+
 		Ok(())
 	}
 
@@ -398,11 +418,17 @@ impl<'a> Target<'a> {
 		build_config:BuildConfig,
 	) -> Result<(), BuildError> {
 		let configuration = profile.as_str();
+
 		let scheme = config.scheme();
+
 		let workspace_path = config.workspace_path();
+
 		let sdk = self.sdk.to_string();
+
 		let arch = if self.is_macos() { Some(self.arch.to_string()) } else { None };
+
 		let args:Vec<OsString> = vec![];
+
 		duct::cmd("xcodebuild", args)
 			.full_env(env.explicit_env())
 			.env("FORCE_COLOR", "--force-color")
@@ -419,11 +445,13 @@ impl<'a> Target<'a> {
 					.args(["-sdk", &sdk])
 					.args(["-configuration", configuration])
 					.arg("build");
+
 				Ok(())
 			})
 			.dup_stdio()
 			.start()?
 			.wait()?;
+
 		Ok(())
 	}
 
@@ -446,12 +474,19 @@ impl<'a> Target<'a> {
 		}
 
 		let configuration = profile.as_str();
+
 		let archive_path = config.archive_dir().join(config.scheme());
+
 		let scheme = config.scheme();
+
 		let workspace_path = config.workspace_path();
+
 		let sdk = self.sdk.to_string();
+
 		let arch = if self.is_macos() { Some(self.arch.to_string()) } else { None };
+
 		let args:Vec<OsString> = vec![];
+
 		duct::cmd("xcodebuild", args)
 			.full_env(env.explicit_env())
 			.before_spawn(move |cmd| {
@@ -460,9 +495,11 @@ impl<'a> Target<'a> {
 				if let Some(v) = verbosity(noise_level) {
 					cmd.arg(v);
 				}
+
 				if let Some(a) = &arch {
 					cmd.args(["-arch", a]);
 				}
+
 				cmd.args(["-scheme", &scheme])
 					.arg("-workspace")
 					.arg(&workspace_path)
@@ -472,6 +509,7 @@ impl<'a> Target<'a> {
 					.arg("archive")
 					.arg("-archivePath")
 					.arg(&archive_path);
+
 				Ok(())
 			})
 			.dup_stdio()
@@ -490,10 +528,13 @@ impl<'a> Target<'a> {
 	) -> Result<(), ExportError> {
 		// Super fun discrepancy in expectation of `-archivePath` value
 		let archive_path = config.archive_dir().join(format!("{}.xcarchive", config.scheme()));
+
 		let export_dir = config.export_dir();
+
 		let export_plist_path = config.export_plist_path();
 
 		let args:Vec<OsString> = vec![];
+
 		duct::cmd("xcodebuild", args)
 			.full_env(env.explicit_env())
 			.before_spawn(move |cmd| {
@@ -502,6 +543,7 @@ impl<'a> Target<'a> {
 				if let Some(v) = verbosity(noise_level) {
 					cmd.arg(v);
 				}
+
 				cmd.arg("-exportArchive")
 					.arg("-archivePath")
 					.arg(&archive_path)

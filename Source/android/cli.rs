@@ -186,6 +186,7 @@ impl Exec for Input {
 
 	fn exec(self, wrapper:&TextWrapper) -> Result<(), Self::Report> {
 		define_device_prompt!(adb::device_list, adb::device_list::Error, Android);
+
 		fn detect_target_ok<'a>(env:&Env) -> Option<&'a Target<'a>> {
 			device_prompt(env).map(|device| device.target()).ok()
 		}
@@ -197,8 +198,10 @@ impl Exec for Input {
 		) -> Result<(), Error> {
 			let (config, _origin) = OmniConfig::load_or_gen(".", non_interactive, wrapper)
 				.map_err(Error::ConfigFailed)?;
+
 			let metadata =
 				OmniMetadata::load(config.app().root_dir()).map_err(Error::MetadataFailed)?;
+
 			let mut env = Env::new().map_err(Error::EnvInitFailed)?;
 
 			if let Some(vars) = metadata.android().env_vars.as_ref() {
@@ -245,6 +248,7 @@ impl Exec for Input {
 				Ok(Target::all().iter().map(|t| t.1).collect())
 			} else {
 				let mut outs = Vec::new();
+
 				for t in targets {
 					let target = Target::for_name(&t)
 						.ok_or_else(|| {
@@ -254,23 +258,28 @@ impl Exec for Input {
 							}
 						})
 						.map_err(Error::TargetInvalid)?;
+
 					outs.push(target);
 				}
+
 				Ok(outs)
 			}
 		}
 
 		let Self { flags: GlobalFlags { noise_level, non_interactive }, command } = self;
+
 		match command {
 			Command::Open => {
 				with_config(non_interactive, wrapper, |config, _, env| {
 					ensure_init(config)?;
+
 					open_in_android_studio(config, env)
 				})
 			},
 			Command::Check { targets } => {
 				with_config(non_interactive, wrapper, |config, metadata, env| {
 					let force_color = true;
+
 					call_for_targets_with_fallback(
 						targets.iter(),
 						&detect_target_ok,
@@ -287,7 +296,9 @@ impl Exec for Input {
 			Command::Build { targets, profile: cli::Profile { profile } } => {
 				with_config(non_interactive, wrapper, |config, metadata, env| {
 					ensure_init(config)?;
+
 					let force_color = true;
+
 					call_for_targets_with_fallback(
 						targets.iter(),
 						&detect_target_ok,
@@ -309,7 +320,9 @@ impl Exec for Input {
 			} => {
 				with_config(non_interactive, wrapper, |config, metadata, env| {
 					let build_app_bundle = metadata.asset_packs().is_some();
+
 					ensure_init(config)?;
+
 					device_prompt(env)
 						.map_err(Error::DevicePromptFailed)?
 						.run(
@@ -331,6 +344,7 @@ impl Exec for Input {
 			Command::Stacktrace => {
 				with_config(non_interactive, wrapper, |config, _, env| {
 					ensure_init(config)?;
+
 					device_prompt(env)
 						.map_err(Error::DevicePromptFailed)?
 						.stacktrace(config, env)
@@ -376,6 +390,7 @@ impl Exec for Input {
 					} => {
 						with_config(non_interactive, wrapper, |config, _, env| {
 							ensure_init(config)?;
+
 							aab::cli::build(
 								config,
 								env,

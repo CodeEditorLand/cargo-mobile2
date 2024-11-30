@@ -178,6 +178,7 @@ impl Config {
 					super::NAME
 				);
 			}
+
 			if util::under_root(&project_dir, app.root_dir()).map_err(|cause| {
 				Error::ProjectDirInvalid(ProjectDirInvalid::NormalizationFailed {
 					project_dir:project_dir.clone(),

@@ -37,6 +37,7 @@ pub trait TargetTrait<'a>: Debug + Sized {
 		for target in Self::all().values() {
 			target.install()?;
 		}
+
 		Ok(())
 	}
 }
@@ -68,6 +69,7 @@ where
 	I: AsRef<str> + 'a,
 	T: TargetTrait<'a>, {
 	let targets_empty = targets.len() == 0;
+
 	Ok(if !targets_empty {
 		targets
 			.map(|name| {
@@ -82,8 +84,10 @@ where
 	} else {
 		let target = fallback.and_then(|(get_target, arg)| get_target(arg)).unwrap_or_else(|| {
 			log::info!("falling back on default target ({})", T::DEFAULT_KEY);
+
 			T::default_ref()
 		});
+
 		vec![target]
 	})
 }
@@ -103,6 +107,7 @@ where
 		for target in targets {
 			f(target)?;
 		}
+
 		Ok(())
 	})
 }
@@ -120,6 +125,7 @@ where
 		for target in targets {
 			f(target)?;
 		}
+
 		Ok(())
 	})
 }

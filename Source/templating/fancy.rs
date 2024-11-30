@@ -51,9 +51,11 @@ impl FancyPack {
 		}
 
 		let path = path.as_ref();
+
 		let raw = {
 			let toml_str = fs::read_to_string(path)
 				.map_err(|cause| FancyPackParseError::ReadFailed { path:path.to_owned(), cause })?;
+
 			toml::from_str::<Raw>(&toml_str)
 				.map_err(|cause| FancyPackParseError::ParseFailed { path:path.to_owned(), cause })?
 		};
@@ -61,6 +63,7 @@ impl FancyPack {
 		let raw_path = path.parent().map(|p| p.join(&raw.path)).unwrap_or(raw.path.clone());
 
 		let real_path = util::expand_home(raw_path).map_err(FancyPackParseError::NoHomeDir)?;
+
 		let this = Self {
 			path:real_path,
 			base:raw
@@ -77,7 +80,9 @@ impl FancyPack {
 				.map(Box::new),
 			submodule:raw.submodule,
 		};
+
 		log::info!("template pack {:#?}", this);
+
 		Ok(this)
 	}
 
@@ -95,6 +100,7 @@ impl FancyPack {
 				.init(git, submodule_commit)
 				.map_err(FancyPackResolveError::SubmoduleFailed)?;
 		}
+
 		if self.path.exists() {
 			let mut paths = self
 				.base
@@ -107,7 +113,9 @@ impl FancyPack {
 				})
 				.transpose()?
 				.unwrap_or_default();
+
 			paths.push(&self.path);
+
 			Ok(paths)
 		} else {
 			Err(FancyPackResolveError::PackNotFound(self.path.clone()))

@@ -76,6 +76,7 @@ impl Env {
 						"`ANDROID_HOME` isn't set; falling back to `ANDROID_SDK_ROOT`, which is \
 						 deprecated"
 					);
+
 					Ok(sdk_root)
 				} else {
 					Err(err)
@@ -91,11 +92,13 @@ impl Env {
 						"`ANDROID_HOME` isn't set; falling back to `ANDROID_SDK_ROOT`, which is \
 						 deprecated"
 					);
+
 					Ok(sdk_root)
 				} else {
 					Err(err)
 				}
 			})?;
+
 		Ok(Self { base, android_home, ndk:ndk::Env::new()? })
 	}
 
@@ -116,8 +119,11 @@ impl Env {
 impl ExplicitEnv for Env {
 	fn explicit_env(&self) -> HashMap<String, OsString> {
 		let mut envs = self.base.explicit_env();
+
 		envs.insert("ANDROID_HOME".into(), self.android_home.as_os_str().to_os_string());
+
 		envs.insert("NDK_HOME".into(), self.ndk.home().as_os_str().to_os_string());
+
 		envs
 	}
 }

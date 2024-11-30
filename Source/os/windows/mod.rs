@@ -64,7 +64,9 @@ impl Application {
 				_ => Err(err),
 			}
 		})?;
+
 		let argv:Vec<_> = NativeArgv::new(&editor_command).into();
+
 		Ok(Self { argv })
 	}
 
@@ -73,14 +75,17 @@ impl Application {
 			.iter()
 			.map(|arg| Self::replace_command_arg(arg, &path.as_ref().as_os_str()))
 			.collect::<Vec<_>>();
+
 		duct::cmd(&self.argv[0], args)
 			.run_and_detach()
 			.map_err(OpenFileError::LaunchFailed)?;
+
 		Ok(())
 	}
 
 	fn detect_associated_command(ext:PCWSTR) -> Result<Vec<u16>, DetectEditorError> {
 		let mut len:u32 = 0;
+
 		if let Err(e) = unsafe {
 			AssocQueryStringW(
 				ASSOCF_INIT_IGNOREUNKNOWN,
@@ -97,9 +102,12 @@ impl Application {
 			if e.code().0 == (0x80070000 | ERROR_NO_ASSOCIATION.0) as i32 {
 				return Err(DetectEditorError::NoDefaultEditorSet);
 			}
+
 			return Err(DetectEditorError::IOError(e.into()));
 		}
+
 		let mut command:Vec<u16> = vec![0; len as usize];
+
 		unsafe {
 			AssocQueryStringW(
 				ASSOCF_INIT_IGNOREUNKNOWN,
@@ -113,19 +121,28 @@ impl Application {
 			)
 			.ok()?;
 		}
+
 		Ok(command)
 	}
 
 	// Replace %0 or %1 to arg1, and other % is unescape
 	fn replace_command_arg(arg:&OsStr, arg1:&OsStr) -> OsString {
 		let mut is_percent = false;
+
 		let mut iter = arg.encode_wide();
+
 		let mut buffer = vec![];
+
 		const ZERO:u16 = '0' as u16;
+
 		const ONE:u16 = '1' as u16;
+
 		const TWO:u16 = '2' as u16;
+
 		const NINE:u16 = '9' as u16;
+
 		const PERCENT:u16 = '%' as u16;
+
 		loop {
 			match (iter.next(), is_percent) {
 				(Some(ZERO..=ONE), true) => {
@@ -136,6 +153,7 @@ impl Application {
 				},
 				(Some(PERCENT), false) => {
 					is_percent = true;
+
 					continue;
 				},
 				(Some(c), _) => {
@@ -143,8 +161,10 @@ impl Application {
 				},
 				(None, _) => break,
 			}
+
 			is_percent = false;
 		}
+
 		OsString::from_wide(&buffer)
 	}
 }
@@ -173,8 +193,10 @@ const STUDIO_EXE_PATH:&str = "bin/studio.exe";
 
 fn open_file_with_android_studio(path:impl AsRef<OsStr>, env:&Env) -> Result<(), OpenFileError> {
 	let mut application_path = which("studio.cmd").unwrap_or_default();
+
 	if !application_path.is_file() {
 		let mut buffer = [0; MAX_PATH as usize];
+
 		unsafe {
 			SHRegGetPathW(
 				HKEY_LOCAL_MACHINE,
@@ -186,13 +208,17 @@ fn open_file_with_android_studio(path:impl AsRef<OsStr>, env:&Env) -> Result<(),
 			.ok()
 			.map_err(|e| OpenFileError::IOError(e.into()))?
 		};
+
 		let len = NullTerminatedWTF16Iterator(buffer.as_ptr()).count();
+
 		let uninstaller_path = OsString::from_wide(&buffer[..len]);
+
 		application_path = Path::new(&uninstaller_path)
 			.parent()
 			.expect("Failed to get Android Studio uninstaller's parent path")
 			.join(STUDIO_EXE_PATH);
 	}
+
 	duct::cmd(
 		application_path,
 		[
@@ -203,6 +229,7 @@ fn open_file_with_android_studio(path:impl AsRef<OsStr>, env:&Env) -> Result<(),
 	.vars(env.explicit_env())
 	.run_and_detach()
 	.map_err(OpenFileError::LaunchFailed)?;
+
 	Ok(())
 }
 
@@ -222,6 +249,7 @@ impl NativeArgv {
 		// In shellap.h, lpcmdline's type is `LPCWSTR`.
 		// So it's not modified actually.
 		let argv = unsafe { CommandLineToArgvW(PCWSTR::from_raw(buffer.as_ptr()), &mut len as _) };
+
 		Self { argv, len }
 	}
 }
@@ -233,12 +261,17 @@ impl Drop for NativeArgv {
 impl From<NativeArgv> for Vec<OsString> {
 	fn from(native_argv:NativeArgv) -> Self {
 		let mut argv = Vec::with_capacity(native_argv.len as usize);
+
 		let argv_slice = unsafe { from_raw_parts(native_argv.argv, native_argv.len as _) };
+
 		for pwstr in argv_slice {
 			let len = NullTerminatedWTF16Iterator(pwstr.0).count();
+
 			let arg = OsString::from_wide(unsafe { std::slice::from_raw_parts(pwstr.0, len) });
+
 			argv.push(arg);
 		}
+
 		argv
 	}
 }
@@ -253,6 +286,7 @@ impl Iterator for NullTerminatedWTF16Iterator {
 			0 => None,
 			c => {
 				self.0 = unsafe { self.0.offset(1) };
+
 				Some(c)
 			},
 		}
@@ -270,14 +304,20 @@ pub fn replace_path_separator(path:OsString) -> OsString {
 		.encode_wide()
 		.map(|c| if c == '\\' as u16 { '/' as u16 } else { c })
 		.collect::<Vec<_>>();
+
 	OsString::from_wide(&buf)
 }
 
 pub mod consts {
 	pub const CLANG:&str = "clang.cmd";
+
 	pub const CLANGXX:&str = "clang++.cmd";
+
 	pub const LD:&str = "ld.exe";
+
 	pub const AR:&str = "ar.exe";
+
 	pub const READELF:&str = "readelf.exe";
+
 	pub const NDK_STACK:&str = "ndk-stack.cmd";
 }

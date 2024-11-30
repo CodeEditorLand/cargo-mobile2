@@ -28,15 +28,19 @@ impl Env {
 		let mut vars = HashMap::new();
 
 		let home = std::env::var_os("HOME").ok_or(Error::NotSet("HOME"))?;
+
 		let path = std::env::var_os("PATH").ok_or(Error::NotSet("PATH"))?;
+
 		if let Some(term) = std::env::var_os("TERM") {
 			vars.insert("TERM".into(), term);
 		}
+
 		if let Some(ssh_auth_sock) = std::env::var_os("SSH_AUTH_SOCK") {
 			vars.insert("SSH_AUTH_SOCK".into(), ssh_auth_sock);
 		}
 
 		vars.insert("HOME".into(), home);
+
 		vars.insert("PATH".into(), path);
 
 		Ok(Self { vars })
@@ -46,9 +50,13 @@ impl Env {
 
 	pub fn prepend_to_path(mut self, path:impl AsRef<Path>) -> Self {
 		let mut path = path.as_ref().as_os_str().to_os_string();
+
 		path.push(":");
+
 		path.push(self.path().clone());
+
 		self.vars.insert("PATH".into(), path);
+
 		self
 	}
 
@@ -56,6 +64,7 @@ impl Env {
 
 	pub fn explicit_env_vars(mut self, vars:HashMap<String, OsString>) -> Self {
 		self.vars.extend(vars);
+
 		self
 	}
 }

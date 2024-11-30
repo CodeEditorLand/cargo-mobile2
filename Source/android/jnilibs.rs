@@ -66,6 +66,7 @@ pub struct JniLibs {
 impl JniLibs {
 	pub fn create(config:&Config, target:Target<'_>) -> std::io::Result<Self> {
 		let path = path(config, target);
+
 		std::fs::create_dir_all(&path).map(|()| Self { path })
 	}
 
@@ -83,30 +84,37 @@ impl JniLibs {
 						RemoveBrokenLinksError::Entry { dir:abi_dir.clone(), source }
 					})?
 					.path();
+
 				if let Ok(path) = std::fs::read_link(&entry) {
 					log::info!("symlink at {:?} points to {:?}", entry, path);
+
 					if !path.exists() {
 						log::info!(
 							"deleting broken symlink {:?} (points to {:?}, which doesn't exist)",
 							entry,
 							path
 						);
+
 						std::fs::remove_file(entry)
 							.map_err(|source| RemoveBrokenLinksError::Remove { path, source })?;
 					}
 				}
 			}
 		}
+
 		Ok(())
 	}
 
 	pub fn symlink_lib(&self, src:&Path) -> Result<(), SymlinkLibError> {
 		log::info!("symlinking lib {:?} in jniLibs dir {:?}", src, self.path);
+
 		if src.is_file() {
 			let dest =
 				self.path.join(src.file_name().expect("developer error: file had no file name"));
+
 			os::ln::force_symlink(src, dest, ln::TargetStyle::File)
 				.map_err(SymlinkLibError::SymlinkFailed)?;
+
 			Ok(())
 		} else {
 			Err(SymlinkLibError::SourceMissing(src.to_owned()))

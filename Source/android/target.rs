@@ -110,8 +110,10 @@ impl<'a> TargetTrait<'a> for Target<'a> {
 
 	fn all() -> &'a BTreeMap<&'a str, Self> {
 		static TARGETS:OnceCell<BTreeMap<&'static str, Target<'static>>> = OnceCell::new();
+
 		TARGETS.get_or_init(|| {
 			let mut targets = BTreeMap::new();
+
 			targets.insert(
 				"aarch64",
 				Target {
@@ -122,6 +124,7 @@ impl<'a> TargetTrait<'a> for Target<'a> {
 					arch:"arm64",
 				},
 			);
+
 			targets.insert(
 				"armv7",
 				Target {
@@ -132,6 +135,7 @@ impl<'a> TargetTrait<'a> for Target<'a> {
 					arch:"arm",
 				},
 			);
+
 			targets.insert(
 				"i686",
 				Target {
@@ -142,6 +146,7 @@ impl<'a> TargetTrait<'a> for Target<'a> {
 					arch:"x86",
 				},
 			);
+
 			targets.insert(
 				"x86_64",
 				Target {
@@ -152,6 +157,7 @@ impl<'a> TargetTrait<'a> for Target<'a> {
 					arch:"x86_64",
 				},
 			);
+
 			targets
 		})
 	}
@@ -194,6 +200,7 @@ impl<'a> Target<'a> {
 			.compiler_path(ndk::Compiler::Clang, self.clang_triple(), config.min_sdk_version())?
 			.display()
 			.to_string();
+
 		Ok(DotCargoTarget {
 			linker:Some(linker),
 			rustflags:vec![
@@ -220,6 +227,7 @@ impl<'a> Target<'a> {
 		// Force color, since gradle would otherwise give us uncolored output
 		// (which Android Studio makes red, which is extra gross!)
 		let color = if force_color { "always" } else { "auto" };
+
 		CargoCommand::new(mode.as_str())
 			.with_verbose(noise_level.pedantic())
 			.with_package(Some(config.app().name()))
@@ -246,10 +254,12 @@ impl<'a> Target<'a> {
 			)
 			.before_spawn(move |cmd| {
 				cmd.args(["--color", color]);
+
 				Ok(())
 			})
 			.run()
 			.map_err(|cause| CompileLibError::CargoFailed { mode, cause })?;
+
 		Ok(())
 	}
 
@@ -293,11 +303,14 @@ impl<'a> Target<'a> {
 			.required_libs(&src, self.binutils_triple())
 			.map_err(SymlinkLibsError::RequiredLibsFailed)?
 			.contains("libc++_shared.so");
+
 		if needs_cxx_shared {
 			log::info!("lib {:?} requires \"libc++_shared.so\"", src);
+
 			let cxx_shared = ndk
 				.libcxx_shared_path(*self)
 				.map_err(SymlinkLibsError::LibcxxSharedPathFailed)?;
+
 			jnilibs.symlink_lib(&cxx_shared).map_err(SymlinkLibsError::SymlinkFailed)?;
 		}
 
@@ -323,6 +336,7 @@ impl<'a> Target<'a> {
 			CargoMode::Build,
 		)
 		.map_err(BuildError::BuildFailed)?;
+
 		self.symlink_libs(config, &env.ndk, profile)
 			.map_err(BuildError::SymlinkLibsFailed)
 	}

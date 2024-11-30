@@ -43,6 +43,7 @@ fn create_window<T>(
 	}
 
 	let pixels_per_point = window.scale_factor() as f32;
+
 	state.set_pixels_per_point(pixels_per_point);
 
 	window.request_redraw();
@@ -52,20 +53,25 @@ fn create_window<T>(
 
 fn _main(event_loop:EventLoop<Event>) {
 	let ctx = egui::Context::default();
+
 	let repaint_signal =
 		RepaintSignal(std::sync::Arc::new(std::sync::Mutex::new(event_loop.create_proxy())));
+
 	ctx.set_request_repaint_callback(move |_| {
 		repaint_signal.0.lock().unwrap().send_event(Event::RequestRedraw).ok();
 	});
 
 	let mut state = State::new(&event_loop);
+
 	let mut painter = Painter::new(
 		egui_wgpu::WgpuConfiguration::default(),
 		1, // msaa samples
 		None,
 		false,
 	);
+
 	let mut window:Option<winit::window::Window> = None;
+
 	let mut egui_demo_windows = egui_demo_lib::DemoWindows::default();
 
 	event_loop.run(move |event, event_loop, control_flow| {
@@ -77,6 +83,7 @@ fn _main(event_loop:EventLoop<Event>) {
 					},
 					Some(ref window) => {
 						pollster::block_on(painter.set_window(Some(window))).unwrap();
+
 						window.request_redraw();
 					},
 				}
@@ -91,6 +98,7 @@ fn _main(event_loop:EventLoop<Event>) {
 					let full_output = ctx.run(raw_input, |ctx| {
 						egui_demo_windows.ui(ctx);
 					});
+
 					state.handle_platform_output(window, &ctx, full_output.platform_output);
 
 					painter.paint_and_update_textures(
@@ -123,6 +131,7 @@ fn _main(event_loop:EventLoop<Event>) {
 				}
 
 				let response = state.on_event(&ctx, &event);
+
 				if response.repaint {
 					if let Some(window) = window.as_ref() {
 						window.request_redraw();
@@ -140,6 +149,7 @@ fn stop_unwind<F:FnOnce() -> T, T>(f:F) -> T {
 		Ok(t) => t,
 		Err(err) => {
 			eprintln!("attempt to unwind out of `rust` with err: {:?}", err);
+
 			std::process::abort()
 		},
 	}
@@ -161,6 +171,7 @@ pub fn main() {
 		.init();
 
 	let event_loop = EventLoopBuilder::with_user_event().build();
+
 	_main(event_loop);
 }
 
@@ -175,5 +186,6 @@ fn android_main(app:AndroidApp) {
 	);
 
 	let event_loop = EventLoopBuilder::with_user_event().with_android_app(app).build();
+
 	stop_unwind(|| _main(event_loop));
 }

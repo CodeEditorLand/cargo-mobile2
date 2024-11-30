@@ -9,19 +9,24 @@ use crate::{
 
 fn validate_developer_dir() -> Result<String, String> {
 	static FORBIDDEN:&str = "/Library/Developer/CommandLineTools";
+
 	static SUGGESTED:&str = "/Applications/Xcode.app/Contents/Developer";
+
 	let xcode_developer_dir = xcode_plugin::xcode_developer_dir()
 		.map_err(|err| format!("Failed to get active Xcode developer dir: {}", err))?;
+
 	let xcode_developer_dir = {
 		if xcode_developer_dir == Path::new(FORBIDDEN) {
 			println!(
 				"Your active toolchain appears to be the Apple command-line tools: {:?}",
 				xcode_developer_dir
 			);
+
 			println!(
 				"Changing your active toolchain to Xcode may be necessary for everything to work \
 				 correctly."
 			);
+
 			let answer = loop {
 				if let Some(answer) = prompt::yes_no(
 					format!("Would you like us to change it to {:?} for you?", SUGGESTED),
@@ -33,11 +38,13 @@ fn validate_developer_dir() -> Result<String, String> {
 					break answer;
 				}
 			};
+
 			if answer {
 				duct::cmd("xcode-select", ["-s", SUGGESTED])
 					.dup_stdio()
 					.run()
 					.map_err(|err| format!("Failed to update Xcode developer dir: {}", err))?;
+
 				Path::new(SUGGESTED)
 			} else {
 				&xcode_developer_dir
@@ -46,6 +53,7 @@ fn validate_developer_dir() -> Result<String, String> {
 			&xcode_developer_dir
 		}
 	};
+
 	Ok(format!("Active developer dir: {:?}", xcode_developer_dir))
 }
 
@@ -110,6 +118,7 @@ fn validate_xcode_plugin(xcode_version:(u32, u32), section:Section) -> Section {
 
 pub fn check() -> Section {
 	let xcode_version = DeveloperTools::new().map(|dev_tools| dev_tools.version);
+
 	let section = Section::new("Apple developer tools")
 		.with_item(
 			xcode_version
@@ -132,11 +141,13 @@ pub fn check() -> Section {
 				.map(|version| version.trim().replace("Version: ", "XcodeGen v"))
 				.map_err(|err| format!("Failed to check ios-deploy version: {}", err)),
 		);
+
 	let section = if let Ok(version) = xcode_version {
 		validate_xcode_plugin(version, section)
 	} else {
 		section
 	};
+
 	match teams::find_development_teams() {
 		Ok(teams) => {
 			section.with_victories(teams.into_iter().map(|team| {

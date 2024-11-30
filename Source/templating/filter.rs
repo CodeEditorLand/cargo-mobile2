@@ -47,6 +47,7 @@ impl Filter {
 				"config freshly minted, so we're assuming a brand new project; using `WildWest` \
 				 filtering strategy"
 			);
+
 			Ok(Self::WildWest)
 		} else if dot_first_init_exists {
 			log::info!(
@@ -54,17 +55,22 @@ impl Filter {
 				 strategy",
 				crate::init::DOT_FIRST_INIT_FILE_NAME
 			);
+
 			Ok(Self::WildWest)
 		} else {
 			log::info!(
 				"existing config loaded, so we're assuming an existing project; using `Protected` \
 				 filtering strategy"
 			);
+
 			let gitignore_path = config.app().root_dir().join(".gitignore");
+
 			let (unprotected, err) = Gitignore::new(&gitignore_path);
+
 			if let Some(err) = err {
 				log::error!("non-fatal error loading {:?}: {}", gitignore_path, err);
 			}
+
 			if unprotected.is_empty() {
 				log::warn!(
 					"no ignore entries were parsed from {:?}; project generation will more or \
@@ -78,6 +84,7 @@ impl Filter {
 					gitignore_path
 				);
 			}
+
 			Ok(Self::Protected { unprotected })
 		}
 	}
@@ -90,6 +97,7 @@ impl Filter {
 						"filtering strategy is `WildWest`, so action will be processed: {:#?}",
 						action
 					);
+
 					true
 				},
 				Self::Protected { unprotected } => {
@@ -99,6 +107,7 @@ impl Filter {
 					let ignored = unprotected
 						.matched_path_or_any_parents(action.dest(), action.is_create_directory())
 						.is_ignore();
+
 					if ignored {
 						log::debug!(
 							"action has unprotected src, so will be processed: {:#?}",
@@ -110,6 +119,7 @@ impl Filter {
 							action
 						);
 					}
+
 					ignored
 				},
 			}

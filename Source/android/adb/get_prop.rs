@@ -28,6 +28,7 @@ impl Error {
 impl Reportable for Error {
 	fn report(&self) -> Report {
 		let msg = format!("Failed to run `adb shell getprop {}`", self.prop());
+
 		match self {
 			Self::LookupFailed { source, .. } => source.report(&msg),
 			Self::Io(err) => Report::error("IO error", err),
@@ -37,9 +38,11 @@ impl Reportable for Error {
 
 pub fn get_prop(env:&Env, serial_no:&str, prop:&str) -> Result<String, Error> {
 	let prop_ = prop.to_string();
+
 	let handle = adb(env, ["-s", serial_no])
 		.before_spawn(move |cmd| {
 			cmd.args(["shell", "getprop", &prop_]);
+
 			Ok(())
 		})
 		.stdin_file(os_pipe::dup_stdin().unwrap())
@@ -48,6 +51,7 @@ pub fn get_prop(env:&Env, serial_no:&str, prop:&str) -> Result<String, Error> {
 		.start()?;
 
 	let output = handle.wait()?;
+
 	super::check_authorized(output)
 		.map_err(|source| Error::LookupFailed { prop:prop.to_owned(), source })
 }

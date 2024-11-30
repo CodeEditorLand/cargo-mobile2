@@ -71,11 +71,13 @@ impl GemCache {
 				})
 				.collect::<Result<_, Error>>()?;
 		}
+
 		Ok(())
 	}
 
 	pub fn contains(&mut self, package:&str) -> Result<bool, Error> {
 		self.initialize()?;
+
 		Ok(self.contains_unchecked(package))
 	}
 
@@ -88,10 +90,12 @@ impl GemCache {
 			println!("`sudo` is required to install {} using gem", package);
 			"sudo gem install"
 		};
+
 		duct::cmd(command, [package])
 			.dup_stdio()
 			.run()
 			.map_err(|source| Error::InstallFailed { package, source })?;
+
 		Ok(())
 	}
 }
@@ -107,6 +111,7 @@ fn brew_reinstall(package:&'static str) -> Result<(), Error> {
 		.dup_stdio()
 		.run()
 		.map_err(|source| Error::InstallFailed { package, source })?;
+
 	Ok(())
 }
 
@@ -116,6 +121,7 @@ fn update_package(package:&'static str, gem_cache:&mut GemCache) -> Result<(), E
 	} else {
 		gem_cache.reinstall(package)?;
 	}
+
 	Ok(())
 }
 
@@ -143,23 +149,28 @@ impl PackageSpec {
 
 	pub const fn with_bin_name(mut self, bin_name:&'static str) -> Self {
 		self.bin_name = bin_name;
+
 		self
 	}
 
 	pub fn found(&self) -> Result<bool, Error> {
 		let found = util::command_present(self.bin_name)
 			.map_err(|source| Error::PresenceCheckFailed { package:self.pkg_name, source })?;
+
 		log::info!("package `{}` present: {}", self.pkg_name, found);
+
 		Ok(found)
 	}
 
 	pub fn install(&self, reinstall_deps:bool, gem_cache:&mut GemCache) -> Result<bool, Error> {
 		if !self.found()? || reinstall_deps {
 			println!("Installing `{}`...", self.pkg_name);
+
 			match self.package_source {
 				PackageSource::Brew => brew_reinstall(self.pkg_name)?,
 				PackageSource::BrewOrGem => update_package(self.pkg_name, gem_cache)?,
 			}
+
 			Ok(true)
 		} else {
 			Ok(false)
@@ -174,15 +185,21 @@ pub fn install_all(
 	reinstall_deps:bool,
 ) -> Result<(), Error> {
 	let mut gem_cache = GemCache::new();
+
 	for package in PACKAGES {
 		package.install(reinstall_deps, &mut gem_cache)?;
 	}
+
 	if !device_ctl_available() {
 		PackageSpec::brew("ios-deploy").install(reinstall_deps, &mut gem_cache)?;
 	}
+
 	gem_cache.initialize()?;
+
 	let outdated = Outdated::load(&mut gem_cache)?;
+
 	outdated.print_notice();
+
 	if !outdated.is_empty() && !non_interactive {
 		let answer = loop {
 			if let Some(answer) = prompt::yes_no(
@@ -192,6 +209,7 @@ pub fn install_all(
 				break answer;
 			}
 		};
+
 		if answer {
 			for package in outdated.iter() {
 				update_package(package, &mut gem_cache)?;
@@ -201,7 +219,9 @@ pub fn install_all(
 	// we definitely don't want to install this on CI...
 	if !skip_dev_tools {
 		let tool_info = DeveloperTools::new()?;
+
 		let result = xcode_plugin::install(wrapper, reinstall_deps, tool_info.version);
+
 		if let Err(err) = result {
 			// philosophy: never be so sturbborn as to prevent use / progress
 			Report::action_request(
@@ -212,5 +232,6 @@ pub fn install_all(
 			.print(wrapper);
 		}
 	}
+
 	Ok(())
 }

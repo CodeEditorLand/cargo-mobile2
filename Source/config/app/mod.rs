@@ -88,6 +88,7 @@ impl App {
 
 		let identifier = {
 			let identifier = raw.identifier;
+
 			identifier::check_identifier_syntax(&identifier)
 				.map_err(|cause| Error::IdentifierInvalid { identifier:identifier.clone(), cause })
 				.map(|()| identifier)
@@ -99,8 +100,10 @@ impl App {
 				KEY
 			);
 		}
+
 		let asset_dir =
 			raw.asset_dir.map(PathBuf::from).unwrap_or_else(|| DEFAULT_ASSET_DIR.into());
+
 		if !util::under_root(&asset_dir, &root_dir).map_err(|cause| {
 			Error::AssetDirNormalizationFailed { asset_dir:asset_dir.clone(), cause }
 		})? {
@@ -115,8 +118,10 @@ impl App {
 					KEY
 				);
 			}
+
 			raw.template_pack.as_deref().unwrap_or(IMPLIED_TEMPLATE_PACK)
 		};
+
 		let template_pack = if cfg!(feature = "cli") {
 			Pack::lookup_app(template_pack).map_err(Error::TemplatePackNotFound)?
 		} else {
@@ -140,6 +145,7 @@ impl App {
 		resolver:F,
 	) -> Self {
 		self.target_dir_resolver.replace(Arc::new(Box::new(resolver)));
+
 		self
 	}
 
@@ -169,6 +175,7 @@ impl App {
 
 	pub fn name_snake(&self) -> String {
 		use heck::ToSnekCase as _;
+
 		self.name().to_snek_case()
 	}
 

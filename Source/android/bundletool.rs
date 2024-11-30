@@ -36,8 +36,10 @@ impl BundletoolJarInfo {
 
 	fn run_command(&self) -> duct::Expression {
 		let installation_path = self.installation_path();
+
 		duct::cmd("java", ["-jar"]).dup_stdio().before_spawn(move |cmd| {
 			cmd.arg(&installation_path);
+
 			Ok(())
 		})
 	}
@@ -97,16 +99,21 @@ pub fn install(reinstall_deps:bool) -> Result<(), InstallError> {
 	#[cfg(not(target_os = "macos"))]
 	{
 		let jar_path = BUNDLE_TOOL_JAR_INFO.installation_path();
+
 		if !jar_path.exists() || reinstall_deps {
 			let response = ureq::get(&BUNDLE_TOOL_JAR_INFO.download_url())
 				.call()
 				.map_err(Box::new)
 				.map_err(InstallError::Download)?;
+
 			let tools_dir = util::tools_dir().unwrap();
+
 			std::fs::create_dir_all(&tools_dir)
 				.map_err(|cause| InstallError::JarFileCreation { path:tools_dir, cause })?;
+
 			let mut out = std::fs::File::create(&jar_path)
 				.map_err(|cause| InstallError::JarFileCreation { path:jar_path.clone(), cause })?;
+
 			std::io::copy(&mut response.into_reader(), &mut out)
 				.map_err(|cause| InstallError::CopyToFile { path:jar_path, cause })?;
 		}
@@ -114,9 +121,11 @@ pub fn install(reinstall_deps:bool) -> Result<(), InstallError> {
 	#[cfg(target_os = "macos")]
 	{
 		use crate::apple::deps::{GemCache, PackageSpec};
+
 		PackageSpec::brew("bundletool")
 			.install(reinstall_deps, &mut GemCache::new())
 			.map_err(InstallError)?;
 	}
+
 	Ok(())
 }

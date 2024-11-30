@@ -166,15 +166,19 @@ impl Bicycle {
 		base_data:JsonMap,
 	) -> Self {
 		let mut handlebars = Handlebars::new();
+
 		handlebars.set_strict_mode(true);
+
 		match escape_fn {
 			EscapeFn::Custom(escape_fn) => handlebars.register_escape_fn(escape_fn),
 			EscapeFn::None => handlebars.register_escape_fn(handlebars::no_escape),
 			EscapeFn::Html => handlebars.register_escape_fn(handlebars::html_escape),
 		}
+
 		for (name, helper) in helpers {
 			handlebars.register_helper(name, helper);
 		}
+
 		Self { handlebars, base_data }
 	}
 
@@ -200,7 +204,9 @@ impl Bicycle {
 		insert_data:impl FnOnce(&mut JsonMap),
 	) -> Result<String, RenderingError> {
 		let mut data = self.base_data.clone();
+
 		insert_data(&mut data);
+
 		self.handlebars
 			.render_template(template, &data.0)
 			.map_err(Box::new)
@@ -231,6 +237,7 @@ impl Bicycle {
 		insert_data:impl Fn(&mut JsonMap),
 	) -> Result<(), ProcessingError> {
 		log::info!("{:#?}", action);
+
 		match action {
 			Action::CreateDirectory { dest } => {
 				fs::create_dir_all(dest).map_err(|cause| {
@@ -244,12 +251,15 @@ impl Bicycle {
 			},
 			Action::WriteTemplate { src, dest } => {
 				let mut template = String::new();
+
 				fs::File::open(src)
 					.and_then(|mut file| file.read_to_string(&mut template))
 					.map_err(|cause| ProcessingError::TemplateRead { src:src.clone(), cause })?;
+
 				let rendered = self
 					.render(&template, insert_data)
 					.map_err(|cause| ProcessingError::TemplateRender { src:src.clone(), cause })?;
+
 				fs::File::create(dest)
 					.and_then(|mut file| file.write_all(rendered.as_bytes()))
 					.map_err(|cause| {
@@ -257,6 +267,7 @@ impl Bicycle {
 					})?;
 			},
 		}
+
 		Ok(())
 	}
 
@@ -270,6 +281,7 @@ impl Bicycle {
 		for action in actions {
 			self.process_action(action, &insert_data)?;
 		}
+
 		Ok(())
 	}
 
@@ -296,6 +308,7 @@ impl Bicycle {
 		mut filter:impl FnMut(&Action) -> bool,
 	) -> Result<(), ProcessingError> {
 		let src = src.as_ref();
+
 		traverse(src, dest, |path| self.transform_path(path, &insert_data), DEFAULT_TEMPLATE_EXT)
 			.map_err(|cause| ProcessingError::Traversal { src:src.to_owned(), cause })
 			.and_then(|actions| {
@@ -336,6 +349,7 @@ impl Bicycle {
 								.unwrap_or_else(|| p);
 						}
 					}
+
 					p
 				})
 		} else {

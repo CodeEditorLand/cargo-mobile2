@@ -266,6 +266,7 @@ impl Exec for Input {
 
 	fn exec(self, wrapper:&TextWrapper) -> Result<(), Self::Report> {
 		define_device_prompt!(crate::apple::device::list_devices, String, iOS);
+
 		fn detect_target_ok<'a>(env:&Env) -> Option<&'a Target<'a>> {
 			device_prompt(env).map(|device| device.target()).ok()
 		}
@@ -277,8 +278,10 @@ impl Exec for Input {
 		) -> Result<(), Error> {
 			let (config, _origin) = OmniConfig::load_or_gen(".", non_interactive, wrapper)
 				.map_err(Error::ConfigFailed)?;
+
 			let metadata =
 				OmniMetadata::load(config.app().root_dir()).map_err(Error::MetadataFailed)?;
+
 			if metadata.apple().supported() {
 				f(config.apple(), metadata.apple())
 			} else {
@@ -301,17 +304,22 @@ impl Exec for Input {
 		let version_check = || rust_version_check(wrapper).map_err(Error::RustVersionCheckFailed);
 
 		let Self { flags: GlobalFlags { noise_level, non_interactive }, command } = self;
+
 		let env = Env::new().map_err(Error::EnvInitFailed)?;
+
 		match command {
 			Command::Open => {
 				version_check()?;
+
 				with_config(non_interactive, wrapper, |config, _| {
 					ensure_init(config)?;
+
 					open_in_xcode(config)
 				})
 			},
 			Command::Check { targets } => {
 				version_check()?;
+
 				with_config(non_interactive, wrapper, |config, metadata| {
 					call_for_targets_with_fallback(
 						targets.iter(),
@@ -329,7 +337,9 @@ impl Exec for Input {
 			Command::Build { targets, profile: cli::Profile { profile } } => {
 				with_config(non_interactive, wrapper, |config, _| {
 					version_check()?;
+
 					ensure_init(config)?;
+
 					call_for_targets_with_fallback(
 						targets.iter(),
 						&detect_target_ok,
@@ -352,13 +362,16 @@ impl Exec for Input {
 			Command::Archive { targets, build_number, profile: cli::Profile { profile } } => {
 				with_config(non_interactive, wrapper, |config, _| {
 					version_check()?;
+
 					ensure_init(config)?;
+
 					call_for_targets_with_fallback(
 						targets.iter(),
 						&detect_target_ok,
 						&env,
 						|target:&Target| {
 							let mut app_version = config.bundle_version().clone();
+
 							if let Some(build_number) = build_number {
 								app_version.push_extra(build_number);
 							}
@@ -372,6 +385,7 @@ impl Exec for Input {
 									BuildConfig::new().allow_provisioning_updates(),
 								)
 								.map_err(Error::BuildFailed)?;
+
 							target
 								.archive(
 									config,
@@ -390,7 +404,9 @@ impl Exec for Input {
 			Command::Run { profile: cli::Profile { profile } } => {
 				with_config(non_interactive, wrapper, |config, _| {
 					version_check()?;
+
 					ensure_init(config)?;
+
 					device_prompt(&env)
 						.map_err(Error::DevicePromptFailed)?
 						.run(config, &env, noise_level, non_interactive, profile)
@@ -409,7 +425,9 @@ impl Exec for Input {
 				with_config(non_interactive, wrapper, |config, _| {
 					arguments
 						.push(format!("--project-directory={}", config.project_dir().display()));
+
 					duct::cmd("pod", arguments).run().map_err(Error::PodCommandFailed)?;
+
 					Ok(())
 				})
 			},
@@ -434,7 +452,9 @@ impl Exec for Input {
 					if !sdk_root.is_dir() {
 						return Err(Error::SdkRootInvalid { sdk_root });
 					}
+
 					let include_dir = sdk_root.join("usr/include");
+
 					if !include_dir.is_dir() {
 						return Err(Error::IncludeDirInvalid { include_dir });
 					}
@@ -445,6 +465,7 @@ impl Exec for Input {
 					let (macos_isysroot, library_path) = {
 						let macos_sdk_root =
 							sdk_root.join("../../../../MacOSX.platform/Developer/SDKs/MacOSX.sdk");
+
 						if !macos_sdk_root.is_dir() {
 							return Err(Error::MacosSdkRootInvalid { macos_sdk_root });
 						}
@@ -453,8 +474,11 @@ impl Exec for Input {
 							format!("{}/usr/lib", macos_sdk_root.display()),
 						)
 					};
+
 					host_env.insert("MAC_FLAGS", macos_isysroot.as_ref());
+
 					host_env.insert("CFLAGS_x86_64_apple_darwin", macos_isysroot.as_ref());
+
 					host_env.insert("CXXFLAGS_x86_64_apple_darwin", macos_isysroot.as_ref());
 
 					host_env
@@ -463,10 +487,12 @@ impl Exec for Input {
 					host_env.insert("RUST_BACKTRACE", "1".as_ref());
 
 					host_env.insert("FRAMEWORK_SEARCH_PATHS", framework_search_paths.as_ref());
+
 					host_env.insert(
 						"GCC_PREPROCESSOR_DEFINITIONS",
 						gcc_preprocessor_definitions.as_ref(),
 					);
+
 					host_env.insert("HEADER_SEARCH_PATHS", header_search_paths.as_ref());
 
 					let macos_target = Target::macos();
@@ -490,12 +516,19 @@ impl Exec for Input {
 							"x86_64" => ("x86_64_apple_ios", "x86_64-apple-ios"),
 							_ => return Err(Error::ArchInvalid { arch }),
 						};
+
 						let cflags = format!("CFLAGS_{}", triple);
+
 						let cxxflags = format!("CFLAGS_{}", triple);
+
 						let objc_include_path = format!("OBJC_INCLUDE_PATH_{}", triple);
+
 						let mut target_env = host_env.clone();
+
 						target_env.insert(cflags.as_ref(), isysroot.as_ref());
+
 						target_env.insert(cxxflags.as_ref(), isysroot.as_ref());
+
 						target_env.insert(objc_include_path.as_ref(), include_dir.as_ref());
 
 						let target = if macos {
@@ -525,6 +558,7 @@ impl Exec for Input {
 							profile.as_str(),
 							config.app().lib_name()
 						);
+
 						let lib_path = PathBuf::from(format!("../../target/{lib_location}"));
 
 						if !lib_path.exists() {
@@ -543,6 +577,7 @@ impl Exec for Input {
 								.map_err(Error::CopyLibraryFailed)?;
 						}
 					}
+
 					Ok(())
 				})
 			},

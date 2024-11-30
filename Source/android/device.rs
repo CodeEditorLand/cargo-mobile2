@@ -130,9 +130,11 @@ pub struct Device<'a> {
 impl<'a> Display for Device<'a> {
 	fn fmt(&self, f:&mut fmt::Formatter<'_>) -> fmt::Result {
 		write!(f, "{}", self.name)?;
+
 		if self.model != self.name {
 			write!(f, " ({})", self.model)?;
 		}
+
 		Ok(())
 	}
 }
@@ -176,16 +178,21 @@ impl<'a> Device<'a> {
 		loop {
 			let cmd = self.adb(env).stderr_capture().stdout_capture().before_spawn(move |cmd| {
 				cmd.args(["shell", "getprop", "init.svc.bootanim"]);
+
 				Ok(())
 			});
+
 			let handle = cmd.start();
+
 			if let Ok(handle) = handle {
 				if let Ok(output) = handle.wait() {
 					if output.status.success() {
 						let stdout = String::from_utf8_lossy(&output.stdout);
+
 						if stdout.trim() == "stopped" {
 							break;
 						}
+
 						sleep(Duration::from_secs(2));
 					}
 				} else {
@@ -203,6 +210,7 @@ impl<'a> Device<'a> {
 		profile:Profile,
 	) -> Result<(), apk::ApkError> {
 		apk::build(config, env, noise_level, profile, vec![self.target()], true)?;
+
 		Ok(())
 	}
 
@@ -213,6 +221,7 @@ impl<'a> Device<'a> {
 		profile:Profile,
 	) -> Result<(), ApkInstallError> {
 		let flavor = self.target.arch;
+
 		let apk_path = apk::apks_paths(config, profile, flavor)
 			.into_iter()
 			.reduce(last_modified)
@@ -221,7 +230,9 @@ impl<'a> Device<'a> {
 		self.adb(env)
 			.before_spawn(move |cmd| {
 				cmd.args(["install", "-r"]);
+
 				cmd.arg(&apk_path);
+
 				Ok(())
 			})
 			.dup_stdio()
@@ -239,6 +250,7 @@ impl<'a> Device<'a> {
 		profile:Profile,
 	) -> Result<(), aab::AabError> {
 		aab::build(config, env, noise_level, profile, vec![self.target()], false)?;
+
 		Ok(())
 	}
 
@@ -253,7 +265,9 @@ impl<'a> Device<'a> {
 		// and in the case that profile is `Debug` there will be only one path
 		// that has the suffix `debug`
 		let all_apks_path = Self::all_apks_paths(config, profile, flavor)[0].clone();
+
 		let aab_path = aab::aab_path(config, profile, flavor);
+
 		bundletool::command()
 			.before_spawn(move |cmd| {
 				cmd.args([
@@ -262,19 +276,23 @@ impl<'a> Device<'a> {
 					&format!("--output={}", all_apks_path.to_str().unwrap()),
 					"--connected-device",
 				]);
+
 				Ok(())
 			})
 			.run()
 			.map_err(ApksBuildError::BuildFromAabFailed)?;
+
 		Ok(())
 	}
 
 	fn install_apk_from_aab(&self, config:&Config, profile:Profile) -> Result<(), ApkInstallError> {
 		let flavor = self.target.arch;
+
 		let apks_path = Self::all_apks_paths(config, profile, flavor)
 			.into_iter()
 			.reduce(last_modified)
 			.unwrap();
+
 		bundletool::command()
 			.before_spawn(move |cmd| {
 				cmd.args(["install-apks", &format!("--apks={}", apks_path.to_str().unwrap())]);
@@ -283,6 +301,7 @@ impl<'a> Device<'a> {
 			})
 			.run()
 			.map_err(ApkInstallError::InstallFromAabFailed)?;
+
 		Ok(())
 	}
 
@@ -290,11 +309,13 @@ impl<'a> Device<'a> {
 		self.adb(env)
 			.before_spawn(move |cmd| {
 				cmd.args(["shell", "input", "keyevent", "KEYCODE_WAKEUP"]);
+
 				Ok(())
 			})
 			.dup_stdio()
 			.start()?
 			.wait()?;
+
 		Ok(())
 	}
 
@@ -312,24 +333,33 @@ impl<'a> Device<'a> {
 	) -> Result<duct::Handle, RunError> {
 		if build_app_bundle {
 			bundletool::install(reinstall_deps).map_err(RunError::BundletoolInstallFailed)?;
+
 			self.build_aab(config, env, noise_level, profile).map_err(RunError::AabError)?;
+
 			self.build_apks_from_aab(config, profile)
 				.map_err(RunError::ApksFromAabBuildFailed)?;
+
 			if self.serial_no.starts_with("emulator") {
 				self.wait_device_boot(env);
 			}
+
 			self.install_apk_from_aab(config, profile).map_err(RunError::ApkInstallFailed)?;
 		} else {
 			self.build_apk(config, env, noise_level, profile).map_err(RunError::ApkError)?;
+
 			if self.serial_no.starts_with("emulator") {
 				self.wait_device_boot(env);
 			}
+
 			self.install_apk(config, env, profile).map_err(RunError::ApkInstallFailed)?;
 		}
+
 		let activity = format!("{}/{}", config.app().identifier(), activity);
+
 		self.adb(env)
 			.before_spawn(move |cmd| {
 				cmd.args(["shell", "am", "start", "-n", &activity]);
+
 				Ok(())
 			})
 			.dup_stdio()
@@ -358,15 +388,20 @@ impl<'a> Device<'a> {
 			.vars(env.explicit_env())
 			.stderr_capture()
 			.stdout_capture();
+
 			let handle = cmd.start()?;
+
 			if let Ok(out) = handle.wait() {
 				if out.status.success() {
 					break String::from_utf8_lossy(&out.stdout).into_owned();
 				}
 			}
+
 			sleep(Duration::from_secs(2));
 		};
+
 		let pid = stdout.trim().to_string();
+
 		let mut logcat = duct::cmd(
 			env.platform_tools_path().join("adb"),
 			["logcat", "-v", "color", "-s", &filter],
@@ -375,13 +410,17 @@ impl<'a> Device<'a> {
 		.dup_stdio();
 
 		let logcat_filter_specs = config.logcat_filter_specs().to_vec();
+
 		logcat = logcat.before_spawn(move |cmd| {
 			if !pid.is_empty() {
 				cmd.args(["--pid", &pid]);
 			}
+
 			cmd.args(&logcat_filter_specs);
+
 			Ok(())
 		});
+
 		logcat.start().map_err(Into::into)
 	}
 
@@ -398,11 +437,15 @@ impl<'a> Device<'a> {
 		let logcat_command = adb::adb(env, ["-s", &self.serial_no])
 			.before_spawn(move |cmd| {
 				cmd.args(["logcat", "-d"]);
+
 				cmd.arg("-sym");
+
 				cmd.arg(&jnilib_path);
+
 				Ok(())
 			})
 			.dup_stdio();
+
 		let stack_command =
 			duct::cmd::<PathBuf, [String; 0]>(env.ndk.home().join(consts::NDK_STACK), [])
 				.vars(env.explicit_env())
@@ -415,6 +458,7 @@ impl<'a> Device<'a> {
 		if logcat_command.pipe(stack_command).start()?.wait().is_err() {
 			println!("  -- no stacktrace --");
 		}
+
 		Ok(())
 	}
 }

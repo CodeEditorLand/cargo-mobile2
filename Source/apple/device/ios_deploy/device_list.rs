@@ -29,6 +29,7 @@ fn parse_device_list<'a>(
 	output:&std::process::Output,
 ) -> Result<BTreeSet<Device<'a>>, DeviceListError> {
 	let stdout = String::from_utf8_lossy(&output.stdout);
+
 	Event::parse_list(&stdout)
 		.into_iter()
 		.flat_map(|event| event.device_info().cloned())
@@ -54,6 +55,7 @@ pub fn device_list<'a>(env:&Env) -> Result<BTreeSet<Device<'a>>, DeviceListError
 		.stderr_capture()
 		.vars(env.explicit_env())
 		.run();
+
 	match result {
 		Ok(output) => {
 			if output.stdout.is_empty() && output.stderr.is_empty() {
@@ -61,6 +63,7 @@ pub fn device_list<'a>(env:&Env) -> Result<BTreeSet<Device<'a>>, DeviceListError
 					"device detection returned a non-zero exit code, but stdout and stderr are \
 					 both empty; interpreting as a successful run with no devices connected"
 				);
+
 				Ok(Default::default())
 			} else {
 				parse_device_list(&output)

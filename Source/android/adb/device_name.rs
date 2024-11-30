@@ -22,6 +22,7 @@ pub enum Error {
 impl Reportable for Error {
 	fn report(&self) -> Report {
 		let msg = "Failed to get device name";
+
 		match self {
 			Self::EmuFailed(err) => err.report("Failed to run `adb emu avd name`"),
 			Self::DumpsysFailed(err) => {
@@ -39,6 +40,7 @@ pub fn device_name(env:&Env, serial_no:&str) -> Result<String, Error> {
 			adb(env, ["-s", serial_no])
 				.before_spawn(move |cmd| {
 					cmd.args(["emu", "avd", "name"]);
+
 					Ok(())
 				})
 				.stderr_capture()
@@ -53,6 +55,7 @@ pub fn device_name(env:&Env, serial_no:&str) -> Result<String, Error> {
 			adb(env, ["-s", serial_no])
 				.before_spawn(move |cmd| {
 					cmd.args(["shell", "dumpsys", "bluetooth_manager"]);
+
 					Ok(())
 				})
 				.stderr_capture()

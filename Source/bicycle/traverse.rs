@@ -38,6 +38,7 @@ impl Action {
 		transform_path:impl Fn(&Path) -> Result<PathBuf, E>,
 	) -> Result<Self, E> {
 		let dest = append_path(dest, src, false);
+
 		Ok(Self::CopyFile { src:src.to_owned(), dest:transform_path(&dest)? })
 	}
 
@@ -49,6 +50,7 @@ impl Action {
 		transform_path:impl Fn(&Path) -> Result<PathBuf, E>,
 	) -> Result<Self, E> {
 		let dest = append_path(dest, src, true);
+
 		Ok(Self::WriteTemplate { src:src.to_owned(), dest:transform_path(&dest)? })
 	}
 
@@ -74,6 +76,7 @@ fn append_path(base:&Path, other:&Path, strip_extension:bool) -> PathBuf {
 	} else {
 		other.file_name().unwrap()
 	};
+
 	base.join(tail)
 }
 
@@ -86,6 +89,7 @@ fn file_action<E>(
 	let is_template = template_ext
 		.and_then(|template_ext| src.extension().filter(|ext| *ext == template_ext))
 		.is_some();
+
 	if is_template {
 		Action::new_write_template(src, dest, transform_path)
 	} else {
@@ -136,12 +140,14 @@ fn traverse_dir<E:Debug + Display + StdError>(
 			Action::new_create_directory(dest, transform_path)
 				.map_err(|cause| TraversalError::PathTransform { path:dest.to_owned(), cause })?,
 		);
+
 		for entry in fs::read_dir(src)
 			.map_err(|cause| TraversalError::DirectoryRead { path:src.to_owned(), cause })?
 		{
 			let path = entry
 				.map_err(|cause| TraversalError::EntryRead { dir:src.to_owned(), cause })?
 				.path();
+
 			if path.is_dir() {
 				traverse_dir(
 					&path,
@@ -157,6 +163,7 @@ fn traverse_dir<E:Debug + Display + StdError>(
 			}
 		}
 	}
+
 	Ok(())
 }
 
@@ -183,8 +190,11 @@ pub fn traverse<E:Debug + Display + StdError>(
 	template_ext:Option<&str>,
 ) -> Result<VecDeque<Action>, TraversalError<E>> {
 	let src = src.as_ref();
+
 	let dest = dest.as_ref();
+
 	let mut actions = VecDeque::new();
+
 	traverse_dir(src, dest, &transform_path, template_ext, &mut actions).map(|_| actions)
 }
 

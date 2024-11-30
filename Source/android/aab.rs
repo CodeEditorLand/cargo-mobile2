@@ -70,6 +70,7 @@ pub fn build(
 
 		args
 	};
+
 	gradlew(config, env)
 		.before_spawn(move |cmd| {
 			cmd.args(&gradle_args).arg(match noise_level {
@@ -77,6 +78,7 @@ pub fn build(
 				NoiseLevel::LoudAndProud => "--info",
 				NoiseLevel::FranklyQuitePedantic => "--debug",
 			});
+
 			Ok(())
 		})
 		.start()
@@ -91,6 +93,7 @@ pub fn build(
 		.wait()?;
 
 	let mut outputs = Vec::new();
+
 	if split_per_abi {
 		outputs.extend(
 			targets
@@ -120,6 +123,7 @@ pub fn aab_path(config:&Config, profile:Profile, flavor:&str) -> PathBuf {
 
 pub mod cli {
 	use super::*;
+
 	pub fn build(
 		config:&Config,
 		env:&Env,
@@ -142,9 +146,11 @@ pub mod cli {
 		let outputs = super::build(config, env, noise_level, profile, targets, split_per_abi)?;
 
 		println!("\nFinished building AAB(s):");
+
 		for p in &outputs {
 			println!("    {}", p.to_string_lossy().green(),);
 		}
+
 		Ok(())
 	}
 }

@@ -20,6 +20,7 @@ pub fn check() -> Result<Info, Error> {
 	// use this path or even the same format... we'll punt on that for now.
 	// https://grep.app/search?q=os-release&case=true
 	let path = "/etc/os-release";
+
 	let release = std::fs::read_to_string(path)
 		.map_err(|source| Error::ReadFailed { path:path.into(), source })?;
 	// I'll remain optimistic that these regexes won't choke on some unknown
@@ -28,9 +29,11 @@ pub fn check() -> Result<Info, Error> {
 		.captures(&release)
 		.map(|caps| caps[1].to_owned())
 		.ok_or_else(|| Error::NameMissing { path:path.into(), text:release.to_owned() })?;
+
 	let version = regex!(r#"\bVERSION="?(.*)\b"#)
 		.captures(&release)
 		.map(|caps| caps[1].to_owned())
 		.ok_or_else(|| Error::VersionMissing { path:path.into(), text:release.to_owned() })?;
+
 	Ok(Info { name, version })
 }

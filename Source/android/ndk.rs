@@ -85,6 +85,7 @@ pub struct NdkVersion(VersionDouble);
 impl Display for NdkVersion {
 	fn fmt(&self, f:&mut fmt::Formatter<'_>) -> fmt::Result {
 		write!(f, "r{}", self.0.major)?;
+
 		if self.0.minor != 0 {
 			write!(
 				f,
@@ -95,6 +96,7 @@ impl Display for NdkVersion {
 					.expect("NDK minor version exceeded the number of letters in the alphabet")
 			)?;
 		}
+
 		Ok(())
 	}
 }
@@ -155,8 +157,11 @@ impl Env {
 			.and_then(|ndk_home| {
 			if ndk_home.is_dir() { Ok(ndk_home) } else { Err(Error::NdkHomeNotADir) }
 		})?;
+
 		let env = Self { ndk_home };
+
 		let version = env.version().map(NdkVersion::from).map_err(Error::VersionLookupFailed)?;
+
 		if version >= MIN_NDK_VERSION {
 			Ok(env)
 		} else {
@@ -204,37 +209,45 @@ impl Env {
 
 	pub fn libcxx_shared_path(&self, target:Target<'_>) -> Result<PathBuf, MissingToolError> {
 		static LIB:&str = "libc++_shared.so";
+
 		let ndk_ver = self.version().unwrap_or_default();
+
 		let so_path = if ndk_ver.triple.major >= 22 {
 			let ndk_triple = if target.triple == "armv7-linux-androideabi" {
 				"arm-linux-androideabi"
 			} else {
 				target.triple
 			};
+
 			self.prebuilt_dir()?.join("sysroot/usr/lib").join(ndk_triple)
 		} else {
 			self.ndk_home.join("sources/cxx-stl/llvm-libc++/libs").join(target.abi)
 		};
+
 		MissingToolError::check_file(so_path.join(LIB), LIB)
 	}
 
 	pub fn ar_path(&self, triple:&str) -> Result<PathBuf, MissingToolError> {
 		let ndk_ver = self.version().unwrap_or_default();
+
 		let bin_path = if ndk_ver.triple.major >= 23 {
 			format!("llvm-{}", consts::AR)
 		} else {
 			format!("{}-{}", triple, consts::AR)
 		};
+
 		MissingToolError::check_file(self.tool_dir()?.join(bin_path), "ar")
 	}
 
 	fn readelf_path(&self, triple:&str) -> Result<PathBuf, MissingToolError> {
 		let ndk_ver = self.version().unwrap_or_default();
+
 		let bin_path = if ndk_ver.triple.major >= 23 {
 			format!("llvm-{}", consts::READELF)
 		} else {
 			format!("{}-{}", triple, consts::READELF)
 		};
+
 		MissingToolError::check_file(self.tool_dir()?.join(bin_path), "readelf")
 	}
 
@@ -244,11 +257,13 @@ impl Env {
 		triple:&str,
 	) -> Result<HashSet<String>, RequiredLibsError> {
 		let elf_path = dunce::simplified(elf).to_owned();
+
 		Ok(regex_multi_line!(r"\(NEEDED\)\s+Shared library: \[(.+)\]")
 			.captures_iter(
 				duct::cmd(self.readelf_path(triple)?, ["-d"])
 					.before_spawn(move |cmd| {
 						cmd.arg(&elf_path);
+
 						Ok(())
 					})
 					.stderr_capture()
@@ -258,7 +273,9 @@ impl Env {
 			.map(|caps| {
 				let lib =
 					caps.get(1).expect("developer error: regex match had no captures").as_str();
+
 				log::info!("{:?} requires shared lib {:?}", elf, lib);
+
 				lib.to_owned()
 			})
 			.collect())

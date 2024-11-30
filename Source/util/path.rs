@@ -16,7 +16,9 @@ pub fn home_dir() -> Result<PathBuf, NoHomeDir> { home::home_dir().ok_or(NoHomeD
 
 pub fn expand_home(path:impl AsRef<Path>) -> Result<PathBuf, NoHomeDir> {
 	let home = home_dir()?;
+
 	let path = path.as_ref();
+
 	if let Ok(path) = path.strip_prefix("~") {
 		Ok(home.join(path))
 	} else {
@@ -39,7 +41,9 @@ pub fn contract_home(path:impl AsRef<Path>) -> Result<String, ContractHomeError>
 	#[cfg(not(windows))]
 	{
 		let home = home_dir()?;
+
 		let home = home.to_str().ok_or(ContractHomeError::HomeInvalidUtf8)?;
+
 		Ok(path.replace(home, "~"))
 	}
 	#[cfg(windows)]
@@ -50,6 +54,7 @@ pub fn contract_home(path:impl AsRef<Path>) -> Result<String, ContractHomeError>
 
 pub fn install_dir() -> Result<PathBuf, NoHomeDir> {
 	let dir_name = concat!(".", env!("CARGO_PKG_NAME"));
+
 	std::env::var("CARGO_HOME")
 		.map(|p| PathBuf::from(p).join(dir_name))
 		.or_else(|_| home_dir().map(|home| home.join(".cargo").join(dir_name)))
@@ -77,20 +82,26 @@ impl Display for PathNotPrefixed {
 
 pub fn prefix_path(root:impl AsRef<Path>, path:impl AsRef<Path>) -> PathBuf {
 	let root = root.as_ref();
+
 	let path = path.as_ref();
+
 	let is_verbatim = if let Some(Component::Prefix(prefix)) = root.components().next() {
 		prefix.kind().is_verbatim()
 	} else {
 		false
 	};
+
 	if !is_verbatim {
 		return root.join(path);
 	}
+
 	let mut buf = root.components().collect::<Vec<_>>();
+
 	for component in path.components() {
 		match component {
 			Component::RootDir => {
 				buf.truncate(1);
+
 				buf.push(component);
 			},
 			Component::CurDir => {},
@@ -102,6 +113,7 @@ pub fn prefix_path(root:impl AsRef<Path>, path:impl AsRef<Path>) -> PathBuf {
 			_ => buf.push(component),
 		};
 	}
+
 	buf.into_iter().collect()
 }
 
@@ -110,7 +122,9 @@ pub fn unprefix_path(
 	path:impl AsRef<Path>,
 ) -> Result<PathBuf, PathNotPrefixed> {
 	let root = root.as_ref();
+
 	let path = path.as_ref();
+
 	path.strip_prefix(root)
 		.map(|path| path.to_owned())
 		.map_err(|_| PathNotPrefixed { path:path.to_owned(), prefix:root.to_owned() })
@@ -118,6 +132,7 @@ pub fn unprefix_path(
 
 fn common_root(abs_src:&Path, abs_dest:&Path) -> PathBuf {
 	let mut dest_root = abs_dest.to_owned();
+
 	loop {
 		if abs_src.starts_with(&dest_root) {
 			return dest_root;
@@ -130,20 +145,30 @@ fn common_root(abs_src:&Path, abs_dest:&Path) -> PathBuf {
 /// Transforms `abs_path` to be relative to `abs_relative_to`.
 pub fn relativize_path(abs_path:impl AsRef<Path>, abs_relative_to:impl AsRef<Path>) -> PathBuf {
 	let (abs_path, abs_relative_to) = (abs_path.as_ref(), abs_relative_to.as_ref());
+
 	assert!(abs_path.is_absolute());
+
 	assert!(abs_relative_to.is_absolute());
+
 	let (path, relative_to) = {
 		let common_root = common_root(abs_path, abs_relative_to);
+
 		let path = abs_path.strip_prefix(&common_root).unwrap();
+
 		let relative_to = abs_relative_to.strip_prefix(&common_root).unwrap();
 		(path, relative_to)
 	};
+
 	let mut rel_path = PathBuf::new();
+
 	for _ in 0..relative_to.iter().count() {
 		rel_path.push("..");
 	}
+
 	let rel_path = rel_path.join(path);
+
 	log::info!("{:?} relative to {:?} is {:?}", abs_path, abs_relative_to, rel_path);
+
 	rel_path
 }
 
@@ -168,6 +193,7 @@ impl Display for NormalizationError {
 
 pub fn normalize_path(path:impl AsRef<Path>) -> Result<PathBuf, NormalizationError> {
 	let path = path.as_ref();
+
 	if path.exists() {
 		path.canonicalize().map_err(|cause| {
 			NormalizationError::CanonicalizationFailed { path:path.to_owned(), cause }
@@ -184,8 +210,10 @@ pub fn under_root(
 	root:impl AsRef<Path>,
 ) -> Result<bool, NormalizationError> {
 	let root = dunce::simplified(root.as_ref());
+
 	normalize_path(root.join(path)).map(|norm| {
 		let norm = dunce::simplified(&norm);
+
 		norm.starts_with(dunce::simplified(root))
 	})
 }
@@ -193,8 +221,10 @@ pub fn under_root(
 pub fn last_modified(first:PathBuf, second:PathBuf) -> PathBuf {
 	let first_modified =
 		first.metadata().and_then(|m| m.modified()).unwrap_or(SystemTime::UNIX_EPOCH);
+
 	let second_modified =
 		second.metadata().and_then(|m| m.modified()).unwrap_or(SystemTime::UNIX_EPOCH);
+
 	match first_modified.cmp(&second_modified) {
 		std::cmp::Ordering::Less => second,
 		std::cmp::Ordering::Equal => first,
