@@ -4,6 +4,7 @@
 use std::path::PathBuf;
 
 use cargo_mobile2::{
+	NAME,
 	doctor,
 	init,
 	update,
@@ -20,7 +21,6 @@ use cargo_mobile2::{
 			VERSION_SHORT,
 		},
 	},
-	NAME,
 };
 use structopt::StructOpt;
 

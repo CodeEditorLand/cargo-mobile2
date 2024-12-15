@@ -5,8 +5,8 @@ use crate::{
 	config::Config,
 	templating::{self, FancyPackResolveError},
 	util::{
-		cli::{Report, Reportable},
 		Git,
+		cli::{Report, Reportable},
 	},
 };
 

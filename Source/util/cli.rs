@@ -133,14 +133,12 @@ mod interface {
 	use std::fmt::Debug;
 
 	use once_cell_regex::exports::once_cell::sync::Lazy;
-
 	use structopt::{
-		clap::{self, AppSettings},
 		StructOpt,
+		clap::{self, AppSettings},
 	};
 
 	use super::*;
-
 	use crate::{opts, util};
 
 	pub static GLOBAL_SETTINGS:&[AppSettings] = &[

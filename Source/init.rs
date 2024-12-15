@@ -10,8 +10,8 @@ use crate::{
 	android,
 	config::{
 		self,
-		metadata::{self, Metadata},
 		Config,
+		metadata::{self, Metadata},
 	},
 	dot_cargo,
 	os::code_command,

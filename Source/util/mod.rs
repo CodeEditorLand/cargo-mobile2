@@ -20,15 +20,15 @@ use once_cell_regex::{
 	regex,
 };
 use path_abs::PathOps;
-use serde::{ser::Serializer, Deserialize, Serialize};
+use serde::{Deserialize, Serialize, ser::Serializer};
 use thiserror::Error;
 
 use self::cli::{Report, Reportable};
 pub use self::{cargo::*, git::*, path::*};
 use crate::{
+	DuctExpressionExt,
 	env::ExplicitEnv,
 	os::{self, command_path},
-	DuctExpressionExt,
 };
 
 pub fn list_display(list:&[impl Display]) -> String {

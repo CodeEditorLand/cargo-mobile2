@@ -2,7 +2,7 @@ use std::collections::BTreeSet;
 
 use once_cell_regex::regex;
 use thiserror::Error;
-use x509_certificate::{certificate::X509Certificate, X509CertificateError};
+use x509_certificate::{X509CertificateError, certificate::X509Certificate};
 
 pub fn get_pem_list(name_substr:&str) -> std::io::Result<std::process::Output> {
 	duct::cmd("security", ["find-certificate", "-p", "-a", "-c", name_substr])

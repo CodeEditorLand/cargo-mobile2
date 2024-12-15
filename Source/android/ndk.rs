@@ -14,8 +14,8 @@ use super::{
 use crate::{
 	os::consts,
 	util::{
-		cli::{Report, Reportable},
 		VersionDouble,
+		cli::{Report, Reportable},
 	},
 };
 

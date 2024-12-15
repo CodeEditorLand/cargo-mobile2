@@ -12,7 +12,7 @@ use super::{
 	target::Target,
 };
 use crate::{
-	android::{config::DEFAULT_VULKAN_VALIDATION, DEFAULT_ACTIVITY, DEFAULT_THEME_PARENT},
+	android::{DEFAULT_ACTIVITY, DEFAULT_THEME_PARENT, config::DEFAULT_VULKAN_VALIDATION},
 	bicycle,
 	dot_cargo,
 	os::{self, replace_path_separator},

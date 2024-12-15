@@ -2,7 +2,7 @@
 #![forbid(unsafe_code)]
 
 use cargo_mobile2::{
-	android::{cli::Input, NAME},
+	android::{NAME, cli::Input},
 	util::cli::exec,
 };
 

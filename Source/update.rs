@@ -6,12 +6,12 @@ use std::{
 };
 
 use crate::{
+	DuctExpressionExt,
 	util::{
 		self,
 		cli::{Report, TextWrapper},
 		repo::{self, Repo},
 	},
-	DuctExpressionExt,
 };
 
 static ENABLED_FEATURES:&[&str] = &[

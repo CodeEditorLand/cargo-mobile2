@@ -1,9 +1,10 @@
 use std::{collections::HashMap, ffi::OsStr, path::PathBuf};
 
-use structopt::{clap::AppSettings, StructOpt};
+use structopt::{StructOpt, clap::AppSettings};
 
 use crate::{
 	apple::{
+		NAME,
 		config::{Config, Metadata},
 		device::{self, Device, RunError},
 		rust_version_check,
@@ -17,19 +18,18 @@ use crate::{
 			ExportError,
 			Target,
 		},
-		NAME,
 	},
 	config::{
-		metadata::{self, Metadata as OmniMetadata},
 		Config as OmniConfig,
 		LoadOrGenError,
+		metadata::{self, Metadata as OmniMetadata},
 	},
 	define_device_prompt,
 	device::PromptError,
 	env::{Env, Error as EnvError},
 	opts,
 	os,
-	target::{call_for_targets_with_fallback, TargetInvalid, TargetTrait as _},
+	target::{TargetInvalid, TargetTrait as _, call_for_targets_with_fallback},
 	util::{
 		self,
 		cli::{

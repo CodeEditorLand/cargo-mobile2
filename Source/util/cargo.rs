@@ -1,6 +1,6 @@
 use std::{collections::HashMap, ffi::OsString, path::PathBuf};
 
-use crate::{env::ExplicitEnv, DuctExpressionExt};
+use crate::{DuctExpressionExt, env::ExplicitEnv};
 
 #[derive(Debug)]
 pub struct CargoCommand<'a> {

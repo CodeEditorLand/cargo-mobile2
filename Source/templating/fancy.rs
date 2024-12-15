@@ -10,8 +10,8 @@ use thiserror::Error;
 use super::{LookupError, Pack};
 use crate::util::{
 	self,
-	submodule::{self, Submodule},
 	Git,
+	submodule::{self, Submodule},
 };
 
 #[derive(Debug, Error)]

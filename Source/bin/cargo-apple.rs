@@ -4,7 +4,7 @@
 #[cfg(target_os = "macos")]
 fn main() {
 	use cargo_mobile2::{
-		apple::{cli::Input, NAME},
+		apple::{NAME, cli::Input},
 		util::cli::exec,
 	};
 

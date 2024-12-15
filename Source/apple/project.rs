@@ -7,6 +7,7 @@ use super::{
 	target::Target,
 };
 use crate::{
+	DuctExpressionExt,
 	bicycle,
 	target::TargetTrait as _,
 	templating::{self, Pack},
@@ -15,7 +16,6 @@ use crate::{
 		cli::{Report, Reportable, TextWrapper},
 		ln,
 	},
-	DuctExpressionExt,
 };
 
 pub static TEMPLATE_PACK:&str = "xcode";

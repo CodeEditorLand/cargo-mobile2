@@ -9,6 +9,7 @@ use thiserror::Error;
 
 use super::{aab, adb, bundletool, config::Config, env::Env, jnilibs, target::Target};
 use crate::{
+	DuctExpressionExt,
 	android::apk,
 	env::ExplicitEnv as _,
 	opts::{FilterLevel, NoiseLevel, Profile},
@@ -19,7 +20,6 @@ use crate::{
 		last_modified,
 		prefix_path,
 	},
-	DuctExpressionExt,
 };
 
 #[derive(Debug, Error)]

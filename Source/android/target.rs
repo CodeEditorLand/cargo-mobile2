@@ -15,8 +15,8 @@ use crate::{
 	opts::{NoiseLevel, Profile},
 	target::TargetTrait,
 	util::{
-		cli::{Report, Reportable},
 		CargoCommand,
+		cli::{Report, Reportable},
 	},
 };
 

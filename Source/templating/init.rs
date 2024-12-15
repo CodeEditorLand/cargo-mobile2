@@ -4,13 +4,13 @@ use handlebars::RenderErrorReason;
 
 use crate::{
 	bicycle::{
-		handlebars::{self, Context, Handlebars, Helper, HelperResult, Output, RenderContext},
 		Bicycle,
 		EscapeFn,
 		HelperDef,
 		JsonMap,
+		handlebars::{self, Context, Handlebars, Helper, HelperResult, Output, RenderContext},
 	},
-	config::{app, Config},
+	config::{Config, app},
 	reserved_names::KOTLIN_ONLY_KEYWORDS,
 	util::{self, Git},
 };

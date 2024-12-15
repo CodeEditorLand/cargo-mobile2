@@ -8,22 +8,22 @@ use once_cell_regex::exports::once_cell::sync::OnceCell;
 use thiserror::Error;
 
 use super::{
+	AuthCredentials,
 	config::{Config, Metadata},
 	system_profile::{self, DeveloperTools},
 	version_number::VersionNumber,
-	AuthCredentials,
 };
 use crate::{
+	DuctExpressionExt,
 	env::{Env, ExplicitEnv as _},
 	opts::{self, NoiseLevel, Profile},
 	target::TargetTrait,
 	util::{
 		self,
-		cli::{Report, Reportable},
 		CargoCommand,
 		WithWorkingDirError,
+		cli::{Report, Reportable},
 	},
-	DuctExpressionExt,
 };
 
 fn verbosity(noise_level:opts::NoiseLevel) -> Option<&'static str> {

@@ -3,7 +3,7 @@ use std::{
 	str::FromStr,
 };
 
-use serde::{ser::Serializer, Serialize};
+use serde::{Serialize, ser::Serializer};
 use thiserror::Error;
 
 use crate::util::{VersionTriple, VersionTripleError};

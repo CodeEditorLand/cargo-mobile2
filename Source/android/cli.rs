@@ -4,6 +4,8 @@ use structopt::StructOpt;
 
 use crate::{
 	android::{
+		DEFAULT_ACTIVITY,
+		NAME,
 		aab,
 		adb,
 		apk,
@@ -11,18 +13,16 @@ use crate::{
 		device::{Device, RunError, StacktraceError},
 		env::{Env, Error as EnvError},
 		target::{BuildError, CompileLibError, Target},
-		DEFAULT_ACTIVITY,
-		NAME,
 	},
 	config::{
-		metadata::{self, Metadata as OmniMetadata},
 		Config as OmniConfig,
 		LoadOrGenError,
+		metadata::{self, Metadata as OmniMetadata},
 	},
 	define_device_prompt,
 	device::PromptError,
 	os,
-	target::{call_for_targets_with_fallback, TargetInvalid, TargetTrait as _},
+	target::{TargetInvalid, TargetTrait as _, call_for_targets_with_fallback},
 	util::{
 		cli::{
 			self,
