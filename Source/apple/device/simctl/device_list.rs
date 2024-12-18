@@ -5,9 +5,9 @@ use thiserror::Error;
 
 use super::Device;
 use crate::{
+	DuctExpressionExt,
 	env::{Env, ExplicitEnv as _},
 	util::cli::{Report, Reportable},
-	DuctExpressionExt,
 };
 
 #[derive(Debug, Error)]

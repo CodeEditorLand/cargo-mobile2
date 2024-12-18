@@ -7,7 +7,7 @@ use std::{
 use once_cell_regex::regex;
 use serde::{Deserialize, Serialize};
 
-use super::{lfs, Git};
+use super::{Git, lfs};
 
 #[derive(Debug)]
 pub enum Cause {

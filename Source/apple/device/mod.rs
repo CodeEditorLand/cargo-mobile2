@@ -12,11 +12,11 @@ use super::{
 	target::{ArchiveError, BuildError, ExportError, Target},
 };
 use crate::{
+	DuctExpressionExt,
 	apple::target::{ArchiveConfig, BuildConfig, ExportConfig},
 	env::{Env, ExplicitEnv as _},
 	opts,
 	util::cli::{Report, Reportable},
-	DuctExpressionExt,
 };
 
 mod devicectl;

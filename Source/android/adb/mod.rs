@@ -8,7 +8,7 @@ use thiserror::Error;
 
 pub use self::{device_list::device_list, device_name::device_name, get_prop::get_prop};
 use super::env::Env;
-use crate::{env::ExplicitEnv as _, util::cli::Report, DuctExpressionExt};
+use crate::{DuctExpressionExt, env::ExplicitEnv as _, util::cli::Report};
 
 pub fn adb<U>(env:&Env, args:U) -> duct::Expression
 where

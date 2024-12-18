@@ -13,21 +13,21 @@ pub use env::Env;
 use thiserror::Error;
 use which::which;
 use windows::{
-	core::{self, w, PCWSTR, PWSTR},
 	Win32::{
-		Foundation::{LocalFree, ERROR_NO_ASSOCIATION, HLOCAL, MAX_PATH},
+		Foundation::{ERROR_NO_ASSOCIATION, HLOCAL, LocalFree, MAX_PATH},
 		System::Registry::HKEY_LOCAL_MACHINE,
 		UI::Shell::{
+			ASSOCF_INIT_IGNOREUNKNOWN,
+			ASSOCSTR_COMMAND,
 			AssocQueryStringW,
 			CommandLineToArgvW,
 			SHRegGetPathW,
-			ASSOCF_INIT_IGNOREUNKNOWN,
-			ASSOCSTR_COMMAND,
 		},
 	},
+	core::{self, PCWSTR, PWSTR, w},
 };
 
-use crate::{env::ExplicitEnv, DuctExpressionExt};
+use crate::{DuctExpressionExt, env::ExplicitEnv};
 
 #[derive(Debug, Error)]
 pub enum DetectEditorError {

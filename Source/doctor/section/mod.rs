@@ -10,7 +10,7 @@ use colored::Colorize as _;
 
 use crate::util::{
 	self,
-	cli::{colors, TextWrapper},
+	cli::{TextWrapper, colors},
 };
 
 #[derive(Clone, Copy, Debug)]

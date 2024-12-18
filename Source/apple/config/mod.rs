@@ -15,12 +15,12 @@ use crate::{
 	config::app::App,
 	util::{
 		self,
-		cli::Report,
 		Pod,
 		VersionDouble,
 		VersionDoubleError,
 		VersionTriple,
 		VersionTripleError,
+		cli::Report,
 	},
 };
 

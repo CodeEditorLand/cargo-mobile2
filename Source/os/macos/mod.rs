@@ -16,8 +16,8 @@ use core_foundation::{
 };
 use thiserror::Error;
 
+use crate::{DuctExpressionExt, env::ExplicitEnv};
 pub use crate::{env::Env, util::ln};
-use crate::{env::ExplicitEnv, DuctExpressionExt};
 
 // This can hopefully be relied upon... https://stackoverflow.com/q/8003919
 static RUST_UTI:&str = "dyn.ah62d4rv4ge81e62";

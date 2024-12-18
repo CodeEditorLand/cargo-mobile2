@@ -6,7 +6,7 @@ use std::{
 	path::{Path, PathBuf},
 };
 
-use freedesktop_entry_parser::{parse_entry, Entry as FreeDesktopEntry};
+use freedesktop_entry_parser::{Entry as FreeDesktopEntry, parse_entry};
 use once_cell_regex::{byte_regex, exports::regex::bytes::Regex};
 
 // Detects which .desktop file contains the data on how to handle a given

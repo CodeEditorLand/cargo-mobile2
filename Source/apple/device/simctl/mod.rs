@@ -4,9 +4,9 @@ use serde::Deserialize;
 
 use super::{super::target::Target, DeviceKind};
 use crate::{
+	DuctExpressionExt,
 	apple::device::Device as AppleDevice,
 	env::{Env, ExplicitEnv},
-	DuctExpressionExt,
 };
 
 mod device_list;

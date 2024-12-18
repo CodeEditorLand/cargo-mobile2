@@ -6,7 +6,7 @@ use std::{
 use heck::{ToKebabCase as _, ToSnekCase as _};
 
 use crate::{
-	reserved_names::{is_reserved, Reservation},
+	reserved_names::{Reservation, is_reserved},
 	util,
 };
 

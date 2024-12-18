@@ -1,14 +1,14 @@
 use thiserror::Error;
 use windows::Win32::System::{
 	SystemInformation::{
-		VerSetConditionMask,
-		VerifyVersionInfoW,
 		OSVERSIONINFOEXW,
 		VER_BUILDNUMBER,
 		VER_MAJORVERSION,
 		VER_MINORVERSION,
 		VER_PRODUCT_TYPE,
 		VER_SERVICEPACKMAJOR,
+		VerSetConditionMask,
+		VerifyVersionInfoW,
 	},
 	SystemServices::{VER_EQUAL, VER_GREATER_EQUAL},
 };

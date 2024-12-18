@@ -12,12 +12,12 @@ use super::{
 	system_profile::{self, DeveloperTools},
 };
 use crate::{
+	DuctExpressionExt,
 	util::{
 		self,
 		cli::{Report, TextWrapper},
 		prompt,
 	},
-	DuctExpressionExt,
 };
 
 static PACKAGES:&[PackageSpec] = &[

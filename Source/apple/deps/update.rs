@@ -3,9 +3,9 @@ use serde::Deserialize;
 use thiserror::Error;
 
 use super::{
-	util::{self, CaptureGroupError},
 	GemCache,
 	PACKAGES,
+	util::{self, CaptureGroupError},
 };
 
 #[derive(Debug, Error)]

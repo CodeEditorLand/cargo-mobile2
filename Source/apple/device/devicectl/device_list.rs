@@ -4,13 +4,13 @@ use serde::Deserialize;
 use thiserror::Error;
 
 use crate::{
+	DuctExpressionExt,
 	apple::{
 		device::{Device, DeviceKind},
 		target::Target,
 	},
 	env::{Env, ExplicitEnv as _},
 	util::cli::{Report, Reportable},
-	DuctExpressionExt,
 };
 
 #[derive(Debug, Error)]

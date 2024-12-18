@@ -2,9 +2,9 @@ use std::path::Path;
 
 use super::{Item, Section};
 use crate::{
+	DuctExpressionExt,
 	apple::{deps::xcode_plugin, system_profile::DeveloperTools, teams},
 	util::prompt,
-	DuctExpressionExt,
 };
 
 fn validate_developer_dir() -> Result<String, String> {

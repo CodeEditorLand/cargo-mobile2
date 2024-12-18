@@ -6,7 +6,6 @@ use std::{
 };
 
 use windows::{
-	core::{self, PCWSTR},
 	Win32::{
 		Foundation::{CloseHandle, ERROR_PRIVILEGE_NOT_HELD, GENERIC_READ, HANDLE},
 		Storage::FileSystem::{
@@ -18,6 +17,7 @@ use windows::{
 			OPEN_EXISTING,
 		},
 	},
+	core::{self, PCWSTR},
 };
 
 use crate::util::{

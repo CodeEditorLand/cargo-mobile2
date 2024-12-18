@@ -4,11 +4,11 @@ use serde::Deserialize;
 use thiserror::Error;
 
 use crate::{
+	DuctExpressionExt,
 	apple::config::Config,
 	env::{Env, ExplicitEnv as _},
 	opts::NoiseLevel,
 	util::cli::{Report, Reportable},
-	DuctExpressionExt,
 };
 
 #[derive(Debug, Error)]
