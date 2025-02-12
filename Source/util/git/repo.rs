@@ -138,7 +138,7 @@ impl Repo {
 
 			Git::new(parent)
 				.command_parse(format!(
-					"clone --depth 1 --single-branch {} {}",
+					"clone --depth 2 --single-branch {} {}",
 					url.as_ref().to_string_lossy(),
 					path.to_string_lossy()
 				))
@@ -153,7 +153,7 @@ impl Repo {
 				.display()
 			);
 
-			self.git().command_parse("fetch --depth 1").run().map_err(Error::FetchFailed)?;
+			self.git().command_parse("fetch --depth 2").run().map_err(Error::FetchFailed)?;
 
 			self.git()
 				.command_parse(format!("reset --hard origin/{branch}"))
