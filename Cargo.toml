@@ -2,9 +2,9 @@
 name = "cargo-mobile2"
 version = "0.17.5"
 authors = [
-	"Tauri Programme within The Commons Conservancy",
-	"Brainium Studios LLC",
-	"Francesca Lovebloom <francesca@brainiumstudios.com>",
+  "Tauri Programme within The Commons Conservancy",
+  "Brainium Studios LLC",
+  "Francesca Lovebloom <francesca@brainiumstudios.com>"
 ]
 edition = "2021"
 description = "Rust on mobile made easy!"
@@ -21,34 +21,34 @@ no-default-features = true
 features = ["native-tls"]
 default-target = "x86_64-unknown-linux-gnu"
 targets = [
-	"x86_64-pc-windows-msvc",
-	"x86_64-unknown-linux-gnu",
-	"x86_64-apple-darwin",
+  "x86_64-pc-windows-msvc",
+  "x86_64-unknown-linux-gnu",
+  "x86_64-apple-darwin",
 ]
 
 [[bin]]
 name = "cargo-mobile"
-required-features = ["cli"]
+required-features = [ "cli" ]
 
 [[bin]]
 name = "cargo-apple"
-required-features = ["cli"]
+required-features = [ "cli" ]
 
 [[bin]]
 name = "cargo-android"
-required-features = ["cli"]
+required-features = [ "cli" ]
 
 [features]
 cli = [
-	"home",
-	"dunce",
-	"handlebars",
-	"log",
-	"serde",
-	"serde_json",
-	"thiserror",
-	"structopt",
-	"env_logger",
+  "home",
+  "dunce",
+  "handlebars",
+  "log",
+  "serde",
+  "serde_json",
+  "thiserror",
+  "structopt",
+  "env_logger"
 ]
 brainium = [ ]
 rustls = [ "ureq/rustls" ]
@@ -63,14 +63,14 @@ deunicode = "1.4"
 dunce = "1.0"
 english-numbers = "0.3"
 env_logger = { version = "0.11", optional = true }
-heck = { version = "0.5" }
-home = { version = "0.5" }
-ignore = { version = "0.4" }
+heck = "0.5"
+home = "0.5"
+ignore = "0.4"
 java-properties = "2.0"
-log = { version = "0.4" }
+log = "0.4"
 once-cell-regex = "0.2"
-path_abs = { version = "0.5" }
-serde = { version = "1.0", features = ["derive"] }
+path_abs = "0.5"
+serde = { version = "1.0", features = [ "derive" ] }
 structopt = { version = "0.3", optional = true }
 textwrap = { version = "0.16", features = [ "terminal_size" ] }
 thiserror = "2.0"
@@ -91,25 +91,25 @@ os_info = "3"
 ureq = { version = "3.0", default-features = false, features = [ "gzip" ] }
 
 [target."cfg(target_os = \"linux\")".dependencies]
-freedesktop_entry_parser = { version = "1.3" }
+freedesktop_entry_parser = "1.3"
 
 [target."cfg(unix)".dependencies]
-libc = { version = "0.2" }
+libc = "0.2"
 
 [target."cfg(windows)".dependencies.windows]
 version = "0.59"
 features = [
-	"Win32_Foundation",
-	"Win32_Security",
-	"Win32_Storage_FileSystem",
-	"Win32_System_Diagnostics_Debug",
-	"Win32_System_IO",
-	"Win32_System_Ioctl",
-	"Win32_System_Memory",
-	"Win32_System_Registry",
-	"Win32_System_SystemInformation",
-	"Win32_System_SystemServices",
-	"Win32_UI_Shell",
+  "Win32_Foundation",
+  "Win32_Security",
+  "Win32_Storage_FileSystem",
+  "Win32_System_Diagnostics_Debug",
+  "Win32_System_IO",
+  "Win32_System_Ioctl",
+  "Win32_System_Memory",
+  "Win32_System_Registry",
+  "Win32_System_SystemInformation",
+  "Win32_System_SystemServices",
+  "Win32_UI_Shell"
 ]
 
 [target."cfg(windows)".build-dependencies]
