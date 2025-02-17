@@ -15,7 +15,7 @@ required-features = ["cli"]
 
 [build-dependencies]
 dunce = { version = "1.0", optional = true }
-handlebars = { version = "6.0", optional = true }
+handlebars = { version = "6.3", optional = true }
 home = { version = "0.5", optional = true }
 log = { version = "0.4", optional = true }
 serde = { version = "1.0", optional = true }
@@ -23,8 +23,8 @@ serde_json = { version = "1.0", optional = true }
 thiserror = { version = "2.0", optional = true }
 
 [dependencies]
-colored = "2.1"
-deunicode = "1.4"
+colored = "3.0"
+deunicode = "1.6"
 duct = "0.13"
 dunce = "1.0"
 english-numbers = "0.3"
@@ -78,13 +78,13 @@ authors = [
 categories = ["development-tools::cargo-plugins"]
 description = "Rust on mobile made easy!"
 documentation = "https://docs.rs/cargo-mobile2"
-edition = "2021"
+edition = "2024"
 keywords = ["cargo", "mobile", "ios", "android", "tauri"]
 license-file = "LICENSE"
 name = "cargo-mobile2"
 readme = "README.md"
 repository = "https://github.com/tauri-apps/cargo-mobile2"
-rust-version = "1.76"
+rust-version = "1.85.0"
 version = "0.17.5"
 
 [package.metadata]
